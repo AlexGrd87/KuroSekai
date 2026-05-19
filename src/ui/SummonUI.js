@@ -36,26 +36,46 @@ export class SummonUI {
           <span class="s-kanji">召喚</span>
           <span class="s-roman">INVOCATION</span>
         </h2>
-        <div id="pity-display">
-          <span id="pity5-txt">5★ dans <b>90</b> pulls</span>
-          <span id="pity4-txt">4★ dans <b>10</b> pulls</span>
-        </div>
+        <div style="width:120px"></div>
       </div>
 
       <!-- Zone de résultats (cartes) -->
       <div id="cards-area"></div>
 
-      <!-- Boutons de pull -->
-      <div id="summon-actions">
-        <button class="pull-btn" id="pull-x1">
-          <span class="pull-count">×1</span>
-          <span class="pull-label">INVOQUER</span>
-        </button>
-        <button class="pull-btn pull-x10" id="pull-x10">
-          <span class="pull-count">×10</span>
-          <span class="pull-label">INVOQUER</span>
-          <span class="pull-guarantee">3★ GARANTI</span>
-        </button>
+      <!-- Pity + Boutons de pull regroupés en bas -->
+      <div id="summon-bottom">
+
+        <!-- Compteurs de pity au-dessus des boutons -->
+        <div id="pity-display">
+          <div class="pity-bar">
+            <span class="pity-label">5★ LÉGENDAIRE</span>
+            <div class="pity-track">
+              <div class="pity-fill pity-fill-5" id="pity5-bar"></div>
+            </div>
+            <span class="pity-count" id="pity5-txt">90</span>
+          </div>
+          <div class="pity-bar">
+            <span class="pity-label">4★ ÉPIQUE</span>
+            <div class="pity-track">
+              <div class="pity-fill pity-fill-4" id="pity4-bar"></div>
+            </div>
+            <span class="pity-count" id="pity4-txt">10</span>
+          </div>
+        </div>
+
+        <!-- Boutons de pull -->
+        <div id="summon-actions">
+          <button class="pull-btn" id="pull-x1">
+            <span class="pull-count">×1</span>
+            <span class="pull-label">INVOQUER</span>
+          </button>
+          <button class="pull-btn pull-x10" id="pull-x10">
+            <span class="pull-count">×10</span>
+            <span class="pull-label">INVOQUER</span>
+            <span class="pull-guarantee">3★ GARANTI</span>
+          </button>
+        </div>
+
       </div>
     `;
 
@@ -218,13 +238,21 @@ export class SummonUI {
     });
   }
 
-  /* ── Met à jour l'affichage du pity ── */
+  /* ── Met à jour le pity : compteurs + barres de progression ── */
   _updatePityDisplay() {
-    const { next5Guaranteed, next4Guaranteed } = this.engine.getPityInfo();
-    const p5 = this.overlay.querySelector('#pity5-txt b');
-    const p4 = this.overlay.querySelector('#pity4-txt b');
-    if (p5) p5.textContent = next5Guaranteed;
-    if (p4) p4.textContent = next4Guaranteed;
+    const { pity5, pity4, next5Guaranteed, next4Guaranteed } = this.engine.getPityInfo();
+
+    const txt5  = this.overlay.querySelector('#pity5-txt');
+    const txt4  = this.overlay.querySelector('#pity4-txt');
+    const bar5  = this.overlay.querySelector('#pity5-bar');
+    const bar4  = this.overlay.querySelector('#pity4-bar');
+
+    if (txt5) txt5.textContent = next5Guaranteed;
+    if (txt4) txt4.textContent = next4Guaranteed;
+
+    // Largeur de la barre = progression vers la garantie
+    if (bar5) gsap.to(bar5, { width: `${(pity5 / 90) * 100}%`, duration: 0.4, ease: 'power2.out' });
+    if (bar4) gsap.to(bar4, { width: `${(pity4 / 10) * 100}%`, duration: 0.4, ease: 'power2.out' });
   }
 
   /* ── Affiche l'écran avec animation d'entrée ── */

@@ -242,19 +242,7 @@ html, body {
   color: var(--cyan);
 }
 
-/* Compteur de pity */
-#pity-display {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.2rem;
-}
-#pity-display span {
-  font-size: 0.72rem;
-  color: rgba(224,238,255,0.4);
-  letter-spacing: 0.05em;
-}
-#pity-display b { color: var(--cyan); }
+/* Placeholder pour l'espace droit du header (équilibre visuel) */
 
 /* --- Zone cartes --- */
 #cards-area {
@@ -367,6 +355,85 @@ html, body {
   letter-spacing: 0.1em;
   margin-top: 0.2rem;
   opacity: 0.7;
+}
+
+/* --- Bloc bas : pity + boutons --- */
+#summon-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  z-index: 1;
+  width: 100%;
+}
+
+/* --- Pity display : barres de progression cyberpunk --- */
+#pity-display {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  background: rgba(0, 212, 255, 0.04);
+  border: 1px solid rgba(0, 212, 255, 0.12);
+  border-top: 1px solid rgba(0, 212, 255, 0.25);
+  padding: 0.65rem 2rem;
+  clip-path: polygon(12px 0%, calc(100% - 12px) 0%, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0% 50%);
+}
+
+/* Une ligne de pity (label + barre + compteur) */
+.pity-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.pity-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  color: rgba(224, 238, 255, 0.45);
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+/* Piste de la barre */
+.pity-track {
+  width: 120px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Remplissage progressif */
+.pity-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 2px;
+  transition: width 0.4s;
+}
+.pity-fill-5 {
+  background: linear-gradient(90deg, #aa6600, #ffd700);
+  box-shadow: 0 0 6px #ffaa00;
+}
+.pity-fill-4 {
+  background: linear-gradient(90deg, #4a0a99, #b44fff);
+  box-shadow: 0 0 6px #7b2fff;
+}
+
+/* Compteur numérique (pulls restants) */
+.pity-count {
+  font-size: 0.8rem;
+  font-weight: 700;
+  min-width: 2ch;
+  text-align: right;
+}
+#pity5-txt { color: #ffd700; text-shadow: 0 0 8px #ffaa00; }
+#pity4-txt { color: #b44fff; text-shadow: 0 0 8px #7b2fff; }
+
+/* Séparateur vertical entre les deux barres */
+.pity-bar + .pity-bar {
+  border-left: 1px solid rgba(0, 212, 255, 0.1);
+  padding-left: 2rem;
 }
 
 /* --- Boutons de pull --- */

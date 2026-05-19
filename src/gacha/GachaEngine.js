@@ -60,16 +60,15 @@ export class GachaEngine {
     return this._pickCharacter(rarity);
   }
 
-  /* ── Détermine la rareté par tirage aléatoire ── */
+  /* ── Détermine la rareté par tirage aléatoire (système 3-5★) ── */
   _rollRarity() {
     const roll = Math.random();
     let cumul = 0;
-    // Parcourt les raretés de la plus haute à la plus basse
-    for (const r of [5, 4, 3, 2, 1]) {
+    for (const r of [5, 4, 3]) {
       cumul += RARITIES[r].rate;
       if (roll < cumul) return r;
     }
-    return 1;
+    return 3; // fallback minimum 3★
   }
 
   /* ── Sélectionne un personnage aléatoire de la rareté donnée ── */

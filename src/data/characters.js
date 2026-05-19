@@ -7,10 +7,8 @@
 
 export const RARITIES = {
   5: { label: 'LÉGENDAIRE', color: '#ffd700', glow: '#ffaa00', rate: 0.02 },
-  4: { label: 'ÉPIQUE',     color: '#b44fff', glow: '#7b2fff', rate: 0.08 },
-  3: { label: 'RARE',       color: '#00d4ff', glow: '#0099bb', rate: 0.25 },
-  2: { label: 'PEU COMMUN', color: '#44ff88', glow: '#00aa44', rate: 0.35 },
-  1: { label: 'COMMUN',     color: '#aabbcc', glow: '#556677', rate: 0.30 },
+  4: { label: 'ÉPIQUE',     color: '#b44fff', glow: '#7b2fff', rate: 0.13 },
+  3: { label: 'RARE',       color: '#00d4ff', glow: '#0099bb', rate: 0.85 },
 };
 
 export const CHARACTERS = [
@@ -100,47 +98,25 @@ export const CHARACTERS = [
     color: '#ffff00',
   },
 
-  // ── 2★ PEU COMMUNS ──
+  // ── 3★ additionnels ──
   {
     id: 'jin',
     name: 'JIN',
     title: 'Recrue Augmentée',
     class: 'Guerrier',
-    rarity: 2,
+    rarity: 3,
     element: 'Fire',
-    description: 'Nouvelle recrue de la résistance. Prometteur mais encore inexpérimenté.',
-    color: '#ff8844',
+    description: 'Nouvelle recrue de la résistance. Prometteur, il progresse vite.',
+    color: '#00d4ff',
   },
   {
     id: 'mira',
     name: 'MIRA',
     title: 'Espionne de Bas-Fond',
     class: 'Assassin',
-    rarity: 2,
+    rarity: 3,
     element: 'Dark',
     description: 'Infiltrée dans les rangs démoniques. Ses vraies allégeances restent floues.',
-    color: '#cc44aa',
-  },
-
-  // ── 1★ COMMUNS ──
-  {
-    id: 'grunt1',
-    name: 'SOLDAT-K',
-    title: 'Fantassin de Base',
-    class: 'Guerrier',
-    rarity: 1,
-    element: 'Neutral',
-    description: 'Soldat standard de la résistance. Fiable, sans éclat.',
-    color: '#778899',
-  },
-  {
-    id: 'grunt2',
-    name: 'DRONE-3',
-    title: 'Unité de Reconnaissance',
-    class: 'Tireur',
-    rarity: 1,
-    element: 'Wind',
-    description: 'Drone de surveillance reconverti. Utile en début de partie.',
-    color: '#667788',
+    color: '#00d4ff',
   },
 ];
