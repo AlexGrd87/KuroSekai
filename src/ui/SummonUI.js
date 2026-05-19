@@ -182,43 +182,136 @@ export class SummonUI {
     }
   }
 
-  /* ── Crée l'élément DOM d'une carte personnage ── */
+  /* ── Crée une carte au design cyberpunk détaillé ── */
   _createCard(char) {
-    const rarity   = RARITIES[char.rarity];
-    const stars    = '★'.repeat(char.rarity) + '☆'.repeat(5 - char.rarity);
-    const card     = document.createElement('div');
-    card.className = 'summon-card';
-    card.dataset.rarity = char.rarity;
+    const rarity  = RARITIES[char.rarity];
+    const stars   = '★'.repeat(char.rarity);
+    const empties = '★'.repeat(5 - char.rarity);
+    const elColor = this._elementColor(char.element);
+    const card    = document.createElement('div');
 
-    card.style.setProperty('--card-color', rarity.color);
-    card.style.setProperty('--card-glow',  rarity.glow);
+    card.className       = `summon-card rarity-${char.rarity}`;
+    card.dataset.rarity  = char.rarity;
+    card.style.setProperty('--card-color',   rarity.color);
+    card.style.setProperty('--card-glow',    rarity.glow);
+    card.style.setProperty('--elem-color',   elColor.main);
+    card.style.setProperty('--elem-glow',    elColor.glow);
 
     card.innerHTML = `
-      <div class="card-inner">
-        <!-- Bordure lumineuse de rareté -->
-        <div class="card-border"></div>
+      <!-- Shimmer holographique (visible au hover) -->
+      <div class="card-holo"></div>
 
-        <!-- Portrait (placeholder jusqu'aux vrais sprites) -->
-        <div class="card-portrait" style="background: linear-gradient(135deg, #0a0e18 0%, ${rarity.glow}33 100%)">
-          <div class="card-class-icon">${this._classIcon(char.class)}</div>
-          <div class="card-initial">${char.name.charAt(0)}</div>
+      <!-- Ligne de scan (cyberpunk) -->
+      <div class="card-scanline"></div>
+
+      <!-- Coins décoratifs -->
+      <div class="card-corner card-corner--tl"></div>
+      <div class="card-corner card-corner--tr"></div>
+      <div class="card-corner card-corner--bl"></div>
+      <div class="card-corner card-corner--br"></div>
+
+      <!-- Portrait (zone haute de la carte) -->
+      <div class="card-portrait">
+        <!-- Fond gradient par élément -->
+        <div class="card-portrait-bg"></div>
+
+        <!-- Lignes circuit déco -->
+        <div class="card-circuit">
+          <div class="circuit-h circuit-h1"></div>
+          <div class="circuit-h circuit-h2"></div>
+          <div class="circuit-v circuit-v1"></div>
         </div>
 
-        <!-- Infos personnage -->
-        <div class="card-info">
-          <div class="card-rarity-label" style="color: ${rarity.color}">${rarity.label}</div>
-          <div class="card-stars">${stars}</div>
-          <div class="card-name">${char.name}</div>
-          <div class="card-title">${char.title}</div>
-          <div class="card-class">${char.class} · ${char.element}</div>
+        <!-- Grand symbole d'élément -->
+        <div class="card-element-bg">${this._elementSymbol(char.element)}</div>
+
+        <!-- Initiale du personnage (placeholder sprite) -->
+        <div class="card-initial">${char.name.charAt(0)}</div>
+
+        <!-- Badge de rareté en bas du portrait -->
+        <div class="card-rarity-badge">
+          <span class="stars-lit">${stars}</span><span class="stars-dim">${empties}</span>
+        </div>
+
+        <!-- Bande déco bas portrait -->
+        <div class="card-portrait-foot">
+          <span class="card-elem-tag">${char.element}</span>
+          <span class="card-class-tag">${char.class}</span>
+        </div>
+      </div>
+
+      <!-- Zone infos personnage -->
+      <div class="card-info">
+        <!-- Ligne accent rareté -->
+        <div class="card-accent-line"></div>
+
+        <div class="card-rarity-label">${rarity.label}</div>
+        <div class="card-name">${char.name}</div>
+        <div class="card-title-text">${char.title}</div>
+
+        <!-- Ligne déco bas -->
+        <div class="card-info-foot">
+          <div class="card-id">ID_${char.id.toUpperCase()}</div>
+          <div class="card-dot"></div>
         </div>
       </div>
     `;
 
+    // Effet tilt 3D au survol de la souris
+    this._addTiltEffect(card);
     return card;
   }
 
-  /* ── Icône selon la classe du personnage ── */
+  /* ── Tilt 3D dynamique selon la position de la souris ── */
+  _addTiltEffect(card) {
+    card.addEventListener('mousemove', e => {
+      const r   = card.getBoundingClientRect();
+      const x   = (e.clientX - r.left) / r.width  - 0.5; // -0.5 à 0.5
+      const y   = (e.clientY - r.top)  / r.height - 0.5;
+      gsap.to(card, {
+        rotateY: x * 18,
+        rotateX: -y * 18,
+        duration: 0.3,
+        ease: 'power2.out',
+        transformPerspective: 800,
+      });
+      // Déplace le reflet holographique selon la souris
+      const holo = card.querySelector('.card-holo');
+      if (holo) {
+        holo.style.backgroundPosition = `${(x + 0.5) * 100}% ${(y + 0.5) * 100}%`;
+      }
+    });
+    card.addEventListener('mouseleave', () => {
+      gsap.to(card, { rotateY: 0, rotateX: 0, duration: 0.5, ease: 'power3.out' });
+    });
+  }
+
+  /* ── Couleur par élément pour le portrait ── */
+  _elementColor(el) {
+    const map = {
+      Fire:    { main: '#ff5500', glow: '#ff2200' },
+      Dark:    { main: '#8800ff', glow: '#5500cc' },
+      Wind:    { main: '#00ffaa', glow: '#00cc88' },
+      Water:   { main: '#00aaff', glow: '#0077cc' },
+      Thunder: { main: '#ffee00', glow: '#ccaa00' },
+      Earth:   { main: '#886600', glow: '#554400' },
+      Light:   { main: '#ffffcc', glow: '#ffdd88' },
+      Void:    { main: '#cc00ff', glow: '#880099' },
+      Neutral: { main: '#99aacc', glow: '#667799' },
+    };
+    return map[el] || map.Neutral;
+  }
+
+  /* ── Grand symbole d'élément pour le fond portrait ── */
+  _elementSymbol(el) {
+    const map = {
+      Fire: '火', Dark: '闇', Wind: '風', Water: '水',
+      Thunder: '雷', Earth: '土', Light: '光', Void: '虚', Neutral: '無',
+    };
+    return map[el] || '？';
+  }
+
+  /* ── Icône classe (conservé pour compatibilité) ── */
   _classIcon(cls) {
     const icons = {
       'Shinigami': '⚡', 'Guerrier': '⚔', 'Assassin': '🗡',
@@ -227,15 +320,27 @@ export class SummonUI {
     return icons[cls] || '◆';
   }
 
-  /* ── Effet de glow pulsant pour les raretés 4★+ ── */
+  /* ── Glow pulsant pour 4★ et 5★ ── */
   _addGlowPulse(card) {
-    gsap.to(card, {
-      filter: `drop-shadow(0 0 20px var(--card-glow)) drop-shadow(0 0 40px var(--card-glow))`,
-      duration: 0.8,
-      yoyo: true,
-      repeat: -1,
-      ease: 'sine.inOut',
-    });
+    const rarity = parseInt(card.dataset.rarity);
+    if (rarity === 5) {
+      // 5★ : effet de lumière plus dramatique avec double couche
+      gsap.to(card, {
+        filter: `drop-shadow(0 0 25px var(--card-glow)) drop-shadow(0 0 60px var(--card-glow)) brightness(1.1)`,
+        duration: 1.2,
+        yoyo: true,
+        repeat: -1,
+        ease: 'sine.inOut',
+      });
+    } else {
+      gsap.to(card, {
+        filter: `drop-shadow(0 0 14px var(--card-glow)) drop-shadow(0 0 28px var(--card-glow))`,
+        duration: 0.9,
+        yoyo: true,
+        repeat: -1,
+        ease: 'sine.inOut',
+      });
+    }
   }
 
   /* ── Met à jour le pity : compteurs + barres de progression ── */

@@ -500,3 +500,326 @@ html, body {
 }
 .pull-x10 .pull-count { color: var(--violet); text-shadow: 0 0 12px rgba(123,47,255,0.7); }
 .pull-x10::before { background: linear-gradient(90deg, rgba(123,47,255,0.18), rgba(0,212,255,0.08)); }
+
+/* =====================================================
+   CARTES PERSONNAGES — DA CYBERPUNK DÉTAILLÉE
+   ===================================================== */
+
+/* --- Carte de base --- */
+.summon-card {
+  position: relative;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  background: linear-gradient(160deg, #0b0e1a 0%, #07090f 60%, #0d0814 100%);
+  border: 1px solid var(--card-color);
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  overflow: hidden;
+  transition: border-color 0.3s;
+  width: 180px; /* fallback */
+}
+
+/* Rareté 5★ : bordure légèrement plus lumineuse */
+.summon-card.rarity-5 {
+  border-color: #ffd700;
+  box-shadow: 0 0 12px rgba(255,170,0,0.25), inset 0 0 20px rgba(255,215,0,0.04);
+}
+.summon-card.rarity-4 {
+  box-shadow: 0 0 8px rgba(123,47,255,0.2), inset 0 0 16px rgba(123,47,255,0.04);
+}
+
+/* --- Shimmer holographique --- */
+.card-holo {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(
+      115deg,
+      transparent 0%,
+      rgba(255,255,255,0.03) 30%,
+      rgba(0,212,255,0.08) 40%,
+      rgba(123,47,255,0.08) 50%,
+      rgba(255,215,0,0.05) 60%,
+      transparent 100%
+    );
+  background-size: 200% 200%;
+  transition: opacity 0.2s;
+  mix-blend-mode: screen;
+}
+.summon-card:hover .card-holo {
+  opacity: 1;
+  animation: holo-shift 3s linear infinite;
+}
+@keyframes holo-shift {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 200% 200%; }
+}
+
+/* --- Ligne de scan cyberpunk --- */
+.card-scanline {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.6), transparent);
+  z-index: 11;
+  pointer-events: none;
+  top: -2px;
+  animation: scan-move 4s linear infinite;
+  opacity: 0.5;
+}
+@keyframes scan-move {
+  0%   { top: -2px;    opacity: 0; }
+  5%   { opacity: 0.5; }
+  95%  { opacity: 0.5; }
+  100% { top: 100%;    opacity: 0; }
+}
+
+/* --- Coins décoratifs en L --- */
+.card-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  z-index: 12;
+  pointer-events: none;
+}
+.card-corner--tl {
+  top: 4px; left: 4px;
+  border-top: 2px solid var(--card-color);
+  border-left: 2px solid var(--card-color);
+  box-shadow: -1px -1px 6px var(--card-glow);
+}
+.card-corner--tr {
+  top: 4px; right: 4px;
+  border-top: 2px solid var(--card-color);
+  border-right: 2px solid var(--card-color);
+  box-shadow: 1px -1px 6px var(--card-glow);
+}
+.card-corner--bl {
+  bottom: 4px; left: 4px;
+  border-bottom: 2px solid var(--card-color);
+  border-left: 2px solid var(--card-color);
+  box-shadow: -1px 1px 6px var(--card-glow);
+}
+.card-corner--br {
+  bottom: 4px; right: 4px;
+  border-bottom: 2px solid var(--card-color);
+  border-right: 2px solid var(--card-color);
+  box-shadow: 1px 1px 6px var(--card-glow);
+}
+
+/* --- Portrait (zone haute) --- */
+.card-portrait {
+  position: relative;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Fond gradient par élément */
+.card-portrait-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 30%, var(--elem-color) 0%, transparent 65%),
+    linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(5,8,15,0.9) 100%);
+  opacity: 0.35;
+}
+
+/* --- Lignes circuit déco --- */
+.card-circuit {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.18;
+}
+.circuit-h, .circuit-v {
+  position: absolute;
+  background: var(--card-color);
+}
+.circuit-h {
+  height: 1px;
+  width: 60%;
+}
+.circuit-v {
+  width: 1px;
+  height: 40%;
+}
+.circuit-h1 { top: 25%;  left: 10%; }
+.circuit-h2 { top: 65%;  left: 30%; }
+.circuit-v1 { left: 20%; top: 15%; }
+
+/* --- Grand kanji d'élément au fond --- */
+.card-element-bg {
+  position: absolute;
+  font-size: clamp(3.5rem, 10vw, 5rem);
+  font-family: var(--font-titre);
+  font-weight: 900;
+  color: var(--elem-color);
+  opacity: 0.12;
+  text-shadow: 0 0 30px var(--elem-glow);
+  user-select: none;
+  pointer-events: none;
+  z-index: 1;
+  letter-spacing: 0;
+}
+
+/* --- Initiale du personnage --- */
+.card-initial {
+  position: absolute;
+  font-size: clamp(3.5rem, 10vw, 5.5rem);
+  font-family: var(--font-titre);
+  font-weight: 900;
+  color: rgba(255,255,255,0.07);
+  text-shadow: 0 0 50px var(--card-glow);
+  user-select: none;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* --- Badge rareté (étoiles) dans le portrait --- */
+.card-rarity-badge {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1px;
+  z-index: 5;
+  filter: drop-shadow(0 0 4px var(--card-glow));
+}
+.stars-lit {
+  color: var(--card-color);
+  font-size: 0.7rem;
+  text-shadow: 0 0 6px var(--card-glow);
+  letter-spacing: 0.05em;
+}
+.stars-dim {
+  color: rgba(255,255,255,0.15);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+}
+
+/* --- Bande pied du portrait (élément + classe) --- */
+.card-portrait-foot {
+  position: absolute;
+  bottom: 0;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  background: linear-gradient(90deg, rgba(5,8,15,0.85), rgba(5,8,15,0.6));
+  border-top: 1px solid rgba(255,255,255,0.07);
+  z-index: 5;
+}
+.card-elem-tag {
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--elem-color);
+  text-shadow: 0 0 8px var(--elem-glow);
+  font-weight: 600;
+}
+.card-class-tag {
+  font-size: 0.5rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(224,238,255,0.45);
+}
+
+/* --- Zone infos (bas de carte) --- */
+.card-info {
+  padding: 0.55rem 0.6rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  background: rgba(5,8,15,0.92);
+  position: relative;
+}
+
+/* Ligne accent colorée en haut des infos */
+.card-accent-line {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--card-color), transparent);
+  box-shadow: 0 0 6px var(--card-glow);
+}
+
+.card-rarity-label {
+  font-size: 0.5rem;
+  letter-spacing: 0.22em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--card-color);
+  text-shadow: 0 0 8px var(--card-glow);
+  margin-top: 0.1rem;
+}
+
+.card-name {
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: var(--blanc);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.card-title-text {
+  font-size: 0.55rem;
+  color: rgba(224,238,255,0.4);
+  font-style: italic;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
+}
+
+/* Pied de la zone info : ID + dot */
+.card-info-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.3rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.card-id {
+  font-size: 0.45rem;
+  letter-spacing: 0.2em;
+  color: rgba(0,212,255,0.3);
+  font-family: monospace;
+}
+.card-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--card-color);
+  box-shadow: 0 0 6px var(--card-glow);
+  animation: dot-pulse 2s ease-in-out infinite;
+}
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1;   box-shadow: 0 0 6px var(--card-glow); }
+  50%       { opacity: 0.4; box-shadow: 0 0 2px var(--card-glow); }
+}
+
+/* --- Taille cartes selon le nb de résultats --- */
+#cards-area[data-count="1"]  .summon-card { width: 200px; }
+#cards-area[data-count="10"] .summon-card { width: 120px; }
+#cards-area:not([data-count]) .summon-card { width: 160px; }
+
+/* Ajustements typographie pour le mode x10 (cartes plus petites) */
+#cards-area[data-count="10"] .card-name      { font-size: 0.75rem; }
+#cards-area[data-count="10"] .card-title-text { display: none; }
+#cards-area[data-count="10"] .card-info-foot  { display: none; }
+#cards-area[data-count="10"] .card-rarity-label { font-size: 0.42rem; }
+#cards-area[data-count="10"] .card-element-bg  { font-size: 2.8rem; }
+#cards-area[data-count="10"] .card-initial     { font-size: 3rem; }
+
+/* Hover léger sur la carte (le tilt GSAP prend le relai) */
+.summon-card:hover {
+  border-color: var(--card-glow);
+  z-index: 20;
+}
