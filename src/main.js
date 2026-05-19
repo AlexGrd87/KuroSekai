@@ -4,18 +4,26 @@
  * Responsabilités :
  *   1. Instancie la scène 3D du menu (Three.js)
  *   2. Instancie l'interface UI du menu (GSAP)
- *   3. Lance la boucle de rendu + l'animation d'intro
+ *   3. Instancie l'écran d'invocation gacha
+ *   4. Lance la boucle de rendu + l'animation d'intro
  */
 
 import { MenuScene } from './scenes/MenuScene.js';
 import { MenuUI }    from './ui/MenuUI.js';
+import { SummonUI }  from './ui/SummonUI.js';
 
 /* ── Initialisation ── */
 const canvas = document.getElementById('bg-canvas');
 
-const scene = new MenuScene(canvas); // Scène 3D (portail, particules, ruines)
-const ui    = new MenuUI();          // Interface menu (boutons, animations)
+const scene   = new MenuScene(canvas); // Scène 3D (portail, particules, ville)
+const ui      = new MenuUI();          // Menu principal
+const summon  = new SummonUI();        // Écran d'invocation
+
+/* ── Navigation : menu → invocation ── */
+document.getElementById('btn-summon')?.addEventListener('click', () => {
+  summon.show();
+});
 
 /* ── Démarrage ── */
-scene.animate();   // Boucle Three.js
-ui.playIntro();    // Animation GSAP d'entrée
+scene.animate();
+ui.playIntro();
