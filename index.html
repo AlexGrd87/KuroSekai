@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KuroSekai — 世界黒</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- Canvas Three.js pour la scène 3D du menu -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Interface du menu principal -->
+    <div id="ui-overlay">
+      <!-- Logo et titre du jeu -->
+      <div id="title-block">
+        <h1 id="game-title">
+          <span class="title-kanji">世界黒</span>
+          <span class="title-roman">KURO SEKAI</span>
+        </h1>
+        <p id="game-subtitle">Le monde sombrera. Toi, tu brilleras.</p>
+      </div>
+
+      <!-- Boutons du menu -->
+      <nav id="main-menu">
+        <button class="menu-btn" id="btn-play">Commencer</button>
+        <button class="menu-btn" id="btn-summon">Invocation</button>
+        <button class="menu-btn" id="btn-collection">Collection</button>
+        <button class="menu-btn" id="btn-settings">Paramètres</button>
+      </nav>
+
+      <!-- Indicateur de version -->
+      <span id="version-tag">v0.1.0 — Alpha</span>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

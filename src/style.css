@@ -1,0 +1,152 @@
+/* ===================================================
+   KuroSekai — Styles globaux + menu principal
+   Palette : noir profond, rouge sang, blanc spectre
+   =================================================== */
+
+/* Reset et base */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --noir:       #0a0a0f;
+  --rouge:      #c0152a;
+  --rouge-vif:  #ff1a35;
+  --blanc:      #e8e8f0;
+  --gris:       #3a3a4a;
+  --violet:     #2d0a3a;
+  --or:         #c8a84b;
+  --font-titre: 'Georgia', serif;
+  --font-ui:    'Segoe UI', sans-serif;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--noir);
+  overflow: hidden;
+  font-family: var(--font-ui);
+  color: var(--blanc);
+}
+
+/* Canvas Three.js — plein écran en arrière-plan */
+#bg-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+}
+
+/* Overlay UI — par-dessus le canvas 3D */
+#ui-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  /* Vignette sombre sur les bords pour profondeur */
+  background: radial-gradient(ellipse at center,
+    transparent 40%,
+    rgba(0,0,0,0.6) 100%
+  );
+}
+
+/* --- Bloc titre --- */
+#title-block {
+  text-align: center;
+  user-select: none;
+}
+
+#game-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  opacity: 0; /* GSAP anime l'apparition */
+  transform: translateY(-20px);
+}
+
+/* Kanji grand format */
+.title-kanji {
+  font-size: clamp(2.5rem, 8vw, 6rem);
+  font-family: var(--font-titre);
+  font-weight: 900;
+  color: var(--blanc);
+  text-shadow:
+    0 0 30px rgba(192, 21, 42, 0.8),
+    0 0 60px rgba(192, 21, 42, 0.4);
+  letter-spacing: 0.3em;
+}
+
+/* Sous-titre romanisé */
+.title-roman {
+  font-size: clamp(0.8rem, 2.5vw, 1.4rem);
+  letter-spacing: 0.6em;
+  color: var(--rouge);
+  font-weight: 300;
+  text-transform: uppercase;
+}
+
+/* Accroche */
+#game-subtitle {
+  margin-top: 1rem;
+  font-size: clamp(0.7rem, 1.8vw, 1rem);
+  color: rgba(232, 232, 240, 0.5);
+  letter-spacing: 0.15em;
+  font-style: italic;
+  opacity: 0; /* GSAP anime */
+}
+
+/* --- Boutons menu --- */
+#main-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  opacity: 0; /* GSAP anime */
+}
+
+.menu-btn {
+  width: 260px;
+  padding: 0.9rem 2rem;
+  background: transparent;
+  border: 1px solid rgba(192, 21, 42, 0.4);
+  color: var(--blanc);
+  font-size: 0.95rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s, color 0.3s;
+  /* Clip diagonal façon manga */
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+}
+
+/* Effet de fill au hover */
+.menu-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--rouge);
+  transform: translateX(-105%);
+  transition: transform 0.3s ease;
+  z-index: -1;
+}
+
+.menu-btn:hover {
+  border-color: var(--rouge-vif);
+  color: #fff;
+}
+
+.menu-btn:hover::before { transform: translateX(0); }
+
+/* --- Tag version --- */
+#version-tag {
+  position: fixed;
+  bottom: 1.2rem;
+  right: 1.5rem;
+  font-size: 0.7rem;
+  color: rgba(232, 232, 240, 0.25);
+  letter-spacing: 0.1em;
+}
