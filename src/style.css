@@ -1,19 +1,18 @@
 /* ===================================================
    KuroSekai — Styles globaux + menu principal
-   Palette : noir profond, rouge sang, blanc spectre
+   Palette cyberpunk japonais : bleu nuit, cyan, violet
    =================================================== */
 
-/* Reset et base */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --noir:       #0a0a0f;
-  --rouge:      #c0152a;
-  --rouge-vif:  #ff1a35;
-  --blanc:      #e8e8f0;
-  --gris:       #3a3a4a;
-  --violet:     #2d0a3a;
-  --or:         #c8a84b;
+  --noir:       #05080f;
+  --bleu:       #0a1628;
+  --cyan:       #00d4ff;
+  --cyan-dim:   #0099bb;
+  --violet:     #7b2fff;
+  --violet-dim: #4a1a99;
+  --blanc:      #e0eeff;
   --font-titre: 'Georgia', serif;
   --font-ui:    'Segoe UI', sans-serif;
 }
@@ -26,7 +25,7 @@ html, body {
   color: var(--blanc);
 }
 
-/* Canvas Three.js — plein écran en arrière-plan */
+/* Canvas Three.js plein écran */
 #bg-canvas {
   position: fixed;
   top: 0; left: 0;
@@ -34,119 +33,139 @@ html, body {
   z-index: 0;
 }
 
-/* Overlay UI — par-dessus le canvas 3D */
+/* Overlay UI — layout : titre en haut, menu à gauche */
 #ui-overlay {
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
   z-index: 10;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr auto;
   align-items: center;
-  justify-content: center;
-  gap: 3rem;
-  /* Vignette sombre sur les bords pour profondeur */
-  background: radial-gradient(ellipse at center,
-    transparent 40%,
-    rgba(0,0,0,0.6) 100%
-  );
+  padding: 3rem 5vw;
+  /* Dégradé latéral pour laisser la scène 3D respirer à droite */
+  background:
+    linear-gradient(to right, rgba(5,8,15,0.85) 0%, rgba(5,8,15,0.4) 50%, transparent 100%),
+    linear-gradient(to top,   rgba(5,8,15,0.6)  0%, transparent 60%);
 }
 
-/* --- Bloc titre --- */
+/* --- Bloc titre (colonne gauche, ligne 1) --- */
 #title-block {
-  text-align: center;
+  grid-column: 1;
+  grid-row: 1;
   user-select: none;
+  padding-bottom: 1rem;
 }
 
 #game-title {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-  opacity: 0; /* GSAP anime l'apparition */
+  gap: 0.3rem;
+  opacity: 0;
   transform: translateY(-20px);
 }
 
-/* Kanji grand format */
+/* Kanji grand format — glow cyan */
 .title-kanji {
-  font-size: clamp(2.5rem, 8vw, 6rem);
+  font-size: clamp(3rem, 7vw, 6.5rem);
   font-family: var(--font-titre);
   font-weight: 900;
   color: var(--blanc);
   text-shadow:
-    0 0 30px rgba(192, 21, 42, 0.8),
-    0 0 60px rgba(192, 21, 42, 0.4);
-  letter-spacing: 0.3em;
+    0 0 20px rgba(0, 212, 255, 0.9),
+    0 0 50px rgba(0, 212, 255, 0.5),
+    0 0 100px rgba(123, 47, 255, 0.3);
+  letter-spacing: 0.15em;
 }
 
 /* Sous-titre romanisé */
 .title-roman {
-  font-size: clamp(0.8rem, 2.5vw, 1.4rem);
-  letter-spacing: 0.6em;
-  color: var(--rouge);
+  font-size: clamp(0.75rem, 2vw, 1.2rem);
+  letter-spacing: 0.7em;
+  color: var(--cyan);
   font-weight: 300;
   text-transform: uppercase;
+  opacity: 0.85;
+}
+
+/* Ligne décorative sous le titre */
+.title-roman::after {
+  content: '';
+  display: block;
+  width: 60%;
+  height: 1px;
+  margin-top: 0.8rem;
+  background: linear-gradient(to right, var(--cyan), transparent);
 }
 
 /* Accroche */
 #game-subtitle {
-  margin-top: 1rem;
-  font-size: clamp(0.7rem, 1.8vw, 1rem);
-  color: rgba(232, 232, 240, 0.5);
-  letter-spacing: 0.15em;
+  margin-top: 0.8rem;
+  font-size: clamp(0.7rem, 1.5vw, 0.9rem);
+  color: rgba(224, 238, 255, 0.45);
+  letter-spacing: 0.2em;
   font-style: italic;
-  opacity: 0; /* GSAP anime */
+  opacity: 0;
 }
 
-/* --- Boutons menu --- */
+/* --- Menu (colonne gauche, ligne 2) --- */
 #main-menu {
+  grid-column: 1;
+  grid-row: 2;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
-  opacity: 0; /* GSAP anime */
+  gap: 0.7rem;
+  opacity: 0;
+  align-self: center;
 }
 
 .menu-btn {
-  width: 260px;
-  padding: 0.9rem 2rem;
-  background: transparent;
-  border: 1px solid rgba(192, 21, 42, 0.4);
+  width: 280px;
+  padding: 0.85rem 1.8rem;
+  background: rgba(0, 212, 255, 0.04);
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  border-left: 3px solid var(--cyan);
   color: var(--blanc);
-  font-size: 0.95rem;
-  letter-spacing: 0.2em;
+  font-size: 0.9rem;
+  letter-spacing: 0.25em;
   text-transform: uppercase;
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  transition: border-color 0.3s, color 0.3s;
-  /* Clip diagonal façon manga */
-  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  text-align: left;
+  transition: border-color 0.25s, background 0.25s, color 0.25s;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%);
 }
 
-/* Effet de fill au hover */
+/* Scan-line glow au hover */
 .menu-btn::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--rouge);
+  background: linear-gradient(90deg, rgba(0,212,255,0.15), rgba(123,47,255,0.1));
   transform: translateX(-105%);
   transition: transform 0.3s ease;
-  z-index: -1;
+  z-index: 0;
 }
 
 .menu-btn:hover {
-  border-color: var(--rouge-vif);
+  border-left-color: var(--violet);
+  border-color: rgba(123, 47, 255, 0.6);
   color: #fff;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
 }
 
 .menu-btn:hover::before { transform: translateX(0); }
+
+.menu-btn span { position: relative; z-index: 1; }
 
 /* --- Tag version --- */
 #version-tag {
   position: fixed;
   bottom: 1.2rem;
   right: 1.5rem;
-  font-size: 0.7rem;
-  color: rgba(232, 232, 240, 0.25);
-  letter-spacing: 0.1em;
+  font-size: 0.65rem;
+  color: rgba(0, 212, 255, 0.2);
+  letter-spacing: 0.15em;
 }
