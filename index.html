@@ -7,13 +7,31 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <!-- Canvas Three.js pour la scène 3D du menu -->
+    <!-- Canvas Three.js pour la scène 3D -->
     <canvas id="bg-canvas"></canvas>
 
     <!-- Interface du menu principal -->
     <div id="ui-overlay">
+
+      <!-- Overlay scanlines (effet CRT subtil) -->
+      <div id="scanline-overlay"></div>
+
+      <!-- Décoration circuit — ligne verticale gauche avec nœuds -->
+      <div id="deco-left">
+        <div class="deco-line deco-line--top"></div>
+        <div class="deco-node"></div>
+        <div class="deco-line deco-line--mid"></div>
+        <div class="deco-node"></div>
+        <div class="deco-line deco-line--bot"></div>
+        <div class="deco-node deco-node--small"></div>
+      </div>
+
       <!-- Logo et titre du jeu -->
       <div id="title-block">
+        <!-- Coins décoratifs du bloc titre -->
+        <div class="title-corner title-corner--tl"></div>
+        <div class="title-corner title-corner--br"></div>
+
         <h1 id="game-title">
           <span class="title-kanji">世界黒</span>
           <span class="title-roman">KURO SEKAI</span>
@@ -21,15 +39,25 @@
         <p id="game-subtitle">Le monde sombrera. Toi, tu brilleras.</p>
       </div>
 
-      <!-- Boutons du menu -->
+      <!-- Boutons du menu (data-index pour les numéros) -->
       <nav id="main-menu">
-        <button class="menu-btn" id="btn-play"><span>▶ Commencer</span></button>
-        <button class="menu-btn" id="btn-summon"><span>✦ Invocation</span></button>
-        <button class="menu-btn" id="btn-collection"><span>◈ Collection</span></button>
-        <button class="menu-btn" id="btn-settings"><span>⚙ Paramètres</span></button>
+        <button class="menu-btn" id="btn-play"       data-index="01"><span>▶ Commencer</span></button>
+        <button class="menu-btn" id="btn-summon"     data-index="02"><span>✦ Invocation</span></button>
+        <button class="menu-btn" id="btn-collection" data-index="03"><span>◈ Collection</span></button>
+        <button class="menu-btn" id="btn-settings"   data-index="04"><span>⚙ Paramètres</span></button>
       </nav>
 
-      <!-- Indicateur de version -->
+      <!-- Barre HUD système en bas à gauche -->
+      <div id="hud-bar">
+        <span class="hud-dot"></span>
+        <span class="hud-item hud-status" id="hud-status">SYS ONLINE</span>
+        <span class="hud-sep">／</span>
+        <span class="hud-item">REIATSU : <span class="hud-val">∞</span></span>
+        <span class="hud-sep">／</span>
+        <span class="hud-item">SYNC : <span class="hud-val" id="hud-sync">00.0%</span></span>
+      </div>
+
+      <!-- Tag version -->
       <span id="version-tag">v0.1.0 — Alpha</span>
     </div>
 
