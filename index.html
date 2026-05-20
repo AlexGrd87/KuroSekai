@@ -42,13 +42,12 @@
         <p id="game-subtitle">Le monde sombrera. Toi, tu brilleras.</p>
       </div>
 
-      <!-- Boutons du menu (data-index pour les numéros) -->
-      <nav id="main-menu">
-        <button class="menu-btn" id="btn-play"       data-index="01"><span>▶ Commencer</span></button>
-        <button class="menu-btn" id="btn-summon"     data-index="02"><span>✦ Invocation</span></button>
-        <button class="menu-btn" id="btn-collection" data-index="03"><span>◈ Collection</span></button>
-        <button class="menu-btn" id="btn-settings"   data-index="04"><span>⚙ Paramètres</span></button>
-      </nav>
+      <!-- Indicateur de chargement -->
+      <div id="splash-loading">
+        <span class="splash-dot"></span>
+        <span class="splash-dot"></span>
+        <span class="splash-dot"></span>
+      </div>
 
       <!-- Barre HUD système en bas à gauche -->
       <div id="hud-bar">
@@ -132,7 +131,6 @@
 
       <!-- Header -->
       <header id="hub-header">
-        <button id="hub-back-btn" class="col-back-btn"><span class="col-back-arrow">←</span> MENU</button>
         <div id="hub-title-block">
           <span class="col-title-kanji">作戦</span>
           <h2>CARTE DES OPÉRATIONS</h2>
@@ -147,6 +145,28 @@
 
       <!-- Silhouette ville bas de page -->
       <div id="hub-city-silhouette"></div>
+
+      <!-- Barre de navigation permanente -->
+      <nav id="hub-navbar">
+        <div id="hub-nav-currency">
+          <span class="hub-currency-icon">◈</span>
+          <span id="hub-nav-currency-val">0</span>
+        </div>
+        <div id="hub-nav-actions">
+          <button id="hub-nav-summon" class="hub-nav-btn">
+            <span class="hub-nav-icon">召喚</span>
+            <span class="hub-nav-label">INVOQUER</span>
+          </button>
+          <button id="hub-nav-collection" class="hub-nav-btn">
+            <span class="hub-nav-icon">蒐</span>
+            <span class="hub-nav-label">COLLECTION</span>
+          </button>
+          <button id="hub-nav-settings" class="hub-nav-btn">
+            <span class="hub-nav-icon">⚙</span>
+            <span class="hub-nav-label">PARAMÈTRES</span>
+          </button>
+        </div>
+      </nav>
 
       <!-- Panneau de détail stage (overlay) -->
       <div id="hub-detail">

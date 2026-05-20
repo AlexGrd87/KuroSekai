@@ -18,158 +18,152 @@ import { SettingsUI }   from './ui/SettingsUI.js';
 import { LevelUpUI }    from './ui/LevelUpUI.js';
 import { settings }     from './data/Settings.js';
 
-/* ── Données joueur ── */
+/* ══════════════════════════════════════════
+   DONNÉES JOUEUR
+══════════════════════════════════════════ */
+
 const playerData = new PlayerData();
 playerData.seedDemo(CHARACTERS);
 
-/* ── Scène 3D + UI menu ── */
+/* ══════════════════════════════════════════
+   SCÈNE 3D (fond permanent)
+══════════════════════════════════════════ */
+
 const canvas = document.getElementById('bg-canvas');
 const scene  = new MenuScene(canvas);
-const ui     = new MenuUI();
 
-/* ── Lecteur de scènes narratives ── */
-const sceneUI = new SceneUI();
+/* ══════════════════════════════════════════
+   ÉCRANS
+══════════════════════════════════════════ */
 
-/* ── Écrans ── */
+const sceneUI    = new SceneUI();
 const summon     = new SummonUI(playerData);
 const collection = new CollectionUI(playerData);
+const levelUpUI  = new LevelUpUI();
 
-/* ── Retour au menu ── */
-function showMenu() {
-  const overlay = document.getElementById('ui-overlay');
-  gsap.set(overlay, { display: 'grid' });
-  gsap.fromTo(overlay, { opacity: 0 }, { opacity: 1, duration: 0.4 });
-}
+/* ── Paramètres — retour vers le hub ── */
+const settingsUI = new SettingsUI(playerData, () => hub.refresh());
 
-/* ── Après victoire : EXP → level up → débriefing → hub ── */
+/* ══════════════════════════════════════════
+   COMBAT + SÉLECTION D'ÉQUIPE
+══════════════════════════════════════════ */
+
+let _pendingStage = null;
+let _currentTeam  = [];
+
+/* Après victoire : EXP → level up → débriefing → hub */
 function handleVictory(stage) {
   playerData.completeStage(stage.id, stage.rewards);
 
-  // Distribue l'EXP à tous les membres de l'équipe
-  const expGained = stage.rewards.exp ?? 0;
+  const expGained  = stage.rewards.exp ?? 0;
   const lvlResults = _currentTeam.map(char => {
     const oldLevel = playerData.getLevel(char.id);
     const result   = playerData.addExp(char.id, expGained);
     const prog     = playerData.expProgress(char.id);
-    return {
-      char,
-      oldLevel,
-      newLevel:  result.newLevel,
-      newExp:    prog.exp,
-      expGained,
-      leveled:   result.newLevel > oldLevel,
-    };
+    return { char, oldLevel, newLevel: result.newLevel,
+             newExp: prog.exp, expGained, leveled: result.newLevel > oldLevel };
   });
 
   const goToHub = () => {
     const debrief = SCENARIO.debriefings[stage.id];
-    hub.refresh();
     if (debrief) {
-      sceneUI.play(debrief, () => hub.show());
+      sceneUI.play(debrief, () => hub.refresh());
     } else {
-      hub.show();
+      hub.refresh();
     }
   };
 
-  // Si au moins un perso a monté de niveau → écran level up
   if (lvlResults.some(r => r.leveled)) {
     levelUpUI.play(lvlResults, goToHub);
   } else {
-    // Pas de level up : juste débriefing + hub
     goToHub();
   }
 }
 
-/* ── Combat ── */
 const combatUI = new CombatUI((winner, stage) => {
-  if (winner === 'player' && stage) {
-    handleVictory(stage);
-  } else {
-    showMenu();
-  }
+  if (winner === 'player' && stage) handleVictory(stage);
+  else hub.refresh();
 });
 
-/* ── Sélection d'équipe ── */
-let _pendingStage = null;
-let _currentTeam  = [];
-
 const teamSelect = new TeamSelectUI(playerData, (team) => {
-  const stage = _pendingStage;
   _currentTeam = team;
-  // Applique le scaling de stats selon le niveau de chaque perso
   const scaledTeam = team.map(char => ({
     ...char,
     level: playerData.getLevel(char.id),
     stats: playerData.getScaledStats(char),
   }));
-  combatUI.start(scaledTeam, stage);
+  combatUI.start(scaledTeam, _pendingStage);
 });
 
-/* ── Hub ── */
+/* Retour depuis team-select → hub */
+document.getElementById('ts-back')?.addEventListener('click', () => hub.refresh());
+
+/* ══════════════════════════════════════════
+   HUB — ÉCRAN PRINCIPAL
+══════════════════════════════════════════ */
+
 const hub = new HubUI(
   playerData,
+
+  /* onDeploy */
   (stage) => {
     _pendingStage = stage;
     const briefing = SCENARIO.briefings[stage.id];
-    if (briefing) {
-      sceneUI.play(briefing, () => teamSelect.show());
-    } else {
-      teamSelect.show();
-    }
+    if (briefing) sceneUI.play(briefing, () => teamSelect.show());
+    else          teamSelect.show();
   },
-  () => showMenu(),
+
+  /* onSummon — le hub reste en fond, summon le recouvre */
+  () => summon.show(),
+
+  /* onCollection */
+  () => collection.show(),
+
+  /* onSettings */
+  () => settingsUI.show(),
 );
 
-/* ── Navigation menu principal ── */
-document.getElementById('btn-play')?.addEventListener('click', () => {
-  const overlay = document.getElementById('ui-overlay');
-  gsap.to(overlay, {
-    opacity: 0, duration: 0.3, ease: 'power2.in',
-    onComplete: () => { overlay.style.display = 'none'; hub.show(); },
-  });
-});
-document.getElementById('btn-summon')?.addEventListener('click', () => summon.show());
-document.getElementById('btn-collection')?.addEventListener('click', () => collection.show());
+/* Rafraîchit les ressources du hub au retour des sous-écrans */
+summon.overlay?.querySelector('#summon-back')
+  ?.addEventListener('click', () => hub._updateStats());
+document.getElementById('col-back')
+  ?.addEventListener('click', () => hub._updateStats());
 
-/* ── Sync invocation → collection ── */
+/* ══════════════════════════════════════════
+   SYNC INVOCATION → COLLECTION
+══════════════════════════════════════════ */
+
 document.addEventListener('kuro:character-obtained', (e) => {
   if (e.detail?.id) playerData.addCharacter(e.detail.id);
 });
 
-/* ── Level Up ── */
-const levelUpUI = new LevelUpUI();
+/* ══════════════════════════════════════════
+   DÉMARRAGE
+══════════════════════════════════════════ */
 
-/* ── Paramètres ── */
-const settingsUI = new SettingsUI(playerData, () => showMenu());
-
-document.getElementById('btn-settings')?.addEventListener('click', () => {
-  const overlay = document.getElementById('ui-overlay');
-  gsap.to(overlay, {
-    opacity: 0, duration: 0.25, ease: 'power2.in',
-    onComplete: () => { overlay.style.display = 'none'; settingsUI.show(); },
-  });
-});
-
-/* ── Démarrage ── */
 settings.applyAll();
 scene.animate();
-ui.playIntro();
 
-/* ── Intro cinématique (une seule fois) ── */
-const INTRO_KEY = 'kuro_intro_v1';
-if (!localStorage.getItem(INTRO_KEY)) {
-  localStorage.setItem(INTRO_KEY, '1');
-  setTimeout(() => {
-    const overlay = document.getElementById('ui-overlay');
-    gsap.to(overlay, {
-      opacity: 0, duration: 0.4, ease: 'power2.in',
-      onComplete: () => {
-        overlay.style.display = 'none';
-        sceneUI.play(SCENARIO.intro, () => {
-          gsap.set(overlay, { display: 'grid' });
-          gsap.fromTo(overlay, { opacity: 0 }, { opacity: 1, duration: 0.5 });
-        });
-      },
-    });
-  }, 2200); // après l'animation d'intro du menu
-}
+/* Splash : animation logo + glitch titre, puis transition vers hub */
+const splashUI = new MenuUI();
+splashUI.playIntro();
+
+const SPLASH_DURATION = 1800; // ms — après l'anim glitch du titre
+const INTRO_KEY       = 'kuro_intro_v1';
+
+setTimeout(() => {
+  const overlay = document.getElementById('ui-overlay');
+  gsap.to(overlay, {
+    opacity: 0, duration: 0.45, ease: 'power2.in',
+    onComplete: () => {
+      overlay.style.display = 'none';
+      // Première session → intro cinématique avant le hub
+      if (!localStorage.getItem(INTRO_KEY)) {
+        localStorage.setItem(INTRO_KEY, '1');
+        sceneUI.play(SCENARIO.intro, () => hub.show());
+      } else {
+        hub.show();
+      }
+    },
+  });
+}, SPLASH_DURATION);

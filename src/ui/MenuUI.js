@@ -19,33 +19,25 @@ export class MenuUI {
     this._bindButtons();
   }
 
-  /* ── Animation d'entrée avec glitch sur le titre ── */
+  /* ── Animation d'entrée splash — glitch titre puis fade-in éléments ── */
   playIntro() {
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-    // Titre : apparaît puis subit un glitch rapide avant de se stabiliser
-    tl.set(this.title, { opacity: 0, y: -20 })
-      .to(this.title, { opacity: 1, y: 0, duration: 0.06, delay: 0.4 })
-      // Glitch frames
-      .to(this.title, { x: -8, skewX: 6,  opacity: 0.8, duration: 0.05 })
-      .to(this.title, { x:  5, skewX: -4, opacity: 1,   duration: 0.05 })
-      .to(this.title, { x: -3, skewX: 2,  opacity: 0.6, duration: 0.04 })
-      .to(this.title, { x:  2, skewX: -1, opacity: 1,   duration: 0.04 })
-      .to(this.title, { x:  0, skewX: 0,  opacity: 0.5, duration: 0.03 })
-      .to(this.title, { x:  0, skewX: 0,  opacity: 1,   duration: 0.25, ease: 'power2.out' });
+    if (this.title) {
+      // Titre : apparaît puis subit un glitch rapide avant de se stabiliser
+      tl.set(this.title, { opacity: 0, y: -20 })
+        .to(this.title, { opacity: 1, y: 0, duration: 0.06, delay: 0.4 })
+        .to(this.title, { x: -8, skewX: 6,  opacity: 0.8, duration: 0.05 })
+        .to(this.title, { x:  5, skewX: -4, opacity: 1,   duration: 0.05 })
+        .to(this.title, { x: -3, skewX: 2,  opacity: 0.6, duration: 0.04 })
+        .to(this.title, { x:  2, skewX: -1, opacity: 1,   duration: 0.04 })
+        .to(this.title, { x:  0, skewX: 0,  opacity: 0.5, duration: 0.03 })
+        .to(this.title, { x:  0, skewX: 0,  opacity: 1,   duration: 0.25, ease: 'power2.out' });
+    }
 
-    // Sous-titre (fade-in progressif)
-    tl.to(this.subtitle, { opacity: 1, duration: 0.7 }, '-=0.15');
-
-    // Boutons slide depuis la gauche avec rebond
-    tl.to(this.menu, { opacity: 1, duration: 0.2 }, '-=0.4');
-    tl.from(this.buttons, {
-      x: -50,
-      opacity: 0,
-      duration: 0.45,
-      stagger: 0.1,
-      ease: 'back.out(1.6)',
-    }, '-=0.25');
+    if (this.subtitle) {
+      tl.to(this.subtitle, { opacity: 1, duration: 0.7 }, '-=0.15');
+    }
 
     // Décoration circuit gauche
     tl.to('#deco-left', { opacity: 1, duration: 0.8, ease: 'power2.out' }, '-=0.4');
@@ -53,7 +45,10 @@ export class MenuUI {
     // HUD bar apparaît en dernier
     tl.to('#hud-bar', { opacity: 1, duration: 0.6, ease: 'power2.out' }, '-=0.1');
 
-    // Lance le compteur de sync en parallèle
+    // Dots de chargement
+    tl.to('.splash-dot', { opacity: 1, duration: 0.3 }, '-=0.2');
+
+    // Compteur de sync
     tl.add(() => this._animateSyncCounter(), '<');
   }
 
@@ -75,21 +70,8 @@ export class MenuUI {
     step();
   }
 
-  /* ── Liaison des boutons aux actions ── */
-  _bindButtons() {
-    document.getElementById('btn-play')?.addEventListener('click', () => {
-      this._onButtonClick('Commencer');
-    });
-    document.getElementById('btn-summon')?.addEventListener('click', () => {
-      this._onButtonClick('Invocation');
-    });
-    document.getElementById('btn-collection')?.addEventListener('click', () => {
-      this._onButtonClick('Collection');
-    });
-    document.getElementById('btn-settings')?.addEventListener('click', () => {
-      this._onButtonClick('Paramètres');
-    });
-  }
+  /* ── Liaison des boutons (no-op, les boutons menu sont supprimés) ── */
+  _bindButtons() {}
 
   /* ── Feedback visuel au clic ── */
   _onButtonClick(label) {

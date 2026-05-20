@@ -12,22 +12,30 @@ import { STAGES } from '../data/enemies.js';
 export class HubUI {
   /**
    * @param {PlayerData} playerData
-   * @param {Function}   onDeploy     callback(stage, waveIndex) — lance le combat
-   * @param {Function}   onBack       callback() — retour menu
+   * @param {Function}   onDeploy      callback(stage) — lance le combat
+   * @param {Function}   onSummon      callback() — ouvre l'invocation
+   * @param {Function}   onCollection  callback() — ouvre la collection
+   * @param {Function}   onSettings    callback() — ouvre les paramètres
    */
-  constructor(playerData, onDeploy, onBack) {
+  constructor(playerData, onDeploy, onSummon, onCollection, onSettings) {
     this.playerData   = playerData;
     this.onDeploy     = onDeploy;
-    this.onBack       = onBack;
+    this.onSummon     = onSummon;
+    this.onCollection = onCollection;
+    this.onSettings   = onSettings;
 
     this.screen       = document.getElementById('hub-screen');
     this.mapWrap      = document.getElementById('hub-map-wrap');
     this.detailPanel  = document.getElementById('hub-detail');
     this._activeStage = null;
 
-    document.getElementById('hub-back-btn')?.addEventListener('click', () => this.hide());
-    document.getElementById('hd-close-btn')?.addEventListener('click', () => this._closeDetail());
+    document.getElementById('hd-close-btn')?.addEventListener('click',  () => this._closeDetail());
     document.getElementById('hd-deploy-btn')?.addEventListener('click', () => this._deploy());
+
+    // Navbar
+    document.getElementById('hub-nav-summon')?.addEventListener('click',     () => this.onSummon?.());
+    document.getElementById('hub-nav-collection')?.addEventListener('click', () => this.onCollection?.());
+    document.getElementById('hub-nav-settings')?.addEventListener('click',   () => this.onSettings?.());
   }
 
   /* ════════════════════════════════
@@ -48,21 +56,20 @@ export class HubUI {
     });
   }
 
+  /** Masque temporairement le hub (navigation vers un sous-écran). */
   hide() {
     this._closeDetail();
     gsap.to(this.screen, {
       opacity: 0, duration: 0.3, ease: 'power2.in',
-      onComplete: () => {
-        this.screen.style.display = 'none';
-        if (this.onBack) this.onBack();
-      },
+      onComplete: () => gsap.set(this.screen, { display: 'none' }),
     });
   }
 
   refresh() {
-    if (this.screen.style.display === 'none') return;
     this._buildMap();
     this._updateStats();
+    // Si le hub est masqué, on le réaffiche
+    if (this.screen.style.display === 'none') this.show();
   }
 
   /* ════════════════════════════════
@@ -121,14 +128,19 @@ export class HubUI {
   }
 
   _updateStats() {
-    const el = document.getElementById('hub-player-stats');
-    if (!el) return;
-    const completed = this.playerData.completedStages.size;
-    el.innerHTML = `
-      <span class="hub-stat">⚔ ${completed}/${STAGES.length} zones</span>
-      <span class="hub-stat">✦ ${this.playerData.exp.toLocaleString()} EXP</span>
-      <span class="hub-stat">◈ ${this.playerData.currency.toLocaleString()}</span>
-    `;
+    // Header : progression des zones
+    const statsEl = document.getElementById('hub-player-stats');
+    if (statsEl) {
+      const completed = this.playerData.completedStages.size;
+      const owned     = this.playerData.collection.size;
+      statsEl.innerHTML = `
+        <span class="hub-stat">⚔ ${completed}/${STAGES.length} zones</span>
+        <span class="hub-stat">✦ ${owned} personnages</span>
+      `;
+    }
+    // Navbar : monnaie en temps réel
+    const currEl = document.getElementById('hub-nav-currency-val');
+    if (currEl) currEl.textContent = this.playerData.currency.toLocaleString();
   }
 
   /* ════════════════════════════════
@@ -194,9 +206,8 @@ export class HubUI {
     gsap.to(this.screen, {
       opacity: 0, duration: 0.25, ease: 'power2.in',
       onComplete: () => {
-        this.screen.style.display = 'none';
-        // On envoie la première vague pour l'instant
-        this.onDeploy(stage, 0);
+        gsap.set(this.screen, { display: 'none' });
+        this.onDeploy(stage);
       },
     });
   }
