@@ -26,12 +26,14 @@ const ELEMENT_DATA = {
 
 export class CombatUI {
   constructor(onBack) {
-    this.onBack      = onBack;
-    this.screen      = document.getElementById('combat-screen');
-    this.engine      = null;
-    this._currentStage = null;
+    this.onBack         = onBack;
+    this.screen         = document.getElementById('combat-screen');
+    this.engine         = null;
+    this._currentStage  = null;
     this._pickingTarget = false;
-    this._pendingAction  = null; // { type: 'attack'|'skill', skillIndex }
+    this._pendingAction = null;   // { type: 'attack'|'skill', skillIndex }
+    this._autoMode      = false;
+    this._speedMult     = 1;      // 1 | 2 | 3
 
     document.getElementById('combat-result-back')?.addEventListener('click', () => this._endCombat());
   }
@@ -41,8 +43,10 @@ export class CombatUI {
   ════════════════════════════════ */
 
   start(team, enemyIds, stage = null) {
-    this._currentStage = stage;
-    this.engine   = new CombatEngine(team, enemyIds);
+    this._currentStage  = stage;
+    this._autoMode      = false;
+    this._speedMult     = 1;
+    this.engine = new CombatEngine(team, enemyIds);
 
     // Réinitialise les listeners avant de re-binder (évite le double-bind)
     this._unbindActions();
@@ -59,6 +63,12 @@ export class CombatUI {
     this.screen.style.opacity  = '0';
     gsap.killTweensOf(this.screen);
     gsap.to(this.screen, { opacity: 1, duration: 0.5, ease: 'power2.out' });
+
+    // Reset auto + vitesse dans l'UI
+    this._updateAutoUI();
+    document.querySelectorAll('.combat-speed-btn').forEach(btn =>
+      btn.classList.toggle('combat-speed-btn--active', btn.dataset.speed === '1')
+    );
 
     const stageName = stage?.name ?? 'Combat';
     this._addLog(`⚔ Début du combat — ${stageName}`, 'round');
@@ -175,19 +185,46 @@ export class CombatUI {
   ════════════════════════════════ */
 
   _bindActions() {
-    this._onAtk  = () => { this._pendingAction = { type: 'attack' };            this._enterTargetMode(); };
+    this._onAtk  = () => { this._pendingAction = { type: 'attack' };               this._enterTargetMode(); };
     this._onSk1  = () => { this._pendingAction = { type: 'skill', skillIndex: 0 }; this._enterTargetMode(); };
     this._onSk2  = () => { this._pendingAction = { type: 'skill', skillIndex: 1 }; this._enterTargetMode(); };
     document.getElementById('cbtn-attack')?.addEventListener('click', this._onAtk);
     document.getElementById('cbtn-skill1')?.addEventListener('click', this._onSk1);
     document.getElementById('cbtn-skill2')?.addEventListener('click', this._onSk2);
+
+    // AUTO toggle
+    this._onAuto = () => {
+      this._autoMode = !this._autoMode;
+      this._updateAutoUI();
+      if (this._autoMode && this.engine.currentUnit?.side === 'player') {
+        this._lockActions(true);
+        setTimeout(() => this._autoPlayerTurn(), this._autoDelay());
+      }
+    };
+    document.getElementById('cbtn-auto')?.addEventListener('click', this._onAuto);
+
+    // Vitesse ×1 / ×2 / ×3
+    this._onSpeed = (e) => {
+      const btn = e.currentTarget;
+      this._speedMult = parseInt(btn.dataset.speed) || 1;
+      document.querySelectorAll('.combat-speed-btn').forEach(b =>
+        b.classList.toggle('combat-speed-btn--active', b === btn)
+      );
+    };
+    document.querySelectorAll('.combat-speed-btn').forEach(btn => {
+      btn.addEventListener('click', this._onSpeed);
+    });
   }
 
   _unbindActions() {
     if (this._onAtk) document.getElementById('cbtn-attack')?.removeEventListener('click', this._onAtk);
     if (this._onSk1) document.getElementById('cbtn-skill1')?.removeEventListener('click', this._onSk1);
     if (this._onSk2) document.getElementById('cbtn-skill2')?.removeEventListener('click', this._onSk2);
-    this._onAtk = this._onSk1 = this._onSk2 = null;
+    if (this._onAuto) document.getElementById('cbtn-auto')?.removeEventListener('click', this._onAuto);
+    if (this._onSpeed) document.querySelectorAll('.combat-speed-btn').forEach(btn =>
+      btn.removeEventListener('click', this._onSpeed)
+    );
+    this._onAtk = this._onSk1 = this._onSk2 = this._onAuto = this._onSpeed = null;
   }
 
   _enterTargetMode() {
@@ -231,10 +268,11 @@ export class CombatUI {
 
     if (this.engine.over) { this._showResult(); return; }
 
-    // Tour ennemi automatique
     if (this.engine.currentUnit?.side === 'enemy') {
       this._lockActions(true);
-      setTimeout(() => this._doEnemyTurn(), settings.enemyDelay);
+      setTimeout(() => this._doEnemyTurn(), this._autoDelay());
+    } else if (this._autoMode) {
+      setTimeout(() => this._autoPlayerTurn(), this._autoDelay());
     } else {
       this._updateTurnUI();
     }
@@ -269,13 +307,80 @@ export class CombatUI {
 
     if (this.engine.over) { this._showResult(); return; }
 
-    // S'il y a encore des ennemis dans le tour order
     if (this.engine.currentUnit?.side === 'enemy') {
-      setTimeout(() => this._doEnemyTurn(), settings.enemyChainDelay);
+      setTimeout(() => this._doEnemyTurn(), this._autoDelay(settings.enemyChainDelay));
+    } else if (this._autoMode) {
+      setTimeout(() => this._autoPlayerTurn(), this._autoDelay());
     } else {
       this._lockActions(false);
       this._updateTurnUI();
     }
+  }
+
+  /* ════════════════════════════════
+     AUTO-COMBAT
+  ════════════════════════════════ */
+
+  _autoPlayerTurn() {
+    if (!this._autoMode || this.engine.over) return;
+    const actor = this.engine.currentUnit;
+    if (!actor || actor.side !== 'player' || !actor.alive) return;
+
+    this._highlightUnit(actor.uid);
+
+    const enemies = this.engine.enemyUnits.filter(u => u.alive);
+    if (!enemies.length) return;
+
+    // Cible prioritaire : le plus faible
+    const target = [...enemies].sort((a, b) => a.hp - b.hp)[0];
+
+    // Choisit le meilleur skill disponible (multiplier max, hors self si HP > 40%)
+    let bestIdx  = -1;
+    let bestMult = -1;
+    actor.skills.forEach((s, i) => {
+      if (actor.skillCooldowns[i] > 0) return;
+      // Skill de soin/bouclier : utiliser si PV < 40%
+      if (s.target === 'self') {
+        if (actor.hp < actor.maxHp * 0.4 && bestIdx === -1) bestIdx = i;
+        return;
+      }
+      if ((s.multiplier || 0) > bestMult) {
+        bestMult = s.multiplier;
+        bestIdx  = i;
+      }
+    });
+
+    if (bestIdx >= 0) {
+      const r = this.engine.useSkill(actor.uid, bestIdx, target.uid);
+      if (r?.results) {
+        r.results.forEach(({ target: t, dmg }) => {
+          if (t && dmg !== undefined) this._applyResult(actor, t, dmg, null);
+        });
+      }
+    } else {
+      const entry = this.engine.basicAttack(actor.uid, target.uid);
+      if (entry) this._applyResult(actor, target, entry.dmg ?? 0, null);
+    }
+
+    const lastLog = this.engine.log[this.engine.log.length - 1];
+    if (lastLog) this._addLog(lastLog.msg, lastLog.tag);
+    this._updateSkillButtons(this.engine.currentUnit);
+
+    if (this.engine.over) { this._showResult(); return; }
+
+    if (this.engine.currentUnit?.side === 'enemy') {
+      setTimeout(() => this._doEnemyTurn(), this._autoDelay());
+    } else if (this._autoMode) {
+      setTimeout(() => this._autoPlayerTurn(), this._autoDelay());
+    } else {
+      this._lockActions(false);
+      this._updateTurnUI();
+    }
+  }
+
+  _autoDelay(base = null) {
+    const b = base ?? settings.enemyDelay;
+    return Math.max(80, Math.round(b / this._speedMult));
   }
 
   /* ════════════════════════════════
@@ -307,7 +412,20 @@ export class CombatUI {
     this._highlightUnit(unit.uid);
     this._updateSkillButtons(unit);
     const isPlayerTurn = unit.side === 'player';
-    this._lockActions(!isPlayerTurn);
+    // En auto, les boutons d'action restent verrouillés même pendant le tour joueur
+    this._lockActions(!isPlayerTurn || this._autoMode);
+  }
+
+  _updateAutoUI() {
+    const btn = document.getElementById('cbtn-auto');
+    if (!btn) return;
+    btn.classList.toggle('combat-auto-btn--on', this._autoMode);
+    btn.textContent = this._autoMode ? '⏹ AUTO ON' : '▶ AUTO';
+    // Verrouille/déverrouille les boutons d'action
+    if (!this._autoMode && this.engine.currentUnit?.side === 'player') {
+      this._lockActions(false);
+      this._updateTurnUI();
+    }
   }
 
   _lockActions(locked) {
