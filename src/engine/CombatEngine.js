@@ -296,6 +296,22 @@ export class CombatEngine {
     this.turn++;
   }
 
+  /**
+   * Charge une nouvelle vague d'ennemis sans recréer le moteur.
+   * Les unités joueur conservent leur HP, cooldowns et statuts.
+   */
+  loadNextWave(enemyIds) {
+    this.enemyUnits = enemyIds.map((id, i) => {
+      const data = ENEMIES.find(e => e.id === id);
+      if (!data) throw new Error(`Enemy not found: ${id}`);
+      return this._buildUnit(data, 'enemy', i);
+    });
+    this.over   = false;
+    this.winner = null;
+    this._buildTurnOrder();
+    this._log('— Vague suivante —', null, null, 0, 'round');
+  }
+
   _checkEnd() {
     const playersAlive = this.playerUnits.some(u => u.alive);
     const enemiesAlive = this.enemyUnits.some(u => u.alive);

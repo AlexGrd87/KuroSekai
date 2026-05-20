@@ -218,6 +218,11 @@
     ══════════════════════════════════════════ -->
     <div id="combat-screen">
 
+      <!-- Indicateur de vague -->
+      <div id="combat-wave-indicator">
+        Vague <span id="combat-wave-num">1</span> / <span id="combat-wave-total">1</span>
+      </div>
+
       <!-- Zone ennemis -->
       <div id="combat-enemies-row">
         <!-- Unités ennemies injectées par JS -->
@@ -254,6 +259,20 @@
 
       <!-- Flash d'effet -->
       <div id="combat-flash"></div>
+
+      <!-- Overlay transition vague -->
+      <div id="combat-wave-overlay">
+        <div id="combat-wave-box">
+          <div id="combat-wave-cleared">✓ VAGUE ÉLIMINÉE</div>
+          <div id="combat-wave-next-label">PROCHAINE VAGUE</div>
+          <div id="combat-wave-next-num-wrap">
+            <span id="combat-wave-next-num">2</span>
+            <span id="combat-wave-next-sep">/</span>
+            <span id="combat-wave-next-total">3</span>
+          </div>
+          <div id="combat-wave-regen">⚕ Équipe régénérée à 20%</div>
+        </div>
+      </div>
 
       <!-- Écran résultat -->
       <div id="combat-result">

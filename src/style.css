@@ -1852,6 +1852,84 @@ html, body {
 .float-dmg--damage { color: #ff4400; }
 .float-dmg--heal   { color: #00ff88; }
 
+/* ── Indicateur de vague ── */
+#combat-wave-indicator {
+  display: none;
+  position: absolute;
+  top: 0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  color: rgba(0,212,255,0.7);
+  background: rgba(3,6,17,0.7);
+  border: 1px solid rgba(0,212,255,0.2);
+  padding: 0.25rem 0.9rem;
+  border-radius: 20px;
+  gap: 0.3rem;
+  align-items: center;
+  backdrop-filter: blur(4px);
+}
+#combat-wave-num  { color: var(--cyan); font-size: 0.75rem; }
+#combat-wave-total{ color: rgba(224,238,255,0.45); }
+
+/* ── Overlay transition vague ── */
+#combat-wave-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2,4,14,0.82);
+  backdrop-filter: blur(6px);
+}
+#combat-wave-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2.5rem 4rem;
+  background: linear-gradient(135deg, #080f20, #050912);
+  border: 1px solid rgba(0,212,255,0.2);
+  box-shadow: 0 0 60px rgba(0,100,200,0.2);
+  clip-path: polygon(18px 0%, 100% 0%, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0% 100%, 0% 18px);
+}
+#combat-wave-cleared {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: #00ff88;
+}
+#combat-wave-next-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.3em;
+  color: rgba(224,238,255,0.35);
+  margin-top: 0.6rem;
+}
+#combat-wave-next-num-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+#combat-wave-next-num {
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--cyan);
+  line-height: 1;
+  text-shadow: 0 0 30px rgba(0,212,255,0.5);
+}
+#combat-wave-next-sep  { font-size: 1.2rem; color: rgba(224,238,255,0.3); }
+#combat-wave-next-total{ font-size: 1.5rem; color: rgba(224,238,255,0.5); font-weight: 700; }
+#combat-wave-regen {
+  font-size: 0.58rem;
+  letter-spacing: 0.15em;
+  color: rgba(0,255,136,0.6);
+  margin-top: 0.4rem;
+}
+
 /* ── Auto-combat + vitesse ── */
 #combat-auto-row {
   display: flex;

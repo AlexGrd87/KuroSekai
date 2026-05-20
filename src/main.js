@@ -95,7 +95,6 @@ let _currentTeam  = [];
 
 const teamSelect = new TeamSelectUI(playerData, (team) => {
   const stage = _pendingStage;
-  const wave  = stage ? stage.waves[0] : [];
   _currentTeam = team;
   // Applique le scaling de stats selon le niveau de chaque perso
   const scaledTeam = team.map(char => ({
@@ -103,7 +102,7 @@ const teamSelect = new TeamSelectUI(playerData, (team) => {
     level: playerData.getLevel(char.id),
     stats: playerData.getScaledStats(char),
   }));
-  combatUI.start(scaledTeam, wave, stage);
+  combatUI.start(scaledTeam, stage);
 });
 
 /* ── Hub ── */

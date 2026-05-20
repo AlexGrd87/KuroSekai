@@ -42,10 +42,13 @@ export class CombatUI {
      DÉMARRAGE
   ════════════════════════════════ */
 
-  start(team, enemyIds, stage = null) {
+  start(team, stage = null) {
     this._currentStage  = stage;
+    this._waveIndex     = 0;
+    this._team          = team;
     this._autoMode      = false;
     this._speedMult     = 1;
+    const enemyIds = stage?.waves[0] ?? [];
     this.engine = new CombatEngine(team, enemyIds);
 
     // Réinitialise les listeners avant de re-binder (évite le double-bind)
@@ -72,6 +75,7 @@ export class CombatUI {
 
     const stageName = stage?.name ?? 'Combat';
     this._addLog(`⚔ Début du combat — ${stageName}`, 'round');
+    this._updateWaveIndicator();
     this._updateTurnUI();
 
     // Si l'ennemi commence (SPD plus élevé)
@@ -476,11 +480,75 @@ export class CombatUI {
   ════════════════════════════════ */
 
   _showResult() {
-    const win   = this.engine.winner === 'player';
+    // Victoire sur une vague → vérifier s'il en reste
+    if (this.engine.winner === 'player' && this._currentStage) {
+      const totalWaves = this._currentStage.waves.length;
+      if (this._waveIndex < totalWaves - 1) {
+        this._showWaveTransition();
+        return;
+      }
+    }
+    // Victoire finale ou défaite
+    this._showFinalResult();
+  }
+
+  _showWaveTransition() {
+    const nextWave  = this._waveIndex + 1;
+    const total     = this._currentStage.waves.length;
+    const overlay   = document.getElementById('combat-wave-overlay');
+    const numEl     = document.getElementById('combat-wave-next-num');
+    const totalEl   = document.getElementById('combat-wave-next-total');
+    if (numEl)   numEl.textContent   = nextWave + 1;
+    if (totalEl) totalEl.textContent = total;
+
+    this._lockActions(true);
+    gsap.set(overlay, { display: 'flex', opacity: 0 });
+    gsap.to(overlay, { opacity: 1, duration: 0.35 });
+
+    const delay = Math.max(1200, this._autoDelay(1800));
+    setTimeout(() => {
+      // Regen partielle 20% PV max pour chaque allié vivant
+      this.engine.playerUnits.forEach(unit => {
+        if (!unit.alive) return;
+        const heal = Math.round(unit.maxHp * 0.20);
+        unit.hp = Math.min(unit.maxHp, unit.hp + heal);
+        this._floatDamage(unit.uid, heal, 'heal');
+      });
+
+      // Charger la vague suivante
+      this._waveIndex++;
+      this.engine.loadNextWave(this._currentStage.waves[this._waveIndex]);
+
+      // Re-render les ennemis, mettre à jour les joueurs
+      this._renderSide('enemy');
+      this.engine.playerUnits.forEach(u => this._updateUnit(u));
+
+      gsap.to(overlay, {
+        opacity: 0, duration: 0.35,
+        onComplete: () => { overlay.style.display = 'none'; },
+      });
+
+      this._addLog(`⚔ Vague ${this._waveIndex + 1} / ${total}`, 'round');
+      this._updateWaveIndicator();
+
+      if (this.engine.currentUnit?.side === 'enemy') {
+        setTimeout(() => this._doEnemyTurn(), this._autoDelay());
+      } else if (this._autoMode) {
+        setTimeout(() => this._autoPlayerTurn(), this._autoDelay());
+      } else {
+        this._lockActions(false);
+        this._updateTurnUI();
+      }
+    }, delay);
+  }
+
+  _showFinalResult() {
+    const win = this.engine.winner === 'player';
+    const total = this._currentStage?.waves.length ?? 1;
     document.getElementById('combat-result-icon').textContent  = win ? '🏆' : '💀';
     document.getElementById('combat-result-title').textContent = win ? 'VICTOIRE' : 'DÉFAITE';
     document.getElementById('combat-result-sub').textContent   = win
-      ? 'Tous les ennemis ont été éliminés.'
+      ? `${total > 1 ? `${total} vagues éliminées.` : 'Tous les ennemis ont été éliminés.'}`
       : 'Votre équipe a été mise hors combat.';
 
     const box = document.getElementById('combat-result');
@@ -490,6 +558,17 @@ export class CombatUI {
       { scale: 0.8, y: 30 },
       { scale: 1, y: 0, duration: 0.55, delay: 0.5, ease: 'back.out(1.6)' }
     );
+  }
+
+  _updateWaveIndicator() {
+    const stage = this._currentStage;
+    if (!stage) return;
+    const numEl   = document.getElementById('combat-wave-num');
+    const totalEl = document.getElementById('combat-wave-total');
+    const wrap    = document.getElementById('combat-wave-indicator');
+    if (numEl)   numEl.textContent   = this._waveIndex + 1;
+    if (totalEl) totalEl.textContent = stage.waves.length;
+    if (wrap)    wrap.style.display  = stage.waves.length > 1 ? 'flex' : 'none';
   }
 
   _endCombat() {
