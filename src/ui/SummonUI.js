@@ -98,6 +98,11 @@ export class SummonUI {
     const results = this.engine.pull(count);
     this._updatePityDisplay();
 
+    // Sauvegarde chaque personnage tiré dans la collection du joueur
+    results.forEach(char => {
+      document.dispatchEvent(new CustomEvent('kuro:character-obtained', { detail: { id: char.id } }));
+    });
+
     // Détermine la meilleure rareté pour calibrer l'effet flash
     const bestRarity = Math.max(...results.map(r => r.rarity));
 

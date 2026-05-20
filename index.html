@@ -7,7 +7,10 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <!-- Canvas Three.js pour la scène 3D -->
+    <!-- Fond dégradé CSS (derrière le canvas transparent) -->
+    <div id="sky-bg"></div>
+
+    <!-- Canvas Three.js pour la scène 3D (alpha:true) -->
     <canvas id="bg-canvas"></canvas>
 
     <!-- Interface du menu principal -->
@@ -60,6 +63,204 @@
       <!-- Tag version -->
       <span id="version-tag">v0.1.0 — Alpha</span>
     </div>
+
+    <!-- ══════════════════════════════════════════
+         SÉLECTION D'ÉQUIPE
+    ══════════════════════════════════════════ -->
+    <div id="team-select-screen">
+      <header id="ts-header">
+        <button id="ts-back" class="col-back-btn"><span class="col-back-arrow">←</span> RETOUR</button>
+        <div id="ts-title-block">
+          <span class="col-title-kanji">編成</span>
+          <h2>SÉLECTION D'ÉQUIPE</h2>
+        </div>
+        <div id="ts-slots-info">
+          <span id="ts-slot-count">0 / 3</span>
+          <span class="ts-slot-label">COMBATTANTS</span>
+        </div>
+      </header>
+
+      <!-- Slots de l'équipe choisie -->
+      <div id="ts-team-row">
+        <div class="ts-slot" data-slot="0"><span class="ts-slot-empty">+</span></div>
+        <div class="ts-slot" data-slot="1"><span class="ts-slot-empty">+</span></div>
+        <div class="ts-slot" data-slot="2"><span class="ts-slot-empty">+</span></div>
+      </div>
+
+      <!-- Grille de persos disponibles -->
+      <div id="ts-grid"></div>
+
+      <!-- Bouton lancer -->
+      <div id="ts-footer">
+        <button id="ts-start-btn" disabled>⚔ LANCER LE COMBAT</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         ÉCRAN DE COMBAT
+    ══════════════════════════════════════════ -->
+    <div id="combat-screen">
+
+      <!-- Zone ennemis -->
+      <div id="combat-enemies-row">
+        <!-- Unités ennemies injectées par JS -->
+      </div>
+
+      <!-- Journal de combat -->
+      <div id="combat-log-wrap">
+        <div id="combat-log"></div>
+      </div>
+
+      <!-- Zone joueur -->
+      <div id="combat-player-row">
+        <!-- Unités joueur injectées par JS -->
+      </div>
+
+      <!-- Panneau d'actions -->
+      <div id="combat-actions">
+        <div id="combat-turn-label">Tour de : <span id="combat-turn-name">—</span></div>
+        <div id="combat-btns">
+          <button class="combat-btn" id="cbtn-attack">⚔ ATTAQUE</button>
+          <button class="combat-btn" id="cbtn-skill1">— Skill 1</button>
+          <button class="combat-btn" id="cbtn-skill2">— Skill 2</button>
+        </div>
+        <div id="combat-target-prompt">Choisissez une cible</div>
+      </div>
+
+      <!-- Flash d'effet -->
+      <div id="combat-flash"></div>
+
+      <!-- Écran résultat -->
+      <div id="combat-result">
+        <div id="combat-result-box">
+          <div id="combat-result-icon">🏆</div>
+          <h2 id="combat-result-title">VICTOIRE</h2>
+          <p  id="combat-result-sub">Tous les ennemis ont été éliminés.</p>
+          <button id="combat-result-back">← RETOUR AU MENU</button>
+        </div>
+      </div>
+
+    </div><!-- /combat-screen -->
+
+    <!-- ══════════════════════════════════════════
+         ÉCRAN DE COLLECTION
+    ══════════════════════════════════════════ -->
+    <div id="collection-screen">
+
+      <!-- Header -->
+      <header id="col-header">
+        <button id="col-back" class="col-back-btn">
+          <span class="col-back-arrow">←</span> RETOUR
+        </button>
+        <div id="col-title-block">
+          <span class="col-title-kanji">蒐集</span>
+          <h2 id="col-title">COLLECTION</h2>
+        </div>
+        <div id="col-count-block">
+          <span class="col-count-label">OBTENUS</span>
+          <span id="col-count">0 / 10</span>
+        </div>
+      </header>
+
+      <!-- Filtres -->
+      <div id="col-filters">
+        <div id="col-filters-rar">
+          <button class="col-filter-rar active" data-filter="all">TOUS</button>
+          <button class="col-filter-rar" data-filter="5">★★★★★</button>
+          <button class="col-filter-rar" data-filter="4">★★★★</button>
+          <button class="col-filter-rar" data-filter="3">★★★</button>
+        </div>
+        <div id="col-filters-el">
+          <button class="col-filter-el active" data-element="all"><span class="el-kanji">〇</span><span class="el-label">Tous</span></button>
+          <button class="col-filter-el" data-element="Fire">   <span class="el-kanji">火</span><span class="el-label">Feu</span></button>
+          <button class="col-filter-el" data-element="Dark">   <span class="el-kanji">闇</span><span class="el-label">Ténèbres</span></button>
+          <button class="col-filter-el" data-element="Wind">   <span class="el-kanji">風</span><span class="el-label">Vent</span></button>
+          <button class="col-filter-el" data-element="Water">  <span class="el-kanji">水</span><span class="el-label">Eau</span></button>
+          <button class="col-filter-el" data-element="Thunder"><span class="el-kanji">雷</span><span class="el-label">Foudre</span></button>
+          <button class="col-filter-el" data-element="Earth">  <span class="el-kanji">土</span><span class="el-label">Terre</span></button>
+          <button class="col-filter-el" data-element="Light">  <span class="el-kanji">光</span><span class="el-label">Lumière</span></button>
+          <button class="col-filter-el" data-element="Void">   <span class="el-kanji">虚</span><span class="el-label">Vide</span></button>
+        </div>
+      </div>
+
+      <!-- Grille + Détail -->
+      <div id="col-main">
+        <div id="col-grid"></div>
+
+        </div>
+
+      <!-- ── Modale de détail personnage ── -->
+      <div id="col-modal">
+        <div id="col-modal-backdrop"></div>
+        <div id="col-modal-box">
+
+          <button id="col-modal-close" class="col-modal-close-btn">✕</button>
+
+          <!-- Colonne gauche : carte animée -->
+          <div id="col-modal-card-col">
+            <div id="col-modal-card-wrap">
+              <!-- La carte est injectée ici par JS -->
+            </div>
+          </div>
+
+          <!-- Colonne droite : fiche -->
+          <div id="col-modal-info">
+
+            <div id="det-header">
+              <div id="det-stars"></div>
+              <h3 id="det-name">—</h3>
+              <p class="det-title-text" id="det-title-text">—</p>
+              <div id="det-tags">
+                <span class="det-tag" id="det-class"></span>
+                <span class="det-tag" id="det-el"></span>
+              </div>
+              <p class="det-copies" id="det-copies">—</p>
+            </div>
+
+            <div id="det-stats">
+              <div class="det-stat-row">
+                <span class="det-stat-label">HP</span>
+                <div class="det-stat-track"><div id="det-hp-bar"  class="det-stat-bar"></div></div>
+                <span class="det-stat-val" id="det-hp-val">—</span>
+              </div>
+              <div class="det-stat-row">
+                <span class="det-stat-label">ATK</span>
+                <div class="det-stat-track"><div id="det-atk-bar" class="det-stat-bar"></div></div>
+                <span class="det-stat-val" id="det-atk-val">—</span>
+              </div>
+              <div class="det-stat-row">
+                <span class="det-stat-label">DEF</span>
+                <div class="det-stat-track"><div id="det-def-bar" class="det-stat-bar"></div></div>
+                <span class="det-stat-val" id="det-def-val">—</span>
+              </div>
+              <div class="det-stat-row">
+                <span class="det-stat-label">SPD</span>
+                <div class="det-stat-track"><div id="det-spd-bar" class="det-stat-bar"></div></div>
+                <span class="det-stat-val" id="det-spd-val">—</span>
+              </div>
+            </div>
+
+            <div id="det-skills">
+              <div class="det-skill">
+                <span class="det-skill-name" id="det-skill1-name">—</span>
+                <p    class="det-skill-desc" id="det-skill1-desc">—</p>
+              </div>
+              <div class="det-skill">
+                <span class="det-skill-name" id="det-skill2-name">—</span>
+                <p    class="det-skill-desc" id="det-skill2-desc">—</p>
+              </div>
+            </div>
+
+            <div id="det-lore-block">
+              <p class="det-desc" id="det-desc"></p>
+              <p class="det-lore" id="det-lore"></p>
+            </div>
+
+          </div><!-- /col-modal-info -->
+        </div><!-- /col-modal-box -->
+      </div><!-- /col-modal -->
+
+    </div><!-- /collection-screen -->
 
     <script type="module" src="/src/main.js"></script>
   </body>

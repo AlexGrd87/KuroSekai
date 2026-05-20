@@ -1,27 +1,49 @@
 /**
  * main.js — Point d'entrée de KuroSekai
- *
- * Responsabilités :
- *   1. Instancie la scène 3D du menu (Three.js)
- *   2. Instancie l'interface UI du menu (GSAP)
- *   3. Instancie l'écran d'invocation gacha
- *   4. Lance la boucle de rendu + l'animation d'intro
  */
 
-import { MenuScene } from './scenes/MenuScene.js';
-import { MenuUI }    from './ui/MenuUI.js';
-import { SummonUI }  from './ui/SummonUI.js';
+import { gsap }         from 'gsap';
+import { MenuScene }    from './scenes/MenuScene.js';
+import { MenuUI }       from './ui/MenuUI.js';
+import { SummonUI }     from './ui/SummonUI.js';
+import { CollectionUI } from './ui/CollectionUI.js';
+import { TeamSelectUI } from './ui/TeamSelectUI.js';
+import { CombatUI }     from './ui/CombatUI.js';
+import { PlayerData }   from './data/PlayerData.js';
+import { CHARACTERS }   from './data/characters.js';
 
-/* ── Initialisation ── */
+/* ── Données joueur ── */
+const playerData = new PlayerData();
+playerData.seedDemo(CHARACTERS);
+
+/* ── Scène 3D + UI menu ── */
 const canvas = document.getElementById('bg-canvas');
+const scene  = new MenuScene(canvas);
+const ui     = new MenuUI();
 
-const scene   = new MenuScene(canvas); // Scène 3D (portail, particules, ville)
-const ui      = new MenuUI();          // Menu principal
-const summon  = new SummonUI();        // Écran d'invocation
+/* ── Écrans ── */
+const summon     = new SummonUI();
+const collection = new CollectionUI(playerData);
 
-/* ── Navigation : menu → invocation ── */
-document.getElementById('btn-summon')?.addEventListener('click', () => {
-  summon.show();
+const combatUI = new CombatUI(() => {
+  // Retour au menu après combat
+  const overlay = document.getElementById('ui-overlay');
+  gsap.set(overlay, { display: 'grid' });
+  gsap.fromTo(overlay, { opacity: 0 }, { opacity: 1, duration: 0.4 });
+});
+
+const teamSelect = new TeamSelectUI(playerData, (team) => {
+  combatUI.start(team);
+});
+
+/* ── Navigation ── */
+document.getElementById('btn-summon')?.addEventListener('click', () => summon.show());
+document.getElementById('btn-collection')?.addEventListener('click', () => collection.show());
+document.getElementById('btn-play')?.addEventListener('click', () => teamSelect.show());
+
+/* ── Sync invocation → collection ── */
+document.addEventListener('kuro:character-obtained', (e) => {
+  if (e.detail?.id) playerData.addCharacter(e.detail.id);
 });
 
 /* ── Démarrage ── */
