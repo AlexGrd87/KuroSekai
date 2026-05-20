@@ -42,11 +42,14 @@ export class MenuUI {
     // Décoration circuit gauche
     tl.to('#deco-left', { opacity: 1, duration: 0.8, ease: 'power2.out' }, '-=0.4');
 
-    // HUD bar apparaît en dernier
+    // HUD bar
     tl.to('#hud-bar', { opacity: 1, duration: 0.6, ease: 'power2.out' }, '-=0.1');
 
-    // Dots de chargement
-    tl.to('.splash-dot', { opacity: 1, duration: 0.3 }, '-=0.2');
+    // Bouton COMMENCER (scale + fade)
+    tl.fromTo('#btn-start',
+      { opacity: 0, scale: 0.88, y: 12 },
+      { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: 'back.out(1.8)' },
+      '-=0.2');
 
     // Compteur de sync
     tl.add(() => this._animateSyncCounter(), '<');

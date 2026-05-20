@@ -42,12 +42,11 @@
         <p id="game-subtitle">Le monde sombrera. Toi, tu brilleras.</p>
       </div>
 
-      <!-- Indicateur de chargement -->
-      <div id="splash-loading">
-        <span class="splash-dot"></span>
-        <span class="splash-dot"></span>
-        <span class="splash-dot"></span>
-      </div>
+      <!-- Bouton principal -->
+      <button id="btn-start">
+        <span class="btn-start-arrow">▶</span>
+        <span class="btn-start-text">COMMENCER</span>
+      </button>
 
       <!-- Barre HUD système en bas à gauche -->
       <div id="hud-bar">
@@ -129,75 +128,126 @@
       <!-- Grille scanline décorative -->
       <div id="hub-grid-overlay"></div>
 
-      <!-- Header -->
-      <header id="hub-header">
-        <div id="hub-title-block">
-          <span class="col-title-kanji">作戦</span>
-          <h2>CARTE DES OPÉRATIONS</h2>
-        </div>
-        <div id="hub-player-stats"></div>
-      </header>
+      <!-- ══ VUE ACCUEIL HUB (icônes) ══ -->
+      <div id="hub-home">
 
-      <!-- Carte horizontale des stages -->
-      <div id="hub-map-wrap">
-        <!-- Nœuds injectés par JS -->
-      </div>
-
-      <!-- Silhouette ville bas de page -->
-      <div id="hub-city-silhouette"></div>
-
-      <!-- Barre de navigation permanente -->
-      <nav id="hub-navbar">
-        <div id="hub-nav-currency">
-          <span class="hub-currency-icon">◈</span>
-          <span id="hub-nav-currency-val">0</span>
-        </div>
-        <div id="hub-nav-actions">
-          <button id="hub-nav-summon" class="hub-nav-btn">
-            <span class="hub-nav-icon">召喚</span>
-            <span class="hub-nav-label">INVOQUER</span>
-          </button>
-          <button id="hub-nav-collection" class="hub-nav-btn">
-            <span class="hub-nav-icon">蒐</span>
-            <span class="hub-nav-label">COLLECTION</span>
-          </button>
-          <button id="hub-nav-settings" class="hub-nav-btn">
-            <span class="hub-nav-icon">⚙</span>
-            <span class="hub-nav-label">PARAMÈTRES</span>
-          </button>
-        </div>
-      </nav>
-
-      <!-- Panneau de détail stage (overlay) -->
-      <div id="hub-detail">
-        <div id="hub-detail-box">
-          <button id="hd-close-btn" class="col-modal-close-btn">✕</button>
-
-          <div id="hd-header">
-            <div id="hd-element">—</div>
-            <h3 id="hd-name">—</h3>
-            <p  id="hd-subtitle">—</p>
-            <div id="hd-diff-stars">—</div>
+        <!-- Barre ressources haute -->
+        <header id="hub-header">
+          <div id="hub-player-info">
+            <span id="hub-player-name">Commandant</span>
+            <div id="hub-player-stages"></div>
           </div>
-
-          <p id="hd-lore">—</p>
-
-          <div id="hd-waves-block">
-            <div class="hd-section-label">VAGUES</div>
-            <div id="hd-waves-list"></div>
+          <div id="hub-nav-currency">
+            <span class="hub-currency-icon">◈</span>
+            <span id="hub-nav-currency-val">0</span>
           </div>
+        </header>
 
-          <div id="hd-rewards-block">
-            <div class="hd-section-label">RÉCOMPENSES</div>
-            <div id="hd-rewards-row">
-              <span id="hd-exp">—</span>
-              <span id="hd-currency">—</span>
+        <!-- Zone héro centrale -->
+        <div id="hub-hero">
+          <div id="hub-hero-scan"></div>
+          <div id="hub-hero-kanji">世界黒</div>
+          <div id="hub-hero-name">KURO SEKAI</div>
+          <div id="hub-hero-tag">— SECTEUR ACTIF —</div>
+        </div>
+
+        <!-- Navigation par icônes -->
+        <nav id="hub-icons">
+
+          <button class="hub-icon-btn" id="hub-icon-combat">
+            <div class="hub-icon-frame">
+              <div class="hub-icon-glow"></div>
+              <span class="hub-icon-glyph">⚔</span>
             </div>
-          </div>
+            <span class="hub-icon-kanji">出撃</span>
+            <span class="hub-icon-label">COMBAT</span>
+          </button>
 
-          <button id="hd-deploy-btn">⚔ DÉPLOYER</button>
+          <button class="hub-icon-btn hub-icon-btn--summon" id="hub-icon-summon">
+            <div class="hub-icon-frame">
+              <div class="hub-icon-glow"></div>
+              <span class="hub-icon-glyph">召</span>
+            </div>
+            <span class="hub-icon-kanji">召喚</span>
+            <span class="hub-icon-label">INVOQUER</span>
+          </button>
+
+          <button class="hub-icon-btn hub-icon-btn--col" id="hub-icon-collection">
+            <div class="hub-icon-frame">
+              <div class="hub-icon-glow"></div>
+              <span class="hub-icon-glyph">蒐</span>
+            </div>
+            <span class="hub-icon-kanji">蒐集</span>
+            <span class="hub-icon-label">COLLECTION</span>
+          </button>
+
+          <button class="hub-icon-btn hub-icon-btn--cfg" id="hub-icon-settings">
+            <div class="hub-icon-frame">
+              <div class="hub-icon-glow"></div>
+              <span class="hub-icon-glyph">⚙</span>
+            </div>
+            <span class="hub-icon-kanji">設定</span>
+            <span class="hub-icon-label">PARAMÈTRES</span>
+          </button>
+
+        </nav>
+
+      </div><!-- /hub-home -->
+
+      <!-- ══ PANNEAU CARTE DES STAGES ══ -->
+      <div id="hub-map-panel">
+
+        <header id="hub-map-header">
+          <button id="hub-map-back-btn" class="col-back-btn">
+            <span class="col-back-arrow">←</span> HUB
+          </button>
+          <div id="hub-map-title-block">
+            <span class="col-title-kanji">作戦</span>
+            <h2>CARTE DES OPÉRATIONS</h2>
+          </div>
+          <div id="hub-player-stats"></div>
+        </header>
+
+        <!-- Carte horizontale des stages -->
+        <div id="hub-map-wrap">
+          <!-- Nœuds injectés par JS -->
         </div>
-      </div>
+
+        <!-- Silhouette ville bas de page -->
+        <div id="hub-city-silhouette"></div>
+
+        <!-- Panneau de détail stage (overlay) -->
+        <div id="hub-detail">
+          <div id="hub-detail-box">
+            <button id="hd-close-btn" class="col-modal-close-btn">✕</button>
+
+            <div id="hd-header">
+              <div id="hd-element">—</div>
+              <h3 id="hd-name">—</h3>
+              <p  id="hd-subtitle">—</p>
+              <div id="hd-diff-stars">—</div>
+            </div>
+
+            <p id="hd-lore">—</p>
+
+            <div id="hd-waves-block">
+              <div class="hd-section-label">VAGUES</div>
+              <div id="hd-waves-list"></div>
+            </div>
+
+            <div id="hd-rewards-block">
+              <div class="hd-section-label">RÉCOMPENSES</div>
+              <div id="hd-rewards-row">
+                <span id="hd-exp">—</span>
+                <span id="hd-currency">—</span>
+              </div>
+            </div>
+
+            <button id="hd-deploy-btn">⚔ DÉPLOYER</button>
+          </div>
+        </div>
+
+      </div><!-- /hub-map-panel -->
 
     </div><!-- /hub-screen -->
 

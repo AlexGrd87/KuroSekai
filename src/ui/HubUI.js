@@ -1,22 +1,15 @@
 /**
- * HubUI.js
- * Carte des opérations — sélection de stage de KuroSekai.
+ * HubUI.js — Écran d'accueil / navigation centrale de KuroSekai.
  *
- * Affiche 5 zones cyberpunk connectées, déverrouillables progressivement.
- * Clic sur une zone disponible → panneau de détail → DÉPLOYER → TeamSelect.
+ * Deux vues à l'intérieur de #hub-screen :
+ *   #hub-home      → icônes de navigation + ressources (vue par défaut)
+ *   #hub-map-panel → carte des stages (ouverte via COMBAT, slide-up)
  */
 
 import { gsap }   from 'gsap';
 import { STAGES } from '../data/enemies.js';
 
 export class HubUI {
-  /**
-   * @param {PlayerData} playerData
-   * @param {Function}   onDeploy      callback(stage) — lance le combat
-   * @param {Function}   onSummon      callback() — ouvre l'invocation
-   * @param {Function}   onCollection  callback() — ouvre la collection
-   * @param {Function}   onSettings    callback() — ouvre les paramètres
-   */
   constructor(playerData, onDeploy, onSummon, onCollection, onSettings) {
     this.playerData   = playerData;
     this.onDeploy     = onDeploy;
@@ -24,39 +17,64 @@ export class HubUI {
     this.onCollection = onCollection;
     this.onSettings   = onSettings;
 
-    this.screen       = document.getElementById('hub-screen');
-    this.mapWrap      = document.getElementById('hub-map-wrap');
-    this.detailPanel  = document.getElementById('hub-detail');
+    this.screen      = document.getElementById('hub-screen');
+    this.homeView    = document.getElementById('hub-home');
+    this.mapPanel    = document.getElementById('hub-map-panel');
+    this.mapWrap     = document.getElementById('hub-map-wrap');
+    this.detailPanel = document.getElementById('hub-detail');
+
     this._activeStage = null;
 
-    document.getElementById('hd-close-btn')?.addEventListener('click',  () => this._closeDetail());
-    document.getElementById('hd-deploy-btn')?.addEventListener('click', () => this._deploy());
-
-    // Navbar
-    document.getElementById('hub-nav-summon')?.addEventListener('click',     () => this.onSummon?.());
-    document.getElementById('hub-nav-collection')?.addEventListener('click', () => this.onCollection?.());
-    document.getElementById('hub-nav-settings')?.addEventListener('click',   () => this.onSettings?.());
+    this._bindEvents();
   }
 
-  /* ════════════════════════════════
-     AFFICHAGE / MASQUAGE
-  ════════════════════════════════ */
+  _bindEvents() {
+    // Icônes hub-home
+    document.getElementById('hub-icon-combat')
+      ?.addEventListener('click', () => this._openMap());
+    document.getElementById('hub-icon-summon')
+      ?.addEventListener('click', () => { this.hide(); this.onSummon?.(); });
+    document.getElementById('hub-icon-collection')
+      ?.addEventListener('click', () => { this.hide(); this.onCollection?.(); });
+    document.getElementById('hub-icon-settings')
+      ?.addEventListener('click', () => { this.hide(); this.onSettings?.(); });
 
+    // Carte des stages
+    document.getElementById('hub-map-back-btn')
+      ?.addEventListener('click', () => this._closeMap());
+    document.getElementById('hd-close-btn')
+      ?.addEventListener('click', () => this._closeDetail());
+    document.getElementById('hd-deploy-btn')
+      ?.addEventListener('click', () => this._deploy());
+  }
+
+  /* ══════════════════════════════════════
+     SHOW / HIDE / REFRESH
+  ══════════════════════════════════════ */
+
+  /** Affiche le hub-home (vue icônes). */
   show() {
-    this._buildMap();
     this._updateStats();
 
-    gsap.set(this.screen, { display: 'flex', opacity: 0 });
-    gsap.to(this.screen, { opacity: 1, duration: 0.45, ease: 'power2.out' });
+    gsap.set(this.screen,   { display: 'flex', opacity: 0 });
+    gsap.set(this.homeView, { display: 'flex', opacity: 1 });
+    gsap.set(this.mapPanel, { display: 'none' });
 
-    // Animation en cascade des nœuds
-    gsap.fromTo('.hub-node', { opacity: 0, y: 30 }, {
-      opacity: 1, y: 0,
-      duration: 0.4, stagger: 0.12, delay: 0.2, ease: 'back.out(1.4)',
-    });
+    gsap.to(this.screen, { opacity: 1, duration: 0.4, ease: 'power2.out' });
+
+    // Cascade des icônes
+    gsap.fromTo('.hub-icon-btn',
+      { opacity: 0, y: 35, scale: 0.88 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.45, stagger: 0.07,
+        delay: 0.2, ease: 'back.out(1.6)' });
+
+    // Hero kanji
+    gsap.fromTo('#hub-hero-kanji',
+      { opacity: 0, scale: 0.92 },
+      { opacity: 1, scale: 1, duration: 0.6, delay: 0.1, ease: 'power2.out' });
   }
 
-  /** Masque temporairement le hub (navigation vers un sous-écran). */
+  /** Masque le hub (navigation vers un autre écran plein-écran). */
   hide() {
     this._closeDetail();
     gsap.to(this.screen, {
@@ -65,16 +83,53 @@ export class HubUI {
     });
   }
 
+  /** Rafraîchit les stats et ré-affiche le hub-home si caché. */
   refresh() {
-    this._buildMap();
     this._updateStats();
-    // Si le hub est masqué, on le réaffiche
-    if (this.screen.style.display === 'none') this.show();
+    const hidden = !this.screen.style.display || this.screen.style.display === 'none';
+    if (hidden) this.show();
   }
 
-  /* ════════════════════════════════
+  /* ══════════════════════════════════════
+     NAVIGATION HOME ↔ CARTE
+  ══════════════════════════════════════ */
+
+  _openMap() {
+    this._buildMap();
+    this._updateStats();
+
+    // Slide-up du panneau carte depuis le bas
+    gsap.set(this.mapPanel, { display: 'flex', y: '100%', opacity: 0 });
+    gsap.to(this.homeView, {
+      opacity: 0, duration: 0.18, ease: 'power2.in',
+      onComplete: () => gsap.set(this.homeView, { display: 'none' }),
+    });
+    gsap.to(this.mapPanel, { y: 0, opacity: 1, duration: 0.42, delay: 0.1, ease: 'power3.out' });
+
+    gsap.fromTo('.hub-node',
+      { opacity: 0, y: 25 },
+      { opacity: 1, y: 0, duration: 0.35, stagger: 0.09, delay: 0.3, ease: 'back.out(1.3)' });
+  }
+
+  _closeMap() {
+    this._closeDetail();
+
+    gsap.to(this.mapPanel, {
+      y: '100%', opacity: 0, duration: 0.35, ease: 'power3.in',
+      onComplete: () => {
+        gsap.set(this.mapPanel, { display: 'none' });
+        gsap.set(this.homeView, { display: 'flex', opacity: 0 });
+        gsap.to(this.homeView, { opacity: 1, duration: 0.3, ease: 'power2.out' });
+        gsap.fromTo('.hub-icon-btn',
+          { opacity: 0, y: 18 },
+          { opacity: 1, y: 0, duration: 0.32, stagger: 0.06, ease: 'back.out(1.4)' });
+      },
+    });
+  }
+
+  /* ══════════════════════════════════════
      CONSTRUCTION DE LA CARTE
-  ════════════════════════════════ */
+  ══════════════════════════════════════ */
 
   _buildMap() {
     this.mapWrap.innerHTML = '';
@@ -82,16 +137,13 @@ export class HubUI {
     STAGES.forEach((stage, i) => {
       const unlocked  = this.playerData.isStageUnlocked(stage);
       const completed = this.playerData.isStageCompleted(stage.id);
+      const diffStars = '★'.repeat(stage.difficulty) + '☆'.repeat(5 - stage.difficulty);
 
-      /* ── Nœud ── */
       const node = document.createElement('div');
       node.className = `hub-node${unlocked ? '' : ' hub-node--locked'}${completed ? ' hub-node--done' : ''}`;
       node.dataset.stageId = stage.id;
-      node.style.setProperty('--el', stage.color);
+      node.style.setProperty('--el',   stage.color);
       node.style.setProperty('--glow', stage.glow);
-
-      const diffStars = '★'.repeat(stage.difficulty) + '☆'.repeat(5 - stage.difficulty);
-
       node.innerHTML = `
         <div class="hub-node-order">0${stage.order}</div>
         <div class="hub-node-card">
@@ -104,64 +156,66 @@ export class HubUI {
             <div class="hub-node-subtitle">${stage.subtitle}</div>
             <div class="hub-node-diff" style="color:${stage.glow}">${diffStars}</div>
           </div>
-        </div>
-      `;
+        </div>`;
 
-      if (unlocked) {
-        node.addEventListener('click', () => this._openDetail(stage));
-      } else {
-        node.addEventListener('click', () => this._shakeNode(node));
-      }
+      node.addEventListener('click', unlocked
+        ? () => this._openDetail(stage)
+        : () => this._shakeNode(node));
 
       this.mapWrap.appendChild(node);
 
-      /* ── Connecteur entre nœuds ── */
       if (i < STAGES.length - 1) {
-        const next = STAGES[i + 1];
         const conn = document.createElement('div');
-        conn.className = `hub-connector${this.playerData.isStageCompleted(stage.id) ? ' hub-connector--active' : ''}`;
+        conn.className = `hub-connector${completed ? ' hub-connector--active' : ''}`;
         conn.style.setProperty('--from', stage.color);
-        conn.style.setProperty('--to', next.color);
+        conn.style.setProperty('--to',   STAGES[i + 1].color);
         this.mapWrap.appendChild(conn);
       }
     });
   }
 
+  /* ══════════════════════════════════════
+     STATS / RESSOURCES
+  ══════════════════════════════════════ */
+
   _updateStats() {
-    // Header : progression des zones
-    const statsEl = document.getElementById('hub-player-stats');
-    if (statsEl) {
-      const completed = this.playerData.completedStages.size;
-      const owned     = this.playerData.collection.size;
-      statsEl.innerHTML = `
-        <span class="hub-stat">⚔ ${completed}/${STAGES.length} zones</span>
-        <span class="hub-stat">✦ ${owned} personnages</span>
-      `;
-    }
-    // Navbar : monnaie en temps réel
+    const done  = this.playerData.completedStages.size;
+    const owned = this.playerData.collection.size;
+    const curr  = this.playerData.currency;
+
+    // Hub home — monnaie
     const currEl = document.getElementById('hub-nav-currency-val');
-    if (currEl) currEl.textContent = this.playerData.currency.toLocaleString();
+    if (currEl) currEl.textContent = curr.toLocaleString();
+
+    // Hub home — zones
+    const zoneEl = document.getElementById('hub-player-stages');
+    if (zoneEl) zoneEl.textContent = `${done} / ${STAGES.length} zones`;
+
+    // Carte header — stats complètes
+    const statsEl = document.getElementById('hub-player-stats');
+    if (statsEl) statsEl.innerHTML = `
+      <span class="hub-stat">⚔ ${done}/${STAGES.length}</span>
+      <span class="hub-stat">✦ ${owned} perso.</span>
+      <span class="hub-stat" style="color:#f0c040">◈ ${curr.toLocaleString()}</span>`;
   }
 
-  /* ════════════════════════════════
-     PANNEAU DE DÉTAIL
-  ════════════════════════════════ */
+  /* ══════════════════════════════════════
+     DÉTAIL STAGE
+  ══════════════════════════════════════ */
 
   _openDetail(stage) {
     this._activeStage = stage;
 
-    // Contenu
-    document.getElementById('hd-name').textContent     = stage.name;
-    document.getElementById('hd-subtitle').textContent = stage.subtitle;
-    document.getElementById('hd-lore').textContent     = stage.lore;
-    document.getElementById('hd-element').textContent  = this._elementLabel(stage.element);
-    document.getElementById('hd-element').style.color  = stage.glow;
+    document.getElementById('hd-name').textContent       = stage.name;
+    document.getElementById('hd-subtitle').textContent   = stage.subtitle;
+    document.getElementById('hd-lore').textContent       = stage.lore;
+    document.getElementById('hd-element').textContent    = this._elementLabel(stage.element);
+    document.getElementById('hd-element').style.color    = stage.glow;
     document.getElementById('hd-diff-stars').textContent = '★'.repeat(stage.difficulty) + '☆'.repeat(5 - stage.difficulty);
     document.getElementById('hd-diff-stars').style.color = stage.glow;
-    document.getElementById('hd-exp').textContent      = `+${stage.rewards.exp} EXP`;
-    document.getElementById('hd-currency').textContent = `+${stage.rewards.currency} ◈`;
+    document.getElementById('hd-exp').textContent        = `+${stage.rewards.exp} EXP`;
+    document.getElementById('hd-currency').textContent   = `+${stage.rewards.currency} ◈`;
 
-    // Vagues
     const wavesEl = document.getElementById('hd-waves-list');
     wavesEl.innerHTML = '';
     stage.waves.forEach((wave, i) => {
@@ -172,28 +226,22 @@ export class HubUI {
       wavesEl.appendChild(li);
     });
 
-    // Couleur du bouton deploy
-    const deployBtn = document.getElementById('hd-deploy-btn');
-    deployBtn.style.setProperty('--el', stage.color);
-    deployBtn.style.setProperty('--glow', stage.glow);
+    const btn = document.getElementById('hd-deploy-btn');
+    btn.style.setProperty('--el',   stage.color);
+    btn.style.setProperty('--glow', stage.glow);
+    btn.innerHTML = this.playerData.isStageCompleted(stage.id) ? '⚔ REJOUER' : '⚔ DÉPLOYER';
 
-    const completed = this.playerData.isStageCompleted(stage.id);
-    deployBtn.innerHTML = completed ? '⚔ REJOUER' : '⚔ DÉPLOYER';
-
-    // Affichage animé
     gsap.set(this.detailPanel, { display: 'flex' });
     gsap.fromTo(this.detailPanel, { opacity: 0 }, { opacity: 1, duration: 0.2 });
     gsap.fromTo('#hub-detail-box',
-      { y: 60, scale: 0.92 },
-      { y: 0, scale: 1, duration: 0.35, ease: 'back.out(1.6)' }
-    );
+      { y: 60, scale: 0.92 }, { y: 0, scale: 1, duration: 0.35, ease: 'back.out(1.6)' });
   }
 
   _closeDetail() {
-    if (this.detailPanel.style.display === 'none') return;
+    if (!this.detailPanel || this.detailPanel.style.display === 'none') return;
     gsap.to(this.detailPanel, {
       opacity: 0, duration: 0.2,
-      onComplete: () => { this.detailPanel.style.display = 'none'; },
+      onComplete: () => gsap.set(this.detailPanel, { display: 'none' }),
     });
     this._activeStage = null;
   }
@@ -202,7 +250,6 @@ export class HubUI {
     if (!this._activeStage) return;
     const stage = this._activeStage;
     this._closeDetail();
-
     gsap.to(this.screen, {
       opacity: 0, duration: 0.25, ease: 'power2.in',
       onComplete: () => {
@@ -212,25 +259,23 @@ export class HubUI {
     });
   }
 
-  /* ════════════════════════════════
+  /* ══════════════════════════════════════
      UTILITAIRES
-  ════════════════════════════════ */
+  ══════════════════════════════════════ */
 
   _shakeNode(node) {
     gsap.to(node, { x: -8, duration: 0.05, yoyo: true, repeat: 5,
       onComplete: () => gsap.set(node, { x: 0 }) });
   }
 
-  _elementKanji(element) {
-    const map = { Fire:'火', Dark:'闇', Wind:'風', Water:'水', Thunder:'雷',
-                  Earth:'土', Light:'光', Void:'虚', Neutral:'無' };
-    return map[element] || '無';
+  _elementKanji(el) {
+    return { Fire:'火', Dark:'闇', Wind:'風', Water:'水', Thunder:'雷',
+             Earth:'土', Light:'光', Void:'虚', Neutral:'無' }[el] || '無';
   }
 
-  _elementLabel(element) {
-    const map = { Fire:'Feu', Dark:'Ténèbres', Wind:'Vent', Water:'Eau',
-                  Thunder:'Foudre', Earth:'Terre', Light:'Lumière',
-                  Void:'Vide', Neutral:'Neutre' };
-    return map[element] || element;
+  _elementLabel(el) {
+    return { Fire:'Feu', Dark:'Ténèbres', Wind:'Vent', Water:'Eau',
+             Thunder:'Foudre', Earth:'Terre', Light:'Lumière',
+             Void:'Vide', Neutral:'Neutre' }[el] || el;
   }
 }

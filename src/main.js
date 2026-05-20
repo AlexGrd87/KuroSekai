@@ -41,8 +41,10 @@ const summon     = new SummonUI(playerData);
 const collection = new CollectionUI(playerData);
 const levelUpUI  = new LevelUpUI();
 
-/* ── Paramètres — retour vers le hub ── */
-const settingsUI = new SettingsUI(playerData, () => hub.refresh());
+/* ── Retour hub depuis les sous-écrans plein-écran ── */
+function goHub() { hub.show(); }
+
+const settingsUI = new SettingsUI(playerData, goHub);
 
 /* ══════════════════════════════════════════
    COMBAT + SÉLECTION D'ÉQUIPE
@@ -51,7 +53,6 @@ const settingsUI = new SettingsUI(playerData, () => hub.refresh());
 let _pendingStage = null;
 let _currentTeam  = [];
 
-/* Après victoire : EXP → level up → débriefing → hub */
 function handleVictory(stage) {
   playerData.completeStage(stage.id, stage.rewards);
 
@@ -66,37 +67,33 @@ function handleVictory(stage) {
 
   const goToHub = () => {
     const debrief = SCENARIO.debriefings[stage.id];
-    if (debrief) {
-      sceneUI.play(debrief, () => hub.refresh());
-    } else {
-      hub.refresh();
-    }
+    if (debrief) sceneUI.play(debrief, goHub);
+    else         goHub();
   };
 
-  if (lvlResults.some(r => r.leveled)) {
-    levelUpUI.play(lvlResults, goToHub);
-  } else {
-    goToHub();
-  }
+  if (lvlResults.some(r => r.leveled)) levelUpUI.play(lvlResults, goToHub);
+  else goToHub();
 }
 
 const combatUI = new CombatUI((winner, stage) => {
   if (winner === 'player' && stage) handleVictory(stage);
-  else hub.refresh();
+  else goHub();
 });
 
 const teamSelect = new TeamSelectUI(playerData, (team) => {
   _currentTeam = team;
-  const scaledTeam = team.map(char => ({
-    ...char,
-    level: playerData.getLevel(char.id),
-    stats: playerData.getScaledStats(char),
-  }));
-  combatUI.start(scaledTeam, _pendingStage);
+  combatUI.start(
+    team.map(char => ({
+      ...char,
+      level: playerData.getLevel(char.id),
+      stats: playerData.getScaledStats(char),
+    })),
+    _pendingStage
+  );
 });
 
-/* Retour depuis team-select → hub */
-document.getElementById('ts-back')?.addEventListener('click', () => hub.refresh());
+/* Retour team-select → hub */
+document.getElementById('ts-back')?.addEventListener('click', goHub);
 
 /* ══════════════════════════════════════════
    HUB — ÉCRAN PRINCIPAL
@@ -105,7 +102,7 @@ document.getElementById('ts-back')?.addEventListener('click', () => hub.refresh(
 const hub = new HubUI(
   playerData,
 
-  /* onDeploy */
+  /* onDeploy — lance le combat depuis la carte */
   (stage) => {
     _pendingStage = stage;
     const briefing = SCENARIO.briefings[stage.id];
@@ -113,7 +110,7 @@ const hub = new HubUI(
     else          teamSelect.show();
   },
 
-  /* onSummon — le hub reste en fond, summon le recouvre */
+  /* onSummon */
   () => summon.show(),
 
   /* onCollection */
@@ -123,11 +120,11 @@ const hub = new HubUI(
   () => settingsUI.show(),
 );
 
-/* Rafraîchit les ressources du hub au retour des sous-écrans */
+/* Retour hub depuis summon et collection */
 summon.overlay?.querySelector('#summon-back')
-  ?.addEventListener('click', () => hub._updateStats());
+  ?.addEventListener('click', goHub);
 document.getElementById('col-back')
-  ?.addEventListener('click', () => hub._updateStats());
+  ?.addEventListener('click', goHub);
 
 /* ══════════════════════════════════════════
    SYNC INVOCATION → COLLECTION
@@ -138,32 +135,31 @@ document.addEventListener('kuro:character-obtained', (e) => {
 });
 
 /* ══════════════════════════════════════════
-   DÉMARRAGE
+   DÉMARRAGE — PAGE D'ACCUEIL
 ══════════════════════════════════════════ */
 
 settings.applyAll();
 scene.animate();
 
-/* Splash : animation logo + glitch titre, puis transition vers hub */
+/* Animation du splash (logo + glitch titre) */
 const splashUI = new MenuUI();
 splashUI.playIntro();
 
-const SPLASH_DURATION = 1800; // ms — après l'anim glitch du titre
-const INTRO_KEY       = 'kuro_intro_v1';
+/* Bouton COMMENCER — clic manuel */
+const INTRO_KEY = 'kuro_intro_v1';
 
-setTimeout(() => {
+document.getElementById('btn-start')?.addEventListener('click', () => {
   const overlay = document.getElementById('ui-overlay');
   gsap.to(overlay, {
     opacity: 0, duration: 0.45, ease: 'power2.in',
     onComplete: () => {
       overlay.style.display = 'none';
-      // Première session → intro cinématique avant le hub
       if (!localStorage.getItem(INTRO_KEY)) {
         localStorage.setItem(INTRO_KEY, '1');
-        sceneUI.play(SCENARIO.intro, () => hub.show());
+        sceneUI.play(SCENARIO.intro, goHub);
       } else {
-        hub.show();
+        goHub();
       }
     },
   });
-}, SPLASH_DURATION);
+});
