@@ -15,6 +15,7 @@ import { PlayerData }   from './data/PlayerData.js';
 import { CHARACTERS }   from './data/characters.js';
 import { SCENARIO }     from './data/scenario.js';
 import { SettingsUI }   from './ui/SettingsUI.js';
+import { LevelUpUI }    from './ui/LevelUpUI.js';
 import { settings }     from './data/Settings.js';
 
 /* ── Données joueur ── */
@@ -40,20 +41,49 @@ function showMenu() {
   gsap.fromTo(overlay, { opacity: 0 }, { opacity: 1, duration: 0.4 });
 }
 
+/* ── Après victoire : EXP → level up → débriefing → hub ── */
+function handleVictory(stage) {
+  playerData.completeStage(stage.id, stage.rewards);
+
+  // Distribue l'EXP à tous les membres de l'équipe
+  const expGained = stage.rewards.exp ?? 0;
+  const lvlResults = _currentTeam.map(char => {
+    const oldLevel = playerData.getLevel(char.id);
+    const result   = playerData.addExp(char.id, expGained);
+    const prog     = playerData.expProgress(char.id);
+    return {
+      char,
+      oldLevel,
+      newLevel:  result.newLevel,
+      newExp:    prog.exp,
+      expGained,
+      leveled:   result.newLevel > oldLevel,
+    };
+  });
+
+  const goToHub = () => {
+    const debrief = SCENARIO.debriefings[stage.id];
+    hub.refresh();
+    if (debrief) {
+      sceneUI.play(debrief, () => hub.show());
+    } else {
+      hub.show();
+    }
+  };
+
+  // Si au moins un perso a monté de niveau → écran level up
+  if (lvlResults.some(r => r.leveled)) {
+    levelUpUI.play(lvlResults, goToHub);
+  } else {
+    // Pas de level up : juste débriefing + hub
+    goToHub();
+  }
+}
+
 /* ── Combat ── */
 const combatUI = new CombatUI((winner, stage) => {
   if (winner === 'player' && stage) {
-    playerData.completeStage(stage.id, stage.rewards);
-    const debrief = SCENARIO.debriefings[stage.id];
-    if (debrief) {
-      sceneUI.play(debrief, () => {
-        hub.refresh();
-        hub.show();
-      });
-    } else {
-      hub.refresh();
-      hub.show();
-    }
+    handleVictory(stage);
   } else {
     showMenu();
   }
@@ -61,11 +91,19 @@ const combatUI = new CombatUI((winner, stage) => {
 
 /* ── Sélection d'équipe ── */
 let _pendingStage = null;
+let _currentTeam  = [];
 
 const teamSelect = new TeamSelectUI(playerData, (team) => {
   const stage = _pendingStage;
   const wave  = stage ? stage.waves[0] : [];
-  combatUI.start(team, wave, stage);
+  _currentTeam = team;
+  // Applique le scaling de stats selon le niveau de chaque perso
+  const scaledTeam = team.map(char => ({
+    ...char,
+    level: playerData.getLevel(char.id),
+    stats: playerData.getScaledStats(char),
+  }));
+  combatUI.start(scaledTeam, wave, stage);
 });
 
 /* ── Hub ── */
@@ -98,6 +136,9 @@ document.getElementById('btn-collection')?.addEventListener('click', () => colle
 document.addEventListener('kuro:character-obtained', (e) => {
   if (e.detail?.id) playerData.addCharacter(e.detail.id);
 });
+
+/* ── Level Up ── */
+const levelUpUI = new LevelUpUI();
 
 /* ── Paramètres ── */
 const settingsUI = new SettingsUI(playerData, () => showMenu());

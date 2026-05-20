@@ -106,7 +106,10 @@ export class CombatUI {
           ${unit.shield > 0 ? `<span class="cu-shield-icon">🛡</span>` : ''}
         </div>
         <div class="cu-info">
-          <div class="cu-name">${unit.name}</div>
+          <div class="cu-name">
+            ${unit.name}
+            ${unit.side === 'player' ? `<span class="unit-level-badge">Lv.${unit.level ?? 1}</span>` : ''}
+          </div>
           <div class="cu-hp-bar-wrap">
             <div class="cu-hp-bar" style="width:100%;background:${el.color}"></div>
           </div>

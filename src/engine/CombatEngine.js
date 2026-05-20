@@ -59,7 +59,9 @@ export class CombatEngine {
       color:    data.color || '#00d4ff',
       side,
       index,
-      // Stats
+      // Niveau (affiché dans l'UI)
+      level:    data.level ?? 1,
+      // Stats (déjà scalées par main.js pour les joueurs)
       maxHp:    data.stats.hp,
       hp:       data.stats.hp,
       atk:      data.stats.atk,

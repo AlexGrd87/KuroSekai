@@ -5,6 +5,7 @@
 
 import { gsap }       from 'gsap';
 import { CHARACTERS, RARITIES } from '../data/characters.js';
+import { statMultiplier } from '../data/PlayerData.js';
 
 const ELEMENT_DATA = {
   Fire:    { color: '#ff5500', glow: '#ff2200', kanji: '火' },
@@ -61,6 +62,9 @@ export class TeamSelectUI {
       card.className = 'ts-char-card';
       card.dataset.id = char.id;
 
+      const level = this.playerData.getLevel(char.id);
+      const prog  = this.playerData.expProgress(char.id);
+
       card.innerHTML = `
         <div class="ts-char-bg" style="--el:${el.color};--glow:${el.glow};--rar:${rar.color}">
           <div class="ts-char-el">${el.kanji}</div>
@@ -68,6 +72,12 @@ export class TeamSelectUI {
           <div class="ts-char-stars" style="color:${rar.color}">${'★'.repeat(char.rarity)}</div>
           <div class="ts-char-name">${char.name}</div>
           <div class="ts-char-class">${char.class}</div>
+          <div class="ts-char-level">
+            <span class="ts-lv-badge">Lv.${level}</span>
+            <div class="ts-lv-bar-track">
+              <div class="ts-lv-bar" style="width:${prog.pct}%"></div>
+            </div>
+          </div>
           <div class="ts-char-check">✓</div>
         </div>
       `;
