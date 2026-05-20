@@ -65,6 +65,65 @@
     </div>
 
     <!-- ══════════════════════════════════════════
+         HUB — CARTE DES OPÉRATIONS
+    ══════════════════════════════════════════ -->
+    <div id="hub-screen">
+
+      <!-- Grille scanline décorative -->
+      <div id="hub-grid-overlay"></div>
+
+      <!-- Header -->
+      <header id="hub-header">
+        <button id="hub-back-btn" class="col-back-btn"><span class="col-back-arrow">←</span> MENU</button>
+        <div id="hub-title-block">
+          <span class="col-title-kanji">作戦</span>
+          <h2>CARTE DES OPÉRATIONS</h2>
+        </div>
+        <div id="hub-player-stats"></div>
+      </header>
+
+      <!-- Carte horizontale des stages -->
+      <div id="hub-map-wrap">
+        <!-- Nœuds injectés par JS -->
+      </div>
+
+      <!-- Silhouette ville bas de page -->
+      <div id="hub-city-silhouette"></div>
+
+      <!-- Panneau de détail stage (overlay) -->
+      <div id="hub-detail">
+        <div id="hub-detail-box">
+          <button id="hd-close-btn" class="col-modal-close-btn">✕</button>
+
+          <div id="hd-header">
+            <div id="hd-element">—</div>
+            <h3 id="hd-name">—</h3>
+            <p  id="hd-subtitle">—</p>
+            <div id="hd-diff-stars">—</div>
+          </div>
+
+          <p id="hd-lore">—</p>
+
+          <div id="hd-waves-block">
+            <div class="hd-section-label">VAGUES</div>
+            <div id="hd-waves-list"></div>
+          </div>
+
+          <div id="hd-rewards-block">
+            <div class="hd-section-label">RÉCOMPENSES</div>
+            <div id="hd-rewards-row">
+              <span id="hd-exp">—</span>
+              <span id="hd-currency">—</span>
+            </div>
+          </div>
+
+          <button id="hd-deploy-btn">⚔ DÉPLOYER</button>
+        </div>
+      </div>
+
+    </div><!-- /hub-screen -->
+
+    <!-- ══════════════════════════════════════════
          SÉLECTION D'ÉQUIPE
     ══════════════════════════════════════════ -->
     <div id="team-select-screen">

@@ -1,10 +1,10 @@
 /**
  * PlayerData.js
- * Gestion de la collection du joueur via localStorage.
- * Stocke les personnages obtenus, leur nombre de copies, et le niveau.
+ * Gestion de la collection et de la progression du joueur via localStorage.
  */
 
-const STORAGE_KEY = 'kuro_player_collection';
+const STORAGE_KEY       = 'kuro_player_collection';
+const PROGRESS_KEY      = 'kuro_player_progress';
 
 export class PlayerData {
   constructor() {
@@ -19,6 +19,17 @@ export class PlayerData {
     } catch {
       this.collection = {};
     }
+    try {
+      const raw = localStorage.getItem(PROGRESS_KEY);
+      const data = raw ? JSON.parse(raw) : {};
+      this.completedStages = new Set(data.completedStages || []);
+      this.exp             = data.exp      || 0;
+      this.currency        = data.currency || 0;
+    } catch {
+      this.completedStages = new Set();
+      this.exp             = 0;
+      this.currency        = 0;
+    }
   }
 
   /* ── Sauvegarde dans localStorage ── */
@@ -26,7 +37,15 @@ export class PlayerData {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.collection));
   }
 
-  /* ── Ajouter un personnage (ou une copie) ── */
+  _saveProgress() {
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify({
+      completedStages: [...this.completedStages],
+      exp:      this.exp,
+      currency: this.currency,
+    }));
+  }
+
+  /* ── Personnages ── */
   addCharacter(id) {
     if (!this.collection[id]) {
       this.collection[id] = { count: 1, level: 1, obtainedAt: Date.now() };
@@ -36,35 +55,41 @@ export class PlayerData {
     this._save();
   }
 
-  /* ── Vérifier si le joueur possède un personnage ── */
-  has(id) {
-    return !!this.collection[id];
+  has(id)      { return !!this.collection[id]; }
+  countOf(id)  { return this.collection[id]?.count ?? 0; }
+  uniqueCount(){ return Object.keys(this.collection).length; }
+
+  /* ── Stages ── */
+  completeStage(stageId, rewards = {}) {
+    this.completedStages.add(stageId);
+    if (rewards.exp)      this.exp      += rewards.exp;
+    if (rewards.currency) this.currency += rewards.currency;
+    this._saveProgress();
   }
 
-  /* ── Nombre de copies d'un personnage ── */
-  countOf(id) {
-    return this.collection[id]?.count ?? 0;
+  isStageCompleted(stageId) {
+    return this.completedStages.has(stageId);
   }
 
-  /* ── Nombre total de personnages uniques obtenus ── */
-  uniqueCount() {
-    return Object.keys(this.collection).length;
+  isStageUnlocked(stage) {
+    if (!stage.unlockAfter) return true;              // premier stage toujours dispo
+    return this.completedStages.has(stage.unlockAfter);
   }
 
-  /* ── Réinitialiser (debug) ── */
+  /* ── Reset (debug) ── */
   reset() {
-    this.collection = {};
+    this.collection      = {};
+    this.completedStages = new Set();
+    this.exp             = 0;
+    this.currency        = 0;
     this._save();
+    this._saveProgress();
   }
 
-  /* ── Données de démo : pré-rempli pour le développement ── */
+  /* ── Données de démo ── */
   seedDemo(characters) {
-    if (this.uniqueCount() > 0) return; // déjà des données
-    // Le joueur commence avec quelques personnages de démonstration
-    ['kira', 'ryuu', 'akane', 'taka', 'suki', 'jin'].forEach(id => {
-      this.addCharacter(id);
-    });
-    // Kira a 2 copies (doublon de démo)
+    if (this.uniqueCount() > 0) return;
+    ['kira', 'ryuu', 'akane', 'taka', 'suki', 'jin'].forEach(id => this.addCharacter(id));
     this.addCharacter('kira');
   }
 }

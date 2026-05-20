@@ -25,9 +25,10 @@ const ELEMENT_DATA = {
 
 export class CombatUI {
   constructor(onBack) {
-    this.onBack   = onBack;
-    this.screen   = document.getElementById('combat-screen');
-    this.engine   = null;
+    this.onBack      = onBack;
+    this.screen      = document.getElementById('combat-screen');
+    this.engine      = null;
+    this._currentStage = null;
     this._pickingTarget = false;
     this._pendingAction  = null; // { type: 'attack'|'skill', skillIndex }
 
@@ -38,10 +39,9 @@ export class CombatUI {
      DÉMARRAGE
   ════════════════════════════════ */
 
-  start(team) {
-    const stage   = STAGES[0];
-    const wave    = stage.waves[0];
-    this.engine   = new CombatEngine(team, wave);
+  start(team, enemyIds, stage = null) {
+    this._currentStage = stage;
+    this.engine   = new CombatEngine(team, enemyIds);
 
     // Réinitialise les listeners avant de re-binder (évite le double-bind)
     this._unbindActions();
@@ -59,7 +59,8 @@ export class CombatUI {
     gsap.killTweensOf(this.screen);
     gsap.to(this.screen, { opacity: 1, duration: 0.5, ease: 'power2.out' });
 
-    this._addLog(`⚔ Début du combat — ${stage.name}`, 'round');
+    const stageName = stage?.name ?? 'Combat';
+    this._addLog(`⚔ Début du combat — ${stageName}`, 'round');
     this._updateTurnUI();
 
     // Si l'ennemi commence (SPD plus élevé)
@@ -370,12 +371,15 @@ export class CombatUI {
   }
 
   _endCombat() {
+    const winner = this.engine?.winner;
+    const stage  = this._currentStage;
     gsap.to(this.screen, { opacity: 0, duration: 0.3, ease: 'power2.in',
       onComplete: () => {
         this.screen.style.display = 'none';
         document.getElementById('combat-result').style.display = 'none';
-        this.engine = null;
-        if (this.onBack) this.onBack();
+        this.engine        = null;
+        this._currentStage = null;
+        if (this.onBack) this.onBack(winner, stage);
       },
     });
   }
