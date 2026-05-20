@@ -366,6 +366,128 @@
 
     </div><!-- /collection-screen -->
 
+    <!-- ══════════════════════════════════════════
+         PARAMÈTRES
+    ══════════════════════════════════════════ -->
+    <div id="settings-screen">
+
+      <header id="settings-header">
+        <button id="settings-back-btn" class="col-back-btn"><span class="col-back-arrow">←</span> RETOUR</button>
+        <div id="settings-title-block">
+          <span class="col-title-kanji">設定</span>
+          <h2>PARAMÈTRES</h2>
+        </div>
+      </header>
+
+      <div id="settings-body">
+
+        <!-- ── AUDIO ── -->
+        <div class="settings-section">
+          <div class="settings-section-title">
+            <span class="settings-section-icon">🔊</span> AUDIO
+            <span class="settings-soon-tag">Bientôt</span>
+          </div>
+
+          <div class="settings-row">
+            <span class="settings-label">Musique</span>
+            <div class="settings-slider-wrap">
+              <input type="range" id="set-music-vol" class="settings-slider" min="0" max="100" step="1" value="70" />
+            </div>
+            <span class="settings-val" id="set-music-label">70%</span>
+          </div>
+
+          <div class="settings-row">
+            <span class="settings-label">Effets sonores</span>
+            <div class="settings-slider-wrap">
+              <input type="range" id="set-sfx-vol" class="settings-slider" min="0" max="100" step="1" value="80" />
+            </div>
+            <span class="settings-val" id="set-sfx-label">80%</span>
+          </div>
+        </div>
+
+        <!-- ── AFFICHAGE ── -->
+        <div class="settings-section">
+          <div class="settings-section-title">
+            <span class="settings-section-icon">🖥</span> AFFICHAGE
+          </div>
+
+          <div class="settings-row">
+            <span class="settings-label">Scanlines (effet CRT)</span>
+            <button id="set-scanlines" class="toggle toggle--on" role="switch" aria-checked="true">
+              <span class="toggle-thumb"></span>
+            </button>
+          </div>
+
+          <div class="settings-row">
+            <span class="settings-label">Animations réduites</span>
+            <button id="set-reduced" class="toggle" role="switch" aria-checked="false">
+              <span class="toggle-thumb"></span>
+            </button>
+          </div>
+
+          <div class="settings-row">
+            <span class="settings-label">Journal de combat</span>
+            <button id="set-combatlog" class="toggle toggle--on" role="switch" aria-checked="true">
+              <span class="toggle-thumb"></span>
+            </button>
+          </div>
+
+          <div class="settings-row">
+            <span class="settings-label">Vitesse de combat</span>
+            <div class="speed-group">
+              <button class="speed-btn" data-speed="slow">Lent</button>
+              <button class="speed-btn speed-btn--active" data-speed="normal">Normal</button>
+              <button class="speed-btn" data-speed="fast">Rapide</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── DONNÉES ── -->
+        <div class="settings-section">
+          <div class="settings-section-title">
+            <span class="settings-section-icon">🗄</span> DONNÉES
+          </div>
+
+          <div class="settings-row">
+            <span class="settings-label">Progression des stages</span>
+            <button id="set-reset-progress" class="settings-danger-btn">Réinitialiser</button>
+          </div>
+
+          <div class="settings-row">
+            <span class="settings-label">Collection de personnages</span>
+            <button id="set-reset-collection" class="settings-danger-btn">Réinitialiser</button>
+          </div>
+
+          <div class="settings-row">
+            <span class="settings-label">Cinématique d'introduction</span>
+            <button id="set-replay-intro" class="settings-action-btn">Rejouer</button>
+          </div>
+
+          <div class="settings-row settings-row--danger">
+            <span class="settings-label">Tout effacer (reset total)</span>
+            <button id="set-reset-all" class="settings-danger-btn settings-danger-btn--strong">Effacer tout</button>
+          </div>
+        </div>
+
+      </div><!-- /settings-body -->
+
+      <!-- Toast de confirmation -->
+      <div id="settings-toast"></div>
+
+      <!-- Modale de confirmation -->
+      <div id="settings-confirm">
+        <div id="sc-box">
+          <p id="sc-title">Confirmer ?</p>
+          <p id="sc-desc"></p>
+          <div id="sc-btns">
+            <button id="sc-no">Annuler</button>
+            <button id="sc-yes">Confirmer</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /settings-screen -->
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

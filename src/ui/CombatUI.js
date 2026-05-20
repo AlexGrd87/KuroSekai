@@ -10,6 +10,7 @@ import { gsap }         from 'gsap';
 import { CombatEngine } from '../engine/CombatEngine.js';
 import { STAGES }       from '../data/enemies.js';
 import { RARITIES }     from '../data/characters.js';
+import { settings }     from '../data/Settings.js';
 
 const ELEMENT_DATA = {
   Fire:    { color: '#ff5500', glow: '#ff2200' },
@@ -65,7 +66,7 @@ export class CombatUI {
 
     // Si l'ennemi commence (SPD plus élevé)
     if (this.engine.currentUnit?.side === 'enemy') {
-      setTimeout(() => this._doEnemyTurn(), 900);
+      setTimeout(() => this._doEnemyTurn(), settings.enemyDelay);
     }
   }
 
@@ -233,7 +234,7 @@ export class CombatUI {
     // Tour ennemi automatique
     if (this.engine.currentUnit?.side === 'enemy') {
       this._lockActions(true);
-      setTimeout(() => this._doEnemyTurn(), 900);
+      setTimeout(() => this._doEnemyTurn(), settings.enemyDelay);
     } else {
       this._updateTurnUI();
     }
@@ -270,7 +271,7 @@ export class CombatUI {
 
     // S'il y a encore des ennemis dans le tour order
     if (this.engine.currentUnit?.side === 'enemy') {
-      setTimeout(() => this._doEnemyTurn(), 750);
+      setTimeout(() => this._doEnemyTurn(), settings.enemyChainDelay);
     } else {
       this._lockActions(false);
       this._updateTurnUI();

@@ -14,6 +14,8 @@ import { SceneUI }      from './ui/SceneUI.js';
 import { PlayerData }   from './data/PlayerData.js';
 import { CHARACTERS }   from './data/characters.js';
 import { SCENARIO }     from './data/scenario.js';
+import { SettingsUI }   from './ui/SettingsUI.js';
+import { settings }     from './data/Settings.js';
 
 /* ── Données joueur ── */
 const playerData = new PlayerData();
@@ -97,7 +99,19 @@ document.addEventListener('kuro:character-obtained', (e) => {
   if (e.detail?.id) playerData.addCharacter(e.detail.id);
 });
 
+/* ── Paramètres ── */
+const settingsUI = new SettingsUI(playerData, () => showMenu());
+
+document.getElementById('btn-settings')?.addEventListener('click', () => {
+  const overlay = document.getElementById('ui-overlay');
+  gsap.to(overlay, {
+    opacity: 0, duration: 0.25, ease: 'power2.in',
+    onComplete: () => { overlay.style.display = 'none'; settingsUI.show(); },
+  });
+});
+
 /* ── Démarrage ── */
+settings.applyAll();
 scene.animate();
 ui.playIntro();
 
