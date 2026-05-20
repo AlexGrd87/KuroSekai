@@ -14,8 +14,12 @@ import { gsap } from 'gsap';
 import { GachaEngine } from '../gacha/GachaEngine.js';
 import { RARITIES } from '../data/characters.js';
 
+const COST_X1  = 300;
+const COST_X10 = 2700; // 10% de réduction
+
 export class SummonUI {
-  constructor() {
+  constructor(playerData) {
+    this.playerData = playerData;
     this.engine  = new GachaEngine();
     this.overlay = null; // div principale de l'écran de summon
     this.isAnimating = false;
@@ -36,7 +40,10 @@ export class SummonUI {
           <span class="s-kanji">召喚</span>
           <span class="s-roman">INVOCATION</span>
         </h2>
-        <div style="width:120px"></div>
+        <div id="summon-currency">
+          <span class="currency-icon">◈</span>
+          <span id="summon-currency-val">0</span>
+        </div>
       </div>
 
       <!-- Zone de résultats (cartes) -->
@@ -68,10 +75,12 @@ export class SummonUI {
           <button class="pull-btn" id="pull-x1">
             <span class="pull-count">×1</span>
             <span class="pull-label">INVOQUER</span>
+            <span class="pull-cost"><span class="pull-cost-icon">◈</span> ${COST_X1}</span>
           </button>
           <button class="pull-btn pull-x10" id="pull-x10">
             <span class="pull-count">×10</span>
             <span class="pull-label">INVOQUER</span>
+            <span class="pull-cost"><span class="pull-cost-icon">◈</span> ${COST_X10} <em class="pull-discount">−10%</em></span>
             <span class="pull-guarantee">3★ GARANTI</span>
           </button>
         </div>
@@ -93,7 +102,22 @@ export class SummonUI {
   /* ── Lance un tirage et anime la révélation ── */
   async _doPull(count) {
     if (this.isAnimating) return;
+
+    const cost = count === 1 ? COST_X1 : COST_X10;
+
+    // Vérification du solde
+    if (this.playerData.currency < cost) {
+      this._showInsufficientFunds(cost);
+      return;
+    }
+
     this.isAnimating = true;
+
+    // Déduction immédiate
+    this.playerData.currency -= cost;
+    this.playerData._saveProgress();
+    this._updateCurrencyDisplay();
+    this._updateButtonStates();
 
     const results = this.engine.pull(count);
     this._updatePityDisplay();
@@ -110,6 +134,35 @@ export class SummonUI {
     await this._revealCards(results);
 
     this.isAnimating = false;
+    this._updateButtonStates();
+  }
+
+  /* ── Met à jour l'affichage du solde ── */
+  _updateCurrencyDisplay() {
+    const el = this.overlay.querySelector('#summon-currency-val');
+    if (el) el.textContent = (this.playerData?.currency ?? 0).toLocaleString();
+  }
+
+  /* ── Active/désactive les boutons selon le solde ── */
+  _updateButtonStates() {
+    const currency = this.playerData?.currency ?? 0;
+    const btn1  = this.overlay.querySelector('#pull-x1');
+    const btn10 = this.overlay.querySelector('#pull-x10');
+    if (btn1)  btn1.disabled  = currency < COST_X1;
+    if (btn10) btn10.disabled = currency < COST_X10;
+  }
+
+  /* ── Notification solde insuffisant ── */
+  _showInsufficientFunds(cost) {
+    const needed = cost - (this.playerData?.currency ?? 0);
+    const msg = document.createElement('div');
+    msg.className = 'summon-toast summon-toast--error';
+    msg.textContent = `◈ insuffisantes — il vous manque ${needed} ◈`;
+    this.overlay.appendChild(msg);
+    gsap.fromTo(msg, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.3,
+      onComplete: () => gsap.to(msg, { opacity: 0, y: -20, delay: 1.8, duration: 0.3,
+        onComplete: () => msg.remove() })
+    });
   }
 
   /* ── Animation de flash lumineuse avant la révélation ── */
@@ -370,6 +423,8 @@ export class SummonUI {
     this.overlay.style.display = 'flex';
     this.overlay.querySelector('#cards-area').innerHTML = '';
     this._updatePityDisplay();
+    this._updateCurrencyDisplay();
+    this._updateButtonStates();
     gsap.fromTo(this.overlay, { opacity: 0 }, { opacity: 1, duration: 0.4 });
   }
 

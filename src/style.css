@@ -670,6 +670,74 @@ html, body {
   padding: 0.1rem 0.4rem;
 }
 
+/* Coût en monnaie sur les boutons */
+.pull-cost {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: #f0c040;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.pull-cost-icon {
+  font-size: 0.85rem;
+  color: #f0c040;
+  text-shadow: 0 0 8px rgba(240,192,64,0.7);
+}
+.pull-discount {
+  font-style: normal;
+  font-size: 0.6rem;
+  color: #66ffaa;
+  border: 1px solid rgba(102,255,170,0.4);
+  padding: 0 0.3rem;
+  border-radius: 2px;
+}
+
+/* Bouton désactivé */
+.pull-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Affichage de la monnaie dans le header */
+#summon-currency {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 120px;
+  justify-content: flex-end;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #f0c040;
+  text-shadow: 0 0 10px rgba(240,192,64,0.6);
+}
+.currency-icon {
+  font-size: 1.2rem;
+  text-shadow: 0 0 14px rgba(240,192,64,0.9);
+}
+
+/* Toast solde insuffisant */
+.summon-toast {
+  position: absolute;
+  bottom: 7rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.6rem 1.6rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  pointer-events: none;
+  z-index: 200;
+}
+.summon-toast--error {
+  background: rgba(220,40,40,0.85);
+  border: 1px solid rgba(255,80,80,0.6);
+  color: #fff;
+}
+
 /* Bouton x10 légèrement mis en avant */
 .pull-x10 {
   border-left-color: var(--violet);

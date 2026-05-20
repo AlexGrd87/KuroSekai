@@ -31,7 +31,7 @@ const ui     = new MenuUI();
 const sceneUI = new SceneUI();
 
 /* ── Écrans ── */
-const summon     = new SummonUI();
+const summon     = new SummonUI(playerData);
 const collection = new CollectionUI(playerData);
 
 /* ── Retour au menu ── */
