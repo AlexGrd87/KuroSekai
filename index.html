@@ -143,54 +143,110 @@
           </div>
         </header>
 
-        <!-- Zone héro centrale -->
-        <div id="hub-hero">
-          <div id="hub-hero-scan"></div>
-          <div id="hub-hero-kanji">世界黒</div>
-          <div id="hub-hero-name">KURO SEKAI</div>
-          <div id="hub-hero-tag">— SECTEUR ACTIF —</div>
-        </div>
+        <!-- Scène ville cyberpunk cliquable -->
+        <div id="hub-city-scene">
 
-        <!-- Navigation par icônes -->
-        <nav id="hub-icons">
+          <!-- Ciel + lune + étoiles -->
+          <div id="hub-sky">
+            <div id="hub-moon"></div>
+            <div class="hub-star" style="top:8%;left:12%;animation-delay:0s"></div>
+            <div class="hub-star" style="top:15%;left:35%;animation-delay:0.7s"></div>
+            <div class="hub-star" style="top:5%;left:60%;animation-delay:1.4s"></div>
+            <div class="hub-star" style="top:20%;left:80%;animation-delay:0.3s"></div>
+            <div class="hub-star" style="top:10%;left:90%;animation-delay:1.1s"></div>
+          </div>
 
-          <button class="hub-icon-btn" id="hub-icon-combat">
-            <div class="hub-icon-frame">
-              <div class="hub-icon-glow"></div>
-              <span class="hub-icon-glyph">⚔</span>
-            </div>
-            <span class="hub-icon-kanji">出撃</span>
-            <span class="hub-icon-label">COMBAT</span>
-          </button>
+          <!-- Silhouette de ville arrière-plan (déco) -->
+          <div id="hub-city-far"></div>
 
-          <button class="hub-icon-btn hub-icon-btn--summon" id="hub-icon-summon">
-            <div class="hub-icon-frame">
-              <div class="hub-icon-glow"></div>
-              <span class="hub-icon-glyph">召</span>
-            </div>
-            <span class="hub-icon-kanji">召喚</span>
-            <span class="hub-icon-label">INVOQUER</span>
-          </button>
+          <!-- Rangée de bâtiments cliquables -->
+          <div id="hub-buildings">
 
-          <button class="hub-icon-btn hub-icon-btn--col" id="hub-icon-collection">
-            <div class="hub-icon-frame">
-              <div class="hub-icon-glow"></div>
-              <span class="hub-icon-glyph">蒐</span>
-            </div>
-            <span class="hub-icon-kanji">蒐集</span>
-            <span class="hub-icon-label">COLLECTION</span>
-          </button>
+            <!-- COMBAT -->
+            <button class="hub-bld" id="hub-bld-combat">
+              <div class="bld-label">
+                <span class="bld-glyph">⚔</span>
+                <span class="bld-kanji">出撃</span>
+                <span class="bld-name">COMBAT</span>
+              </div>
+              <div class="bld-tower bld-tower--combat">
+                <div class="bld-antenna"></div>
+                <div class="bld-peak"></div>
+                <div class="bld-body">
+                  <div class="bld-wins bld-wins--3col"></div>
+                  <div class="bld-stripe"></div>
+                  <div class="bld-wins bld-wins--3col"></div>
+                  <div class="bld-logo">⚔</div>
+                </div>
+                <div class="bld-base-glow"></div>
+              </div>
+            </button>
 
-          <button class="hub-icon-btn hub-icon-btn--cfg" id="hub-icon-settings">
-            <div class="hub-icon-frame">
-              <div class="hub-icon-glow"></div>
-              <span class="hub-icon-glyph">⚙</span>
-            </div>
-            <span class="hub-icon-kanji">設定</span>
-            <span class="hub-icon-label">PARAMÈTRES</span>
-          </button>
+            <!-- INVOQUER -->
+            <button class="hub-bld hub-bld--summon" id="hub-bld-summon">
+              <div class="bld-label">
+                <span class="bld-glyph">召</span>
+                <span class="bld-kanji">召喚</span>
+                <span class="bld-name">INVOQUER</span>
+              </div>
+              <div class="bld-tower bld-tower--summon">
+                <div class="bld-crown"></div>
+                <div class="bld-body">
+                  <div class="bld-orb"></div>
+                  <div class="bld-wins bld-wins--2col"></div>
+                  <div class="bld-kanji-sign">召</div>
+                </div>
+                <div class="bld-base-glow"></div>
+              </div>
+            </button>
 
-        </nav>
+            <!-- COLLECTION -->
+            <button class="hub-bld hub-bld--col" id="hub-bld-collection">
+              <div class="bld-label">
+                <span class="bld-glyph">蒐</span>
+                <span class="bld-kanji">蒐集</span>
+                <span class="bld-name">COLLECTION</span>
+              </div>
+              <div class="bld-tower bld-tower--col">
+                <div class="bld-roof"></div>
+                <div class="bld-body">
+                  <div class="bld-screen"></div>
+                  <div class="bld-wins bld-wins--4col"></div>
+                  <div class="bld-stripe"></div>
+                </div>
+                <div class="bld-base-glow"></div>
+              </div>
+            </button>
+
+            <!-- PARAMÈTRES -->
+            <button class="hub-bld hub-bld--cfg" id="hub-bld-settings">
+              <div class="bld-label">
+                <span class="bld-glyph">⚙</span>
+                <span class="bld-kanji">設定</span>
+                <span class="bld-name">PARAMÈTRES</span>
+              </div>
+              <div class="bld-tower bld-tower--cfg">
+                <div class="bld-antenna bld-antenna--long"></div>
+                <div class="bld-body">
+                  <div class="bld-radar"></div>
+                  <div class="bld-wins bld-wins--2col"></div>
+                </div>
+                <div class="bld-base-glow"></div>
+              </div>
+            </button>
+
+          </div><!-- /hub-buildings -->
+
+          <!-- Sol / rue avec reflets -->
+          <div id="hub-ground">
+            <div class="hub-ground-line"></div>
+            <div class="hub-ground-line hub-ground-line--2"></div>
+          </div>
+
+          <!-- Brouillard bas de scène -->
+          <div id="hub-fog"></div>
+
+        </div><!-- /hub-city-scene -->
 
       </div><!-- /hub-home -->
 

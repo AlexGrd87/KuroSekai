@@ -29,14 +29,14 @@ export class HubUI {
   }
 
   _bindEvents() {
-    // Icônes hub-home
-    document.getElementById('hub-icon-combat')
+    // Bâtiments cliquables
+    document.getElementById('hub-bld-combat')
       ?.addEventListener('click', () => this._openMap());
-    document.getElementById('hub-icon-summon')
+    document.getElementById('hub-bld-summon')
       ?.addEventListener('click', () => { this.hide(); this.onSummon?.(); });
-    document.getElementById('hub-icon-collection')
+    document.getElementById('hub-bld-collection')
       ?.addEventListener('click', () => { this.hide(); this.onCollection?.(); });
-    document.getElementById('hub-icon-settings')
+    document.getElementById('hub-bld-settings')
       ?.addEventListener('click', () => { this.hide(); this.onSettings?.(); });
 
     // Carte des stages
@@ -62,16 +62,16 @@ export class HubUI {
 
     gsap.to(this.screen, { opacity: 1, duration: 0.4, ease: 'power2.out' });
 
-    // Cascade des icônes
-    gsap.fromTo('.hub-icon-btn',
-      { opacity: 0, y: 35, scale: 0.88 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.45, stagger: 0.07,
-        delay: 0.2, ease: 'back.out(1.6)' });
+    // Bâtiments qui montent depuis le sol
+    gsap.fromTo('.hub-bld',
+      { opacity: 0, y: 50, scale: 0.92 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.1,
+        delay: 0.2, ease: 'power3.out' });
 
-    // Hero kanji
-    gsap.fromTo('#hub-hero-kanji',
-      { opacity: 0, scale: 0.92 },
-      { opacity: 1, scale: 1, duration: 0.6, delay: 0.1, ease: 'power2.out' });
+    // Lune + ciel
+    gsap.fromTo('#hub-moon',
+      { opacity: 0, scale: 0.7 },
+      { opacity: 1, scale: 1, duration: 0.9, delay: 0.1, ease: 'power2.out' });
   }
 
   /** Masque le hub (navigation vers un autre écran plein-écran). */
@@ -120,9 +120,9 @@ export class HubUI {
         gsap.set(this.mapPanel, { display: 'none' });
         gsap.set(this.homeView, { display: 'flex', opacity: 0 });
         gsap.to(this.homeView, { opacity: 1, duration: 0.3, ease: 'power2.out' });
-        gsap.fromTo('.hub-icon-btn',
-          { opacity: 0, y: 18 },
-          { opacity: 1, y: 0, duration: 0.32, stagger: 0.06, ease: 'back.out(1.4)' });
+        gsap.fromTo('.hub-bld',
+          { opacity: 0, y: 30 },
+          { opacity: 1, y: 0, duration: 0.38, stagger: 0.08, ease: 'power3.out' });
       },
     });
   }
