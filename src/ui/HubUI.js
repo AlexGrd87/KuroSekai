@@ -10,12 +10,13 @@ import { gsap }   from 'gsap';
 import { STAGES } from '../data/enemies.js';
 
 export class HubUI {
-  constructor(playerData, onDeploy, onSummon, onCollection, onSettings) {
+  constructor(playerData, onDeploy, onSummon, onCollection, onSettings, onCampaign) {
     this.playerData   = playerData;
     this.onDeploy     = onDeploy;
     this.onSummon     = onSummon;
     this.onCollection = onCollection;
     this.onSettings   = onSettings;
+    this.onCampaign   = onCampaign;
 
     this.screen      = document.getElementById('hub-screen');
     this.homeView    = document.getElementById('hub-home');
@@ -31,7 +32,10 @@ export class HubUI {
   _bindEvents() {
     // Bâtiments cliquables
     document.getElementById('hub-bld-combat')
-      ?.addEventListener('click', () => this._openMap());
+      ?.addEventListener('click', () => {
+        if (this.onCampaign) this.onCampaign(() => this._openMap());
+        else this._openMap();
+      });
     document.getElementById('hub-bld-summon')
       ?.addEventListener('click', () => { this.hide(); this.onSummon?.(); });
     document.getElementById('hub-bld-collection')
@@ -62,16 +66,16 @@ export class HubUI {
 
     gsap.to(this.screen, { opacity: 1, duration: 0.4, ease: 'power2.out' });
 
-    // Bâtiments qui montent depuis le sol
-    gsap.fromTo('.hub-bld',
-      { opacity: 0, y: 50, scale: 0.92 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.1,
-        delay: 0.2, ease: 'power3.out' });
-
     // Lune + ciel
     gsap.fromTo('#hub-moon',
       { opacity: 0, scale: 0.7 },
       { opacity: 1, scale: 1, duration: 0.9, delay: 0.1, ease: 'power2.out' });
+
+    // Bâtiments qui montent depuis le sol
+    gsap.fromTo('.hub-bld',
+      { opacity: 0, y: 55, scale: 0.9 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.55, stagger: 0.1,
+        delay: 0.2, ease: 'power3.out' });
   }
 
   /** Masque le hub (navigation vers un autre écran plein-écran). */
@@ -121,8 +125,11 @@ export class HubUI {
         gsap.set(this.homeView, { display: 'flex', opacity: 0 });
         gsap.to(this.homeView, { opacity: 1, duration: 0.3, ease: 'power2.out' });
         gsap.fromTo('.hub-bld',
-          { opacity: 0, y: 30 },
-          { opacity: 1, y: 0, duration: 0.38, stagger: 0.08, ease: 'power3.out' });
+          { opacity: 0, y: 40 },
+          { opacity: 1, y: 0, duration: 0.42, stagger: 0.09, ease: 'power3.out' });
+        gsap.fromTo('#hub-moon',
+          { opacity: 0, scale: 0.75 },
+          { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' });
       },
     });
   }

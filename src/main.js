@@ -99,6 +99,8 @@ document.getElementById('ts-back')?.addEventListener('click', goHub);
    HUB — ÉCRAN PRINCIPAL
 ══════════════════════════════════════════ */
 
+const CAMPAIGN_KEY = 'kuro_campaign_v1';
+
 const hub = new HubUI(
   playerData,
 
@@ -118,6 +120,16 @@ const hub = new HubUI(
 
   /* onSettings */
   () => settingsUI.show(),
+
+  /* onCampaign — joue l'intro la première fois, puis ouvre la carte */
+  (openMap) => {
+    if (!localStorage.getItem(CAMPAIGN_KEY)) {
+      localStorage.setItem(CAMPAIGN_KEY, '1');
+      sceneUI.play(SCENARIO.intro, openMap);
+    } else {
+      openMap();
+    }
+  },
 );
 
 /* Retour hub depuis summon et collection */
@@ -146,20 +158,13 @@ const splashUI = new MenuUI();
 splashUI.playIntro();
 
 /* Bouton COMMENCER — clic manuel */
-const INTRO_KEY = 'kuro_intro_v1';
-
 document.getElementById('btn-start')?.addEventListener('click', () => {
   const overlay = document.getElementById('ui-overlay');
   gsap.to(overlay, {
     opacity: 0, duration: 0.45, ease: 'power2.in',
     onComplete: () => {
       overlay.style.display = 'none';
-      if (!localStorage.getItem(INTRO_KEY)) {
-        localStorage.setItem(INTRO_KEY, '1');
-        sceneUI.play(SCENARIO.intro, goHub);
-      } else {
-        goHub();
-      }
+      goHub();
     },
   });
 });
