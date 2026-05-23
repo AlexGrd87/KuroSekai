@@ -131,7 +131,7 @@ export class SettingsUI {
     });
 
     document.getElementById('set-replay-intro')?.addEventListener('click', () => {
-      localStorage.removeItem('kuro_intro_v1');
+      localStorage.removeItem('kuro_campaign_v1');
       this._toast('L\'intro sera rejouée au prochain lancement.');
     });
 
@@ -141,7 +141,7 @@ export class SettingsUI {
         'Collection, progression, paramètres — tout sera effacé.',
         () => {
           this.playerData.reset();
-          localStorage.removeItem('kuro_intro_v1');
+          localStorage.removeItem('kuro_campaign_v1');
           localStorage.removeItem('kuro_settings_v1');
           this._toast('Données effacées. Rechargez la page.');
         }

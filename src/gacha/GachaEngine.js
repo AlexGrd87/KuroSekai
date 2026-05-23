@@ -12,9 +12,10 @@
 import { CHARACTERS, RARITIES } from '../data/characters.js';
 
 export class GachaEngine {
-  constructor() {
-    this.pity5 = 0; // compteur depuis le dernier 5★
-    this.pity4 = 0; // compteur depuis le dernier 4★
+  constructor(playerData) {
+    this._playerData = playerData;
+    this.pity5 = playerData.pity5 ?? 0;
+    this.pity4 = playerData.pity4 ?? 0;
   }
 
   /* ── Effectue N tirages et retourne un tableau de personnages ── */
@@ -30,6 +31,8 @@ export class GachaEngine {
         results[9] = this._pullAtLeastRarity(3);
       }
     }
+    // Persiste les compteurs pity après chaque lot de tirages
+    this._playerData.updatePity(this.pity5, this.pity4);
     return results;
   }
 

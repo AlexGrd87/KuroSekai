@@ -187,7 +187,7 @@ export class HubUI {
 
   _updateStats() {
     const done  = this.playerData.completedStages.size;
-    const owned = this.playerData.collection.size;
+    const owned = this.playerData.uniqueCount();
     const curr  = this.playerData.currency;
 
     // Hub home — monnaie

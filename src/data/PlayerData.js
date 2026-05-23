@@ -43,9 +43,13 @@ export class PlayerData {
       const data = raw ? JSON.parse(raw) : {};
       this.completedStages = new Set(data.completedStages || []);
       this.currency        = data.currency || 0;
+      this.pity5           = data.pity5    ?? 0;
+      this.pity4           = data.pity4    ?? 0;
     } catch {
       this.completedStages = new Set();
       this.currency        = 0;
+      this.pity5           = 0;
+      this.pity4           = 0;
     }
   }
 
@@ -55,7 +59,16 @@ export class PlayerData {
     localStorage.setItem(PROGRESS_KEY, JSON.stringify({
       completedStages: [...this.completedStages],
       currency: this.currency,
+      pity5:    this.pity5,
+      pity4:    this.pity4,
     }));
+  }
+
+  /** Met à jour les compteurs pity gacha et sauvegarde. */
+  updatePity(pity5, pity4) {
+    this.pity5 = pity5;
+    this.pity4 = pity4;
+    this._saveProgress();
   }
 
   /* ════════════════════════════════

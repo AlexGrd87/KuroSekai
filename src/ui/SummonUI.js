@@ -20,7 +20,7 @@ const COST_X10 = 2700; // 10% de réduction
 export class SummonUI {
   constructor(playerData) {
     this.playerData = playerData;
-    this.engine  = new GachaEngine();
+    this.engine  = new GachaEngine(playerData);
     this.overlay = null; // div principale de l'écran de summon
     this.isAnimating = false;
     this._build();
