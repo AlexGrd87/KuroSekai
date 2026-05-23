@@ -178,7 +178,6 @@ export class CombatUI {
     }
 
     if (!unit.alive) {
-      gsap.to(div, { opacity: 0.3, scale: 0.92, duration: 0.4 });
       div.classList.add('combat-unit--dead');
     }
   }
@@ -193,17 +192,22 @@ export class CombatUI {
 
     const num = document.createElement('div');
     num.className   = `float-dmg float-dmg--${type}`;
-    num.textContent = type === 'heal' ? `+${dmg}` : `-${dmg}`;
+    num.textContent = type === 'heal' ? `+${dmg.toLocaleString()}` : `-${dmg.toLocaleString()}`;
     document.getElementById('combat-screen').appendChild(num);
 
-    const rect = div.getBoundingClientRect();
+    const rect       = div.getBoundingClientRect();
     const screenRect = document.getElementById('combat-screen').getBoundingClientRect();
-    num.style.left = `${rect.left - screenRect.left + rect.width / 2}px`;
-    num.style.top  = `${rect.top  - screenRect.top  + rect.height * 0.3}px`;
+    const jitter     = (Math.random() - 0.5) * 20;
+    num.style.left   = `${rect.left - screenRect.left + rect.width / 2 + jitter}px`;
+    num.style.top    = `${rect.top  - screenRect.top  + rect.height * 0.25}px`;
+
+    const isCrit  = type === 'crit';
+    const riseY   = isCrit ? -70 : -50;
+    const dur     = (isCrit ? 1.4 : 1.1) / this._speedMult;
 
     gsap.fromTo(num,
-      { opacity: 1, y: 0, scale: 1.2 },
-      { opacity: 0, y: -50, scale: 0.9, duration: 1.1, ease: 'power2.out',
+      { opacity: 1, y: 0, scale: isCrit ? 1.5 : 1.2 },
+      { opacity: 0, y: riseY, scale: 0.85, duration: dur, ease: 'power2.out',
         onComplete: () => num.remove() }
     );
   }
@@ -286,7 +290,12 @@ export class CombatUI {
     } else {
       const r = this.engine.useSkill(actor.uid, this._pendingAction.skillIndex, targetUnit.uid);
       if (r?.results) {
-        r.results.forEach(({ target, dmg }) => this._applyResult(actor, target, dmg, null));
+        const isAoe = r.results.length > 1;
+        if (isAoe) this._skillVFX(actor.element);
+        r.results.forEach(({ target, dmg }, i) =>
+          this._applyResult(actor, target, dmg, null,
+            isAoe ? { aoe: true, aoeDelay: i * 30 } : null)
+        );
       }
     }
 
@@ -324,9 +333,12 @@ export class CombatUI {
     const result = this.engine.doEnemyTurn();
 
     if (result?.results) {
-      result.results.forEach(({ target, dmg }) => {
+      const isAoe = result.results.length > 1;
+      if (isAoe) this._skillVFX(unit.element);
+      result.results.forEach(({ target, dmg }, i) => {
         if (target && dmg !== undefined) {
-          this._applyResult(unit, target, dmg, null);
+          this._applyResult(unit, target, dmg, null,
+            isAoe ? { aoe: true, aoeDelay: i * 30 } : null);
         }
       });
     }
@@ -383,8 +395,11 @@ export class CombatUI {
     if (bestIdx >= 0) {
       const r = this.engine.useSkill(actor.uid, bestIdx, target.uid);
       if (r?.results) {
-        r.results.forEach(({ target: t, dmg }) => {
-          if (t && dmg !== undefined) this._applyResult(actor, t, dmg, null);
+        const isAoe = r.results.length > 1;
+        if (isAoe) this._skillVFX(actor.element);
+        r.results.forEach(({ target: t, dmg }, i) => {
+          if (t && dmg !== undefined) this._applyResult(actor, t, dmg, null,
+            isAoe ? { aoe: true, aoeDelay: i * 30 } : null);
         });
       }
     } else {
@@ -418,16 +433,159 @@ export class CombatUI {
      HELPERS VISUELS
   ════════════════════════════════ */
 
-  _applyResult(source, target, dmg, tag) {
-    this._updateUnit(target);
-    if (dmg > 0) {
-      this._floatDamage(target.uid, dmg);
-      // SFX selon contexte
-      const isCrit = this.engine.log.slice(-3).some(e => e.tag === 'crit');
-      audio.play(isCrit ? 'hit_crit' : 'hit_normal');
-      if (!target.alive) setTimeout(() => audio.play('unit_ko'), 120);
+  /**
+   * Applique un résultat de combat avec animations :
+   *  - Lunge de l'attaquant (single target)
+   *  - Hit flash + damage number au moment de l'impact
+   *  - Effets spéciaux selon crit / AoE
+   * @param {object}  source
+   * @param {object}  target
+   * @param {number}  dmg
+   * @param {string}  tag
+   * @param {object}  extra  { aoe: bool, aoeDelay: ms }
+   */
+  _applyResult(source, target, dmg, tag, extra = null) {
+    const isCrit = this.engine.log.slice(-3).some(e => e.tag === 'crit');
+    const isAoe  = extra?.aoe ?? false;
+    const delay  = extra?.aoeDelay ?? 0;
+
+    const doHit = () => {
+      // Flash portrait
+      this._hitFlash(target.uid, isCrit);
+      // Mise à jour HP bar
+      this._updateUnit(target);
+      // Nombre flottant + SFX
+      if (dmg > 0) {
+        this._floatDamage(target.uid, dmg, isCrit ? 'crit' : 'damage');
+        audio.play(isCrit ? 'hit_crit' : 'hit_normal');
+        if (isCrit) this._screenShake();
+      }
+      // Shake (sauf unité morte — remplacé par deathEffect)
+      if (target.alive) {
+        this._shakeUnit(target.uid, source.side === 'enemy');
+      } else {
+        setTimeout(() => {
+          audio.play('unit_ko');
+          this._deathEffect(target.uid, target.element);
+        }, 80 / this._speedMult);
+      }
+    };
+
+    if (isAoe) {
+      // AoE : pas de lunge, impact décalé par index
+      setTimeout(doHit, delay / this._speedMult);
+    } else {
+      // Single target : lunge vers la cible
+      this._attackLunge(source.uid, target.uid, doHit);
     }
-    this._shakeUnit(target.uid, source.side === 'enemy');
+  }
+
+  /** Animation de lunge : l'attaquant s'élance vers la cible puis revient. */
+  _attackLunge(sourceUid, targetUid, onImpact) {
+    const srcEl = document.querySelector(`[data-uid="${sourceUid}"]`);
+    if (!srcEl) { onImpact?.(); return; }
+
+    const tgtEl = document.querySelector(`[data-uid="${targetUid}"]`);
+    let lungeX = 0, lungeY = 0;
+
+    if (tgtEl) {
+      const sr = srcEl.getBoundingClientRect();
+      const tr = tgtEl.getBoundingClientRect();
+      const dx = (tr.left + tr.width  / 2) - (sr.left + sr.width  / 2);
+      const dy = (tr.top  + tr.height / 2) - (sr.top  + sr.height / 2);
+      const dist   = Math.sqrt(dx * dx + dy * dy) || 1;
+      const factor = Math.min(0.38, 90 / dist);
+      lungeX = dx * factor;
+      lungeY = dy * factor;
+    } else {
+      // Pas de cible précise (AoE self) : petit hop vertical
+      lungeY = srcEl.closest('#combat-player-row') ? -18 : 18;
+    }
+
+    const spd = this._speedMult;
+    gsap.timeline()
+      .to(srcEl, { x: lungeX, y: lungeY, duration: 0.11 / spd, ease: 'power2.in' })
+      .call(() => onImpact?.())
+      .to(srcEl, { x: 0, y: 0, duration: 0.22 / spd, ease: 'power3.out' });
+  }
+
+  /** Flash lumineux sur le portrait au moment de l'impact. */
+  _hitFlash(targetUid, isCrit = false) {
+    const portrait = document.querySelector(`[data-uid="${targetUid}"] .cu-portrait`);
+    if (!portrait) return;
+    const cls = isCrit ? 'is-hit-crit' : 'is-hit';
+    portrait.classList.remove('is-hit', 'is-hit-crit');
+    // Force reflow pour que l'animation rejoue
+    void portrait.offsetWidth;
+    portrait.classList.add(cls);
+    setTimeout(() => portrait.classList.remove(cls),
+      (isCrit ? 220 : 180) / this._speedMult);
+  }
+
+  /** Effet de mort : grayscale + particules élémentaires. */
+  _deathEffect(uid, element) {
+    const el     = document.querySelector(`[data-uid="${uid}"]`);
+    const elData = ELEMENT_DATA[element] || ELEMENT_DATA.Neutral;
+    if (el) {
+      gsap.to(el, {
+        opacity: 0.2,
+        scale: 0.88,
+        filter: 'grayscale(1) brightness(0.35)',
+        duration: 0.45 / this._speedMult,
+        ease: 'power2.out',
+      });
+    }
+    // Burst de 7 particules
+    const screen     = document.getElementById('combat-screen');
+    const screenRect = screen.getBoundingClientRect();
+    const ref        = el ?? screen;
+    const refRect    = ref.getBoundingClientRect();
+    const cx = refRect.left - screenRect.left + refRect.width  / 2;
+    const cy = refRect.top  - screenRect.top  + refRect.height / 2;
+
+    for (let i = 0; i < 7; i++) {
+      const p = document.createElement('div');
+      p.className = 'death-particle';
+      p.style.setProperty('--dc', elData.color);
+      p.style.left = `${cx + (Math.random() - 0.5) * 16}px`;
+      p.style.top  = `${cy + (Math.random() - 0.5) * 16}px`;
+      screen.appendChild(p);
+      gsap.to(p, {
+        x: (Math.random() - 0.5) * 70,
+        y: (Math.random() - 0.5) * 60 - 20,
+        opacity: 0,
+        scale: Math.random() * 1.5 + 0.3,
+        duration: (0.45 + Math.random() * 0.35) / this._speedMult,
+        delay: i * 0.025,
+        ease: 'power2.out',
+        onComplete: () => p.remove(),
+      });
+    }
+  }
+
+  /** Flash radial coloré en overlay (skill élémentaire). */
+  _skillVFX(element) {
+    const elData  = ELEMENT_DATA[element] || ELEMENT_DATA.Neutral;
+    const overlay = document.createElement('div');
+    overlay.className = 'skill-vfx-overlay';
+    overlay.style.setProperty('--el', elData.color);
+    this.screen.appendChild(overlay);
+    const dur = 0.15 / this._speedMult;
+    gsap.fromTo(overlay,
+      { opacity: 0 },
+      { opacity: 1, duration: dur, yoyo: true, repeat: 1, ease: 'power2.inOut',
+        onComplete: () => overlay.remove() }
+    );
+  }
+
+  /** Micro-tremblement de l'écran pour les coups critiques. */
+  _screenShake() {
+    const spd = this._speedMult;
+    gsap.timeline()
+      .to(this.screen, { x: -7, duration: 0.03 / spd })
+      .to(this.screen, { x:  6, duration: 0.03 / spd })
+      .to(this.screen, { x: -4, duration: 0.03 / spd })
+      .to(this.screen, { x:  0, duration: 0.03 / spd });
   }
 
   /** Traite les événements passifs enregistrés par CombatEngine (heal, crit…) */

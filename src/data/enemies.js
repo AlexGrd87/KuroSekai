@@ -250,6 +250,7 @@ export const STAGES = [
       ['phantom_hacker', 'neuro_guard', 'drone_mk1'],
     ],
     rewards: { exp: 120, currency: 300 },
+    chapter: 1, isBoss: false,
   },
   {
     id: 'stage_02',
@@ -268,6 +269,7 @@ export const STAGES = [
       ['phantom_hacker', 'cyber_witch', 'plasma_sentinel'],
     ],
     rewards: { exp: 280, currency: 600 },
+    chapter: 1, isBoss: false,
   },
   {
     id: 'stage_03',
@@ -286,6 +288,7 @@ export const STAGES = [
       ['shadow_samurai', 'tide_crawler', 'cyber_witch'],
     ],
     rewards: { exp: 480, currency: 1000 },
+    chapter: 1, isBoss: true,
   },
   {
     id: 'stage_04',
@@ -304,6 +307,7 @@ export const STAGES = [
       ['cyber_oni', 'network_spider', 'mech_overlord'],
     ],
     rewards: { exp: 750, currency: 1600 },
+    chapter: 2, isBoss: false,
   },
   {
     id: 'stage_05',
@@ -321,6 +325,7 @@ export const STAGES = [
       ['void_archon', 'cyber_oni', 'network_spider'],
     ],
     rewards: { exp: 1200, currency: 3000 },
+    chapter: 2, isBoss: true,
   },
   {
     id: 'stage_06',
@@ -339,6 +344,7 @@ export const STAGES = [
       ['void_specter', 'arc_sentinel', 'phantom_hacker'],
     ],
     rewards: { exp: 580, currency: 1200 },
+    chapter: 2, isBoss: false,
   },
   {
     id: 'stage_07',
@@ -357,6 +363,7 @@ export const STAGES = [
       ['iron_colossus', 'regen_drone', 'cyber_oni'],
     ],
     rewards: { exp: 900, currency: 2000 },
+    chapter: 3, isBoss: false,
   },
   {
     id: 'stage_08',
@@ -375,6 +382,7 @@ export const STAGES = [
       ['void_archon', 'void_specter', 'network_spider'],
     ],
     rewards: { exp: 1400, currency: 3500 },
+    chapter: 3, isBoss: false,
   },
   {
     id: 'stage_09',
@@ -393,5 +401,6 @@ export const STAGES = [
       ['void_archon', 'mech_overlord', 'arc_sentinel'],
     ],
     rewards: { exp: 2000, currency: 5000 },
+    chapter: 3, isBoss: true,
   },
 ];

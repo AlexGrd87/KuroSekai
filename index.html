@@ -63,6 +63,32 @@
     </div>
 
     <!-- ══════════════════════════════════════════
+         REWARD POPUP (après victoire)
+    ══════════════════════════════════════════ -->
+    <div id="reward-popup">
+      <div id="reward-box">
+        <div id="reward-shine"></div>
+        <div id="reward-stars">★ ★ ★</div>
+        <div id="reward-title">VICTOIRE</div>
+        <div id="reward-stage-name"></div>
+        <div id="reward-divider"></div>
+        <div id="reward-items">
+          <div class="reward-row" id="rrow-exp">
+            <span class="rr-icon">✦</span>
+            <span class="rr-label">EXPÉRIENCE</span>
+            <span class="rr-val" id="rval-exp">+0</span>
+          </div>
+          <div class="reward-row rrow-cur" id="rrow-cur">
+            <span class="rr-icon">◈</span>
+            <span class="rr-label">MONNAIE</span>
+            <span class="rr-val" id="rval-cur">+0</span>
+          </div>
+        </div>
+        <button id="reward-continue-btn">CONTINUER →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
          MONTÉE DE NIVEAU
     ══════════════════════════════════════════ -->
     <div id="levelup-screen">
@@ -378,6 +404,24 @@
                 <span class="hzb-tag">蒐集</span>
               </div>
               <div class="hzb-sub">COMBATTANTS · ÉQUIPE</div>
+              <div class="hzb-bar"><div class="hzb-bar-fill"></div></div>
+            </div>
+            <div class="hzb-arrow-col">▶</div>
+          </button>
+
+          <!-- BOUTIQUE -->
+          <button class="hub-bld hub-zone-btn hub-zone-btn--shop" id="hub-bld-shop">
+            <div class="hzb-side-glow"></div>
+            <div class="hzb-icon-col">
+              <span class="hzb-icon-sym">店</span>
+              <span class="hzb-icon-kanji">購</span>
+            </div>
+            <div class="hzb-body">
+              <div class="hzb-header">
+                <span class="hzb-label">BOUTIQUE</span>
+                <span class="hzb-tag">購買</span>
+              </div>
+              <div class="hzb-sub">OBJETS · INVOCATIONS</div>
               <div class="hzb-bar"><div class="hzb-bar-fill"></div></div>
             </div>
             <div class="hzb-arrow-col">▶</div>
@@ -845,6 +889,50 @@
       </div>
 
     </div><!-- /settings-screen -->
+
+    <!-- ══════════════════════════════════════════
+         BOUTIQUE
+    ══════════════════════════════════════════ -->
+    <div id="shop-screen">
+
+      <header id="shop-header">
+        <button id="shop-back-btn" class="col-back-btn">
+          <span class="col-back-arrow">←</span> RETOUR
+        </button>
+        <div id="shop-title-block">
+          <span class="col-title-kanji">店</span>
+          <h2>BOUTIQUE</h2>
+        </div>
+        <div id="shop-currency-display">
+          <span class="shop-cur-icon">◈</span>
+          <span id="shop-currency-val">0</span>
+        </div>
+      </header>
+
+      <!-- Onglets -->
+      <div id="shop-tabs">
+        <button class="shop-tab-btn shop-tab-btn--active" data-tab="items">🧪 OBJETS</button>
+        <button class="shop-tab-btn" data-tab="summon">🔮 INVOCATIONS</button>
+        <button class="shop-tab-btn" data-tab="boost">⚡ BOOST</button>
+      </div>
+
+      <!-- Grille d'articles -->
+      <div id="shop-grid"></div>
+
+      <!-- Sélecteur de personnage (potions EXP) -->
+      <div id="shop-char-picker">
+        <div id="scp-box">
+          <h3 id="scp-title">Choisir un combattant</h3>
+          <p  id="scp-item-desc"></p>
+          <div id="scp-chars"></div>
+          <button id="scp-cancel">Annuler</button>
+        </div>
+      </div>
+
+      <!-- Toast de confirmation -->
+      <div id="shop-toast"></div>
+
+    </div><!-- /shop-screen -->
 
     <script type="module" src="/src/main.js"></script>
   </body>

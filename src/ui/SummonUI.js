@@ -1,33 +1,37 @@
 /**
  * SummonUI.js
- * Écran d'invocation complet — le cœur du gacha.
- *
- * Flow :
- *  1. Écran d'invocation avec boutons x1 et x10
- *  2. Animation flash + transition
- *  3. Révélation des cartes une par une (ou toutes en x10)
- *  4. Effets spéciaux selon la rareté (glow, particules CSS)
- *  5. Bouton retour vers le menu
+ * Écran d'invocation — gacha avec :
+ *  - Cinématique plein-écran pour les tirages 5★ (x1)
+ *  - Flip carte par carte sur le x10 (rareté croissante = suspense)
+ *  - Panneau historique des 100 derniers pulls avec stats
+ *  - Indication dynamique "4★ dans N pulls" sur le bouton x10
  */
 
-import { gsap } from 'gsap';
+import { gsap }        from 'gsap';
 import { GachaEngine } from '../gacha/GachaEngine.js';
-import { RARITIES } from '../data/characters.js';
-import { audio } from '../audio/AudioManager.js';
+import { RARITIES }    from '../data/characters.js';
+import { audio }       from '../audio/AudioManager.js';
 
 const COST_X1  = 300;
-const COST_X10 = 2700; // 10% de réduction
+const COST_X10 = 2700;
 
 export class SummonUI {
   constructor(playerData) {
-    this.playerData = playerData;
-    this.engine  = new GachaEngine(playerData);
-    this.overlay = null; // div principale de l'écran de summon
+    this.playerData  = playerData;
+    this.engine      = new GachaEngine(playerData);
+    this.overlay     = null;
+    this._cinematic  = null;
+    this._histPanel  = null;
     this.isAnimating = false;
     this._build();
+    this._buildCinematic();
+    this._buildHistoryPanel();
   }
 
-  /* ── Construit le DOM de l'écran d'invocation ── */
+  /* ══════════════════════════════════════════
+     BUILD DOM
+  ══════════════════════════════════════════ */
+
   _build() {
     this.overlay = document.createElement('div');
     this.overlay.id = 'summon-screen';
@@ -41,19 +45,20 @@ export class SummonUI {
           <span class="s-kanji">召喚</span>
           <span class="s-roman">INVOCATION</span>
         </h2>
-        <div id="summon-currency">
-          <span class="currency-icon">◈</span>
-          <span id="summon-currency-val">0</span>
+        <div id="summon-header-right">
+          <div id="summon-currency">
+            <span class="currency-icon">◈</span>
+            <span id="summon-currency-val">0</span>
+          </div>
+          <button id="summon-history-btn" title="Historique des tirages">歴</button>
         </div>
       </div>
 
       <!-- Zone de résultats (cartes) -->
       <div id="cards-area"></div>
 
-      <!-- Pity + Boutons de pull regroupés en bas -->
+      <!-- Pity + Boutons de pull -->
       <div id="summon-bottom">
-
-        <!-- Compteurs de pity au-dessus des boutons -->
         <div id="pity-display">
           <div class="pity-bar">
             <span class="pity-label">5★ LÉGENDAIRE</span>
@@ -71,7 +76,6 @@ export class SummonUI {
           </div>
         </div>
 
-        <!-- Boutons de pull -->
         <div id="summon-actions">
           <button class="pull-btn" id="pull-x1">
             <span class="pull-count">×1</span>
@@ -82,10 +86,9 @@ export class SummonUI {
             <span class="pull-count">×10</span>
             <span class="pull-label">INVOQUER</span>
             <span class="pull-cost"><span class="pull-cost-icon">◈</span> ${COST_X10} <em class="pull-discount">−10%</em></span>
-            <span class="pull-guarantee">3★ GARANTI</span>
+            <span class="pull-guarantee" id="pull-x10-guarantee">3★ GARANTI</span>
           </button>
         </div>
-
       </div>
     `;
 
@@ -93,20 +96,77 @@ export class SummonUI {
     this._bindEvents();
   }
 
-  /* ── Lie les boutons aux actions ── */
-  _bindEvents() {
-    this.overlay.querySelector('#summon-back').addEventListener('click', () => this.hide());
-    this.overlay.querySelector('#pull-x1').addEventListener('click', () => this._doPull(1));
-    this.overlay.querySelector('#pull-x10').addEventListener('click', () => this._doPull(10));
+  _buildCinematic() {
+    this._cinematic = document.createElement('div');
+    this._cinematic.id = 'summon-cinematic';
+    this._cinematic.innerHTML = `
+      <!-- Rayons de lumière -->
+      <div class="cin-rays">
+        ${Array.from({ length: 12 }, (_, i) =>
+          `<div class="cin-ray" style="--angle:${i * 30}deg"></div>`
+        ).join('')}
+      </div>
+      <!-- Particules flottantes -->
+      <div id="cin-particles"></div>
+      <!-- Grande carte -->
+      <div id="cin-card-wrap"></div>
+      <!-- Texte personnage -->
+      <div id="cin-info">
+        <div id="cin-rarity-label">LÉGENDAIRE</div>
+        <div id="cin-char-name"></div>
+        <div id="cin-char-title"></div>
+      </div>
+      <!-- Invite à continuer -->
+      <div id="cin-continue">
+        <span>Appuyez pour continuer</span>
+        <span class="cin-continue-arrow">▼</span>
+      </div>
+    `;
+    document.body.appendChild(this._cinematic);
   }
 
-  /* ── Lance un tirage et anime la révélation ── */
+  _buildHistoryPanel() {
+    this._histPanel = document.createElement('div');
+    this._histPanel.id = 'summon-history-panel';
+    this._histPanel.innerHTML = `
+      <div id="hist-header">
+        <div id="hist-title">
+          <span class="hist-kanji">歴</span>
+          <span class="hist-roman">HISTORIQUE</span>
+        </div>
+        <button id="hist-close">✕</button>
+      </div>
+      <div id="hist-stats"></div>
+      <div id="hist-list"></div>
+    `;
+    document.body.appendChild(this._histPanel);
+    this._histPanel.querySelector('#hist-close')
+      .addEventListener('click', () => this._hideHistory());
+  }
+
+  /* ══════════════════════════════════════════
+     EVENTS
+  ══════════════════════════════════════════ */
+
+  _bindEvents() {
+    this.overlay.querySelector('#summon-back')
+      .addEventListener('click', () => this.hide());
+    this.overlay.querySelector('#pull-x1')
+      .addEventListener('click', () => this._doPull(1));
+    this.overlay.querySelector('#pull-x10')
+      .addEventListener('click', () => this._doPull(10));
+    this.overlay.querySelector('#summon-history-btn')
+      .addEventListener('click', () => this._showHistory());
+  }
+
+  /* ══════════════════════════════════════════
+     LOGIQUE DE TIRAGE
+  ══════════════════════════════════════════ */
+
   async _doPull(count) {
     if (this.isAnimating) return;
 
     const cost = count === 1 ? COST_X1 : COST_X10;
-
-    // Vérification du solde
     if (this.playerData.currency < cost) {
       this._showInsufficientFunds(cost);
       return;
@@ -114,7 +174,6 @@ export class SummonUI {
 
     this.isAnimating = true;
 
-    // Déduction immédiate
     this.playerData.currency -= cost;
     this.playerData._saveProgress();
     this._updateCurrencyDisplay();
@@ -123,63 +182,373 @@ export class SummonUI {
     const results = this.engine.pull(count);
     this._updatePityDisplay();
 
-    // Sauvegarde chaque personnage tiré dans la collection du joueur
+    // Enregistre dans l'historique joueur
+    this.playerData.addPullHistory(results);
+
+    // Dispatch des personnages obtenus
     results.forEach(char => {
-      document.dispatchEvent(new CustomEvent('kuro:character-obtained', { detail: { id: char.id } }));
+      document.dispatchEvent(
+        new CustomEvent('kuro:character-obtained', { detail: { id: char.id } })
+      );
     });
 
-    // Détermine la meilleure rareté pour calibrer l'effet flash
     const bestRarity = Math.max(...results.map(r => r.rarity));
 
-    // SFX selon meilleure rareté du tirage
-    if (bestRarity >= 5) audio.play('summon_legendary');
-    else if (bestRarity >= 4) audio.play('summon_rare');
-    else audio.play('summon_pull');
+    if (count === 1 && bestRarity >= 5) {
+      // x1 + 5★ → flash PUIS cinématique
+      audio.play('summon_legendary');
+      await this._playFlash(5);
+      await this._playCinematic5star(results[0]);
+    } else if (count === 1) {
+      // x1 normal → flash + révélation simple
+      if (bestRarity >= 4) audio.play('summon_rare');
+      else                  audio.play('summon_pull');
+      await this._playFlash(bestRarity);
+    } else {
+      // x10 → flash muet (sons joués pendant le flip)
+      await this._playFlash(bestRarity);
+    }
 
-    await this._playFlash(bestRarity);
     await this._revealCards(results);
 
     this.isAnimating = false;
     this._updateButtonStates();
   }
 
-  /* ── Met à jour l'affichage du solde ── */
+  /* ══════════════════════════════════════════
+     CINÉMATIQUE 5★
+  ══════════════════════════════════════════ */
+
+  _playCinematic5star(char) {
+    return new Promise(resolve => {
+      const el     = this._cinematic;
+      const rarity = RARITIES[char.rarity];
+
+      // Grande carte
+      const wrap = el.querySelector('#cin-card-wrap');
+      wrap.innerHTML = '';
+      const bigCard = this._createCard(char);
+      bigCard.classList.add('cin-card--big');
+      wrap.appendChild(bigCard);
+
+      // Textes
+      const rarityLabel = el.querySelector('#cin-rarity-label');
+      rarityLabel.textContent  = rarity.label.toUpperCase();
+      rarityLabel.style.color  = rarity.color;
+      rarityLabel.style.textShadow = `0 0 20px ${rarity.glow}, 0 0 40px ${rarity.glow}`;
+      el.querySelector('#cin-char-name').textContent  = char.name;
+      el.querySelector('#cin-char-title').textContent = char.title;
+
+      // Particules
+      this._spawnParticles(el.querySelector('#cin-particles'), rarity.glow);
+
+      // States initiaux
+      gsap.set(el, { display: 'flex', opacity: 0 });
+      gsap.set(el.querySelectorAll('.cin-ray'), { scaleX: 0 });
+      gsap.set(wrap, { opacity: 0, scale: 0.25, rotateY: 180 });
+      gsap.set('#cin-info', { opacity: 0, y: 28 });
+      gsap.set('#cin-continue', { opacity: 0 });
+
+      const tl = gsap.timeline();
+
+      // Fond noir
+      tl.to(el, { opacity: 1, duration: 0.35, ease: 'power2.in' });
+
+      // Rayons explosent
+      tl.to(el.querySelectorAll('.cin-ray'), {
+        scaleX: 1,
+        duration: 0.55,
+        stagger: { each: 0.04, from: 'random' },
+        ease: 'power3.out',
+      }, '-=0.05');
+
+      // Carte flip-in dramatique
+      tl.to(wrap, {
+        opacity: 1, scale: 1, rotateY: 0,
+        duration: 0.85,
+        ease: 'back.out(1.7)',
+      }, '-=0.25');
+
+      // Glow pulsant sur la grande carte
+      tl.call(() => this._addGlowPulse(bigCard), [], '-=0.2');
+
+      // Infos personnage
+      tl.to('#cin-info', { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' }, '-=0.3');
+
+      // Prompt continuer (clignotant)
+      tl.to('#cin-continue', { opacity: 1, duration: 0.4 });
+
+      // Fermeture au clic/tap
+      const finish = () => {
+        el.removeEventListener('click', finish);
+        gsap.killTweensOf(bigCard);
+        gsap.to(el, {
+          opacity: 0, duration: 0.38, ease: 'power2.in',
+          onComplete: () => {
+            el.style.display = 'none';
+            el.querySelector('#cin-particles').innerHTML = '';
+            resolve();
+          },
+        });
+      };
+      el.addEventListener('click', finish);
+    });
+  }
+
+  _spawnParticles(container, color) {
+    container.innerHTML = '';
+    for (let i = 0; i < 30; i++) {
+      const p = document.createElement('div');
+      p.className = 'cin-particle';
+      p.style.cssText = [
+        `--px:${10 + Math.random() * 80}%`,
+        `--py:${10 + Math.random() * 80}%`,
+        `--pc:${color}`,
+        `--pd:${0.4 + Math.random() * 2.5}s`,
+        `--ps:${2 + Math.random() * 6}px`,
+        `--pdelay:${Math.random() * 1.5}s`,
+      ].join(';');
+      container.appendChild(p);
+    }
+  }
+
+  /* ══════════════════════════════════════════
+     RÉVÉLATION DES CARTES
+  ══════════════════════════════════════════ */
+
+  async _revealCards(results) {
+    const area = this.overlay.querySelector('#cards-area');
+    area.innerHTML = '';
+    area.dataset.count = results.length;
+
+    if (results.length === 1) {
+      /* ── x1 : entrée simple ── */
+      const card = this._createCard(results[0]);
+      area.appendChild(card);
+      await new Promise(resolve => {
+        gsap.fromTo(card,
+          { y: 50, opacity: 0, scale: 0.85 },
+          { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(1.5)',
+            onComplete: () => {
+              if (results[0].rarity >= 4) this._addGlowPulse(card);
+              resolve();
+            },
+          }
+        );
+      });
+      return;
+    }
+
+    /* ── x10 : toutes face cachée → flip une par une (suspense) ── */
+    const cards = results.map(char => this._createCard(char));
+
+    // Ordre de révélation : rareté croissante (les meilleures en dernier)
+    const revealOrder = cards
+      .map((card, i) => ({ card, char: results[i] }))
+      .sort((a, b) => a.char.rarity - b.char.rarity);
+
+    // 1. Pose toutes les cartes côté dos, simultanément
+    cards.forEach(card => {
+      card.classList.add('card-facedown');
+      gsap.set(card, { opacity: 0, y: 18, scale: 0.9 });
+      area.appendChild(card);
+    });
+
+    await new Promise(resolve => {
+      gsap.to(cards, {
+        opacity: 1, y: 0, scale: 1,
+        duration: 0.28, stagger: 0.04,
+        ease: 'power2.out', onComplete: resolve,
+      });
+    });
+
+    // Courte pause avant le début des retournements
+    await this._wait(180);
+
+    // 2. Retourne chaque carte une par une
+    for (const { card, char } of revealOrder) {
+      const isHigh = char.rarity >= 5;
+      const isMid  = char.rarity >= 4;
+
+      // Demi-tour 1 : carte se ferme (→ 90°)
+      await new Promise(resolve => {
+        gsap.to(card, {
+          rotateY: 90,
+          duration: isHigh ? 0.22 : 0.16,
+          ease: 'power2.in',
+          onComplete: resolve,
+        });
+      });
+
+      // Au moment de l'angle plat : retire le "dos"
+      card.classList.remove('card-facedown');
+
+      // Demi-tour 2 : carte s'ouvre (← 0°)
+      await new Promise(resolve => {
+        gsap.to(card, {
+          rotateY: 0,
+          duration: isHigh ? 0.28 : 0.2,
+          ease: 'power2.out',
+          onComplete: resolve,
+        });
+      });
+
+      // Effets post-flip
+      if (isHigh) {
+        audio.play('summon_legendary');
+        this._addGlowPulse(card);
+        gsap.fromTo(card,
+          { filter: 'brightness(3.5)' },
+          { filter: 'brightness(1)', duration: 0.55, ease: 'power2.out' }
+        );
+        // Légère animation de rebond
+        gsap.fromTo(card,
+          { scale: 1.12 },
+          { scale: 1, duration: 0.4, ease: 'back.out(2)' }
+        );
+        await this._wait(280);
+      } else if (isMid) {
+        audio.play('summon_rare');
+        this._addGlowPulse(card);
+        gsap.fromTo(card,
+          { scale: 1.07 },
+          { scale: 1, duration: 0.3, ease: 'back.out(1.8)' }
+        );
+        await this._wait(100);
+      } else {
+        audio.play('summon_pull');
+        await this._wait(45);
+      }
+    }
+  }
+
+  _wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  /* ══════════════════════════════════════════
+     HISTORIQUE
+  ══════════════════════════════════════════ */
+
+  _showHistory() {
+    this._populateHistory();
+    gsap.set(this._histPanel, { display: 'flex', x: '100%' });
+    gsap.to(this._histPanel, { x: '0%', duration: 0.32, ease: 'power3.out' });
+  }
+
+  _hideHistory() {
+    gsap.to(this._histPanel, {
+      x: '100%', duration: 0.26, ease: 'power3.in',
+      onComplete: () => { this._histPanel.style.display = 'none'; },
+    });
+  }
+
+  _populateHistory() {
+    const history = this.playerData.pullHistory || [];
+    const total   = history.length;
+    const by5     = history.filter(h => h.rarity === 5).length;
+    const by4     = history.filter(h => h.rarity === 4).length;
+    const by3     = history.filter(h => h.rarity === 3).length;
+    const rate5   = total > 0 ? ((by5 / total) * 100).toFixed(1) : '0.0';
+    const rate4   = total > 0 ? ((by4 / total) * 100).toFixed(1) : '0.0';
+
+    this._histPanel.querySelector('#hist-stats').innerHTML = `
+      <div class="hist-stat-grid">
+        <div class="hist-stat">
+          <div class="hist-stat-val">${total}</div>
+          <div class="hist-stat-lbl">TIRAGES</div>
+        </div>
+        <div class="hist-stat hist-stat--5">
+          <div class="hist-stat-val">${by5}</div>
+          <div class="hist-stat-lbl">5★ · ${rate5}%</div>
+        </div>
+        <div class="hist-stat hist-stat--4">
+          <div class="hist-stat-val">${by4}</div>
+          <div class="hist-stat-lbl">4★ · ${rate4}%</div>
+        </div>
+        <div class="hist-stat hist-stat--3">
+          <div class="hist-stat-val">${by3}</div>
+          <div class="hist-stat-lbl">3★</div>
+        </div>
+      </div>
+    `;
+
+    const list = this._histPanel.querySelector('#hist-list');
+    if (total === 0) {
+      list.innerHTML = '<div class="hist-empty">Aucun tirage enregistré</div>';
+      return;
+    }
+
+    list.innerHTML = history.map(entry => {
+      const rarity  = RARITIES[entry.rarity];
+      const d       = new Date(entry.timestamp);
+      const timeStr = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+                    + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      return `
+        <div class="hist-entry hist-entry--r${entry.rarity}" style="--hc:${rarity.color};--hg:${rarity.glow}">
+          <div class="hist-entry-stars">${'★'.repeat(entry.rarity)}</div>
+          <div class="hist-entry-info">
+            <div class="hist-entry-name">${entry.name}</div>
+            <div class="hist-entry-sub">${entry.element} · ${rarity.label}</div>
+          </div>
+          <div class="hist-entry-time">${timeStr}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  /* ══════════════════════════════════════════
+     HELPERS UI
+  ══════════════════════════════════════════ */
+
   _updateCurrencyDisplay() {
     const el = this.overlay.querySelector('#summon-currency-val');
     if (el) el.textContent = (this.playerData?.currency ?? 0).toLocaleString();
   }
 
-  /* ── Active/désactive les boutons selon le solde ── */
   _updateButtonStates() {
     const currency = this.playerData?.currency ?? 0;
     const btn1  = this.overlay.querySelector('#pull-x1');
     const btn10 = this.overlay.querySelector('#pull-x10');
     if (btn1)  btn1.disabled  = currency < COST_X1;
     if (btn10) btn10.disabled = currency < COST_X10;
+
+    // Label dynamique "4★ dans N pulls" sur le bouton x10
+    const g = this.overlay.querySelector('#pull-x10-guarantee');
+    if (g) {
+      const { next4Guaranteed } = this.engine.getPityInfo();
+      if (next4Guaranteed <= 10) {
+        g.textContent   = `4★ DANS ${next4Guaranteed} PULLS`;
+        g.style.color   = '#b44fff';
+        g.style.textShadow = '0 0 8px rgba(180,79,255,0.6)';
+      } else {
+        g.textContent      = '3★ GARANTI';
+        g.style.color      = '';
+        g.style.textShadow = '';
+      }
+    }
   }
 
-  /* ── Notification solde insuffisant ── */
   _showInsufficientFunds(cost) {
     const needed = cost - (this.playerData?.currency ?? 0);
-    const msg = document.createElement('div');
-    msg.className = 'summon-toast summon-toast--error';
-    msg.textContent = `◈ insuffisantes — il vous manque ${needed} ◈`;
+    const msg    = document.createElement('div');
+    msg.className    = 'summon-toast summon-toast--error';
+    msg.textContent  = `◈ insuffisantes — il vous manque ${needed} ◈`;
     this.overlay.appendChild(msg);
-    gsap.fromTo(msg, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.3,
-      onComplete: () => gsap.to(msg, { opacity: 0, y: -20, delay: 1.8, duration: 0.3,
-        onComplete: () => msg.remove() })
-    });
+    gsap.fromTo(msg,
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 0.3,
+        onComplete: () => gsap.to(msg, {
+          opacity: 0, y: -20, delay: 1.8, duration: 0.3,
+          onComplete: () => msg.remove(),
+        }),
+      }
+    );
   }
 
-  /* ── Animation de flash lumineuse avant la révélation ── */
   _playFlash(bestRarity) {
     return new Promise(resolve => {
-      const flash = this.overlay.querySelector('#summon-bg-flash');
-      const color = RARITIES[bestRarity].glow;
-
-      // Flash plus dramatique pour les hautes raretés
+      const flash    = this.overlay.querySelector('#summon-bg-flash');
+      const color    = RARITIES[bestRarity].glow;
       const duration = bestRarity >= 4 ? 0.8 : 0.4;
-
       gsap.timeline({ onComplete: resolve })
         .set(flash, { background: color, opacity: 0 })
         .to(flash, { opacity: bestRarity >= 5 ? 1 : 0.7, duration: duration * 0.4, ease: 'power2.in' })
@@ -187,66 +556,7 @@ export class SummonUI {
     });
   }
 
-  /* ── Affiche et anime les cartes une par une ── */
-  async _revealCards(results) {
-    const area = this.overlay.querySelector('#cards-area');
-    area.innerHTML = '';
-
-    // Adapte la taille des cartes selon le nombre
-    area.dataset.count = results.length;
-
-    const cards = results.map(char => this._createCard(char));
-    cards.forEach(card => area.appendChild(card));
-
-    // Animation d'entrée en cascade
-    const delay = results.length === 1 ? 0 : 0.08;
-
-    for (let i = 0; i < cards.length; i++) {
-      await new Promise(resolve => {
-        gsap.fromTo(cards[i],
-          { y: 60, opacity: 0, scale: 0.85, rotateY: 90 },
-          {
-            y: 0, opacity: 1, scale: 1, rotateY: 0,
-            duration: results.length === 1 ? 0.7 : 0.45,
-            ease: 'back.out(1.4)',
-            delay: results.length === 1 ? 0 : i * delay,
-            onComplete: () => {
-              // Effet glow pulsant sur les hautes raretés
-              if (cards[i].dataset.rarity >= 4) {
-                this._addGlowPulse(cards[i]);
-              }
-              resolve();
-            }
-          }
-        );
-      });
-      // Pour le pull x10, on n'attend pas chaque carte individuellement
-      if (results.length > 1 && i === 0) break;
-    }
-
-    // Pour x10 : on anime tout en même temps après le premier
-    if (results.length > 1) {
-      await new Promise(resolve => {
-        gsap.fromTo(cards.slice(1),
-          { y: 60, opacity: 0, scale: 0.85, rotateY: 90 },
-          {
-            y: 0, opacity: 1, scale: 1, rotateY: 0,
-            duration: 0.45,
-            ease: 'back.out(1.4)',
-            stagger: delay,
-            onComplete: () => {
-              cards.forEach(card => {
-                if (card.dataset.rarity >= 4) this._addGlowPulse(card);
-              });
-              resolve();
-            }
-          }
-        );
-      });
-    }
-  }
-
-  /* ── Crée une carte au design cyberpunk détaillé ── */
+  /* ── Crée une carte au design cyberpunk ── */
   _createCard(char) {
     const rarity  = RARITIES[char.rarity];
     const stars   = '★'.repeat(char.rarity);
@@ -254,66 +564,47 @@ export class SummonUI {
     const elColor = this._elementColor(char.element);
     const card    = document.createElement('div');
 
-    card.className       = `summon-card rarity-${char.rarity}`;
-    card.dataset.rarity  = char.rarity;
-    card.style.setProperty('--card-color',   rarity.color);
-    card.style.setProperty('--card-glow',    rarity.glow);
-    card.style.setProperty('--elem-color',   elColor.main);
-    card.style.setProperty('--elem-glow',    elColor.glow);
+    card.className      = `summon-card rarity-${char.rarity}`;
+    card.dataset.rarity = char.rarity;
+    card.style.setProperty('--card-color',  rarity.color);
+    card.style.setProperty('--card-glow',   rarity.glow);
+    card.style.setProperty('--elem-color',  elColor.main);
+    card.style.setProperty('--elem-glow',   elColor.glow);
 
     card.innerHTML = `
-      <!-- Shimmer holographique (visible au hover) -->
       <div class="card-holo"></div>
-
-      <!-- Ligne de scan (cyberpunk) -->
       <div class="card-scanline"></div>
-
-      <!-- Coins décoratifs -->
       <div class="card-corner card-corner--tl"></div>
       <div class="card-corner card-corner--tr"></div>
       <div class="card-corner card-corner--bl"></div>
       <div class="card-corner card-corner--br"></div>
-
-      <!-- Portrait (zone haute de la carte) -->
+      <!-- Dos de carte (masqué sauf state facedown) -->
+      <div class="card-back">
+        <div class="card-back-symbol">召</div>
+        <div class="card-back-grid"></div>
+      </div>
       <div class="card-portrait">
-        <!-- Fond gradient par élément -->
         <div class="card-portrait-bg"></div>
-
-        <!-- Lignes circuit déco -->
         <div class="card-circuit">
           <div class="circuit-h circuit-h1"></div>
           <div class="circuit-h circuit-h2"></div>
           <div class="circuit-v circuit-v1"></div>
         </div>
-
-        <!-- Grand symbole d'élément -->
         <div class="card-element-bg">${this._elementSymbol(char.element)}</div>
-
-        <!-- Initiale du personnage (placeholder sprite) -->
         <div class="card-initial">${char.name.charAt(0)}</div>
-
-        <!-- Badge de rareté en bas du portrait -->
         <div class="card-rarity-badge">
           <span class="stars-lit">${stars}</span><span class="stars-dim">${empties}</span>
         </div>
-
-        <!-- Bande déco bas portrait -->
         <div class="card-portrait-foot">
           <span class="card-elem-tag">${char.element}</span>
           <span class="card-class-tag">${char.class}</span>
         </div>
       </div>
-
-      <!-- Zone infos personnage -->
       <div class="card-info">
-        <!-- Ligne accent rareté -->
         <div class="card-accent-line"></div>
-
         <div class="card-rarity-label">${rarity.label}</div>
         <div class="card-name">${char.name}</div>
         <div class="card-title-text">${char.title}</div>
-
-        <!-- Ligne déco bas -->
         <div class="card-info-foot">
           <div class="card-id">ID_${char.id.toUpperCase()}</div>
           <div class="card-dot"></div>
@@ -321,36 +612,24 @@ export class SummonUI {
       </div>
     `;
 
-    // Effet tilt 3D au survol de la souris
     this._addTiltEffect(card);
     return card;
   }
 
-  /* ── Tilt 3D dynamique selon la position de la souris ── */
   _addTiltEffect(card) {
     card.addEventListener('mousemove', e => {
-      const r   = card.getBoundingClientRect();
-      const x   = (e.clientX - r.left) / r.width  - 0.5; // -0.5 à 0.5
-      const y   = (e.clientY - r.top)  / r.height - 0.5;
-      gsap.to(card, {
-        rotateY: x * 18,
-        rotateX: -y * 18,
-        duration: 0.3,
-        ease: 'power2.out',
-        transformPerspective: 800,
-      });
-      // Déplace le reflet holographique selon la souris
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width  - 0.5;
+      const y = (e.clientY - r.top)  / r.height - 0.5;
+      gsap.to(card, { rotateY: x * 18, rotateX: -y * 18, duration: 0.3, ease: 'power2.out', transformPerspective: 800 });
       const holo = card.querySelector('.card-holo');
-      if (holo) {
-        holo.style.backgroundPosition = `${(x + 0.5) * 100}% ${(y + 0.5) * 100}%`;
-      }
+      if (holo) holo.style.backgroundPosition = `${(x + 0.5) * 100}% ${(y + 0.5) * 100}%`;
     });
     card.addEventListener('mouseleave', () => {
       gsap.to(card, { rotateY: 0, rotateX: 0, duration: 0.5, ease: 'power3.out' });
     });
   }
 
-  /* ── Couleur par élément pour le portrait ── */
   _elementColor(el) {
     const map = {
       Fire:    { main: '#ff5500', glow: '#ff2200' },
@@ -366,65 +645,42 @@ export class SummonUI {
     return map[el] || map.Neutral;
   }
 
-  /* ── Grand symbole d'élément pour le fond portrait ── */
   _elementSymbol(el) {
-    const map = {
-      Fire: '火', Dark: '闇', Wind: '風', Water: '水',
-      Thunder: '雷', Earth: '土', Light: '光', Void: '虚', Neutral: '無',
-    };
+    const map = { Fire: '火', Dark: '闇', Wind: '風', Water: '水', Thunder: '雷', Earth: '土', Light: '光', Void: '虚', Neutral: '無' };
     return map[el] || '？';
   }
 
-  /* ── Icône classe (conservé pour compatibilité) ── */
-  _classIcon(cls) {
-    const icons = {
-      'Shinigami': '⚡', 'Guerrier': '⚔', 'Assassin': '🗡',
-      'Mage': '✦', 'Tireur': '◎', 'Tank': '🛡', 'Soutien': '✚', 'Gardien': '⬡',
-    };
-    return icons[cls] || '◆';
-  }
-
-  /* ── Glow pulsant pour 4★ et 5★ ── */
   _addGlowPulse(card) {
-    const rarity = parseInt(card.dataset.rarity);
-    if (rarity === 5) {
-      // 5★ : effet de lumière plus dramatique avec double couche
+    const rarity = parseInt(card.dataset.rarity || '3');
+    if (rarity >= 5) {
       gsap.to(card, {
-        filter: `drop-shadow(0 0 25px var(--card-glow)) drop-shadow(0 0 60px var(--card-glow)) brightness(1.1)`,
-        duration: 1.2,
-        yoyo: true,
-        repeat: -1,
-        ease: 'sine.inOut',
+        filter: `drop-shadow(0 0 28px var(--card-glow)) drop-shadow(0 0 70px var(--card-glow)) brightness(1.12)`,
+        duration: 1.2, yoyo: true, repeat: -1, ease: 'sine.inOut',
       });
     } else {
       gsap.to(card, {
-        filter: `drop-shadow(0 0 14px var(--card-glow)) drop-shadow(0 0 28px var(--card-glow))`,
-        duration: 0.9,
-        yoyo: true,
-        repeat: -1,
-        ease: 'sine.inOut',
+        filter: `drop-shadow(0 0 14px var(--card-glow)) drop-shadow(0 0 30px var(--card-glow))`,
+        duration: 0.9, yoyo: true, repeat: -1, ease: 'sine.inOut',
       });
     }
   }
 
-  /* ── Met à jour le pity : compteurs + barres de progression ── */
   _updatePityDisplay() {
     const { pity5, pity4, next5Guaranteed, next4Guaranteed } = this.engine.getPityInfo();
-
-    const txt5  = this.overlay.querySelector('#pity5-txt');
-    const txt4  = this.overlay.querySelector('#pity4-txt');
-    const bar5  = this.overlay.querySelector('#pity5-bar');
-    const bar4  = this.overlay.querySelector('#pity4-bar');
-
+    const txt5 = this.overlay.querySelector('#pity5-txt');
+    const txt4 = this.overlay.querySelector('#pity4-txt');
+    const bar5 = this.overlay.querySelector('#pity5-bar');
+    const bar4 = this.overlay.querySelector('#pity4-bar');
     if (txt5) txt5.textContent = next5Guaranteed;
     if (txt4) txt4.textContent = next4Guaranteed;
-
-    // Largeur de la barre = progression vers la garantie
     if (bar5) gsap.to(bar5, { width: `${(pity5 / 90) * 100}%`, duration: 0.4, ease: 'power2.out' });
     if (bar4) gsap.to(bar4, { width: `${(pity4 / 10) * 100}%`, duration: 0.4, ease: 'power2.out' });
   }
 
-  /* ── Affiche l'écran avec animation d'entrée ── */
+  /* ══════════════════════════════════════════
+     SHOW / HIDE
+  ══════════════════════════════════════════ */
+
   show() {
     this.overlay.style.display = 'flex';
     this.overlay.querySelector('#cards-area').innerHTML = '';
@@ -434,11 +690,11 @@ export class SummonUI {
     gsap.fromTo(this.overlay, { opacity: 0 }, { opacity: 1, duration: 0.4 });
   }
 
-  /* ── Cache l'écran avec animation de sortie ── */
   hide() {
+    this._hideHistory();
     gsap.to(this.overlay, {
       opacity: 0, duration: 0.3,
-      onComplete: () => { this.overlay.style.display = 'none'; }
+      onComplete: () => { this.overlay.style.display = 'none'; },
     });
   }
 }

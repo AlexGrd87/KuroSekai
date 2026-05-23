@@ -65,13 +65,19 @@ export class GachaEngine {
 
   /* ── Détermine la rareté par tirage aléatoire (système 3-5★) ── */
   _rollRarity() {
-    const roll = Math.random();
-    let cumul = 0;
-    for (const r of [5, 4, 3]) {
-      cumul += RARITIES[r].rate;
-      if (roll < cumul) return r;
+    // Soft pity 5★ : à partir du pull 74, le taux augmente de +6% par pull
+    let rate5 = RARITIES[5].rate; // 0.7% base
+    if (this.pity5 >= 74) {
+      const extra = (this.pity5 - 73) * 0.06;
+      rate5 = Math.min(rate5 + extra, 1);
     }
-    return 3; // fallback minimum 3★
+
+    const rate4 = RARITIES[4].rate; // 6% base (inchangé)
+    const roll  = Math.random();
+
+    if (roll < rate5)           return 5;
+    if (roll < rate5 + rate4)   return 4;
+    return 3;
   }
 
   /* ── Sélectionne un personnage aléatoire de la rareté donnée ── */

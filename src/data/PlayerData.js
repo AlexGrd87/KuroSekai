@@ -8,6 +8,8 @@ import { apiService }            from './ApiService.js';
 
 const STORAGE_KEY  = 'kuro_player_collection';
 const PROGRESS_KEY = 'kuro_player_progress';
+const HISTORY_KEY  = 'kuro_pull_history';
+const HISTORY_MAX  = 100;
 
 export const MAX_LEVEL   = 50;
 export const STAT_GROWTH = 0.04; // +4% par niveau sur HP, ATK, DEF
@@ -44,15 +46,25 @@ export class PlayerData {
     try {
       const raw  = localStorage.getItem(PROGRESS_KEY);
       const data = raw ? JSON.parse(raw) : {};
-      this.completedStages = new Set(data.completedStages || []);
-      this.currency        = data.currency || 0;
-      this.pity5           = data.pity5    ?? 0;
-      this.pity4           = data.pity4    ?? 0;
+      this.completedStages  = new Set(data.completedStages || []);
+      this.currency         = data.currency         || 0;
+      this.pity5            = data.pity5             ?? 0;
+      this.pity4            = data.pity4             ?? 0;
+      this.freeRolls        = data.freeRolls         ?? 0;
+      this.xpBoostCombats   = data.xpBoostCombats    ?? 0;
     } catch {
       this.completedStages = new Set();
       this.currency        = 0;
       this.pity5           = 0;
       this.pity4           = 0;
+      this.freeRolls       = 0;
+      this.xpBoostCombats  = 0;
+    }
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      this.pullHistory = raw ? JSON.parse(raw) : [];
+    } catch {
+      this.pullHistory = [];
     }
   }
 
@@ -65,9 +77,11 @@ export class PlayerData {
   _saveProgress() {
     const progress = {
       completedStages: [...this.completedStages],
-      currency: this.currency,
-      pity5:    this.pity5,
-      pity4:    this.pity4,
+      currency:       this.currency,
+      pity5:          this.pity5,
+      pity4:          this.pity4,
+      freeRolls:      this.freeRolls,
+      xpBoostCombats: this.xpBoostCombats,
     };
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
     this._scheduleCloudSync();
@@ -77,9 +91,12 @@ export class PlayerData {
   _scheduleCloudSync() {
     apiService.scheduleSync(this.collection, {
       completedStages: [...this.completedStages],
-      currency: this.currency,
-      pity5:    this.pity5,
-      pity4:    this.pity4,
+      currency:       this.currency,
+      pity5:          this.pity5,
+      pity4:          this.pity4,
+      freeRolls:      this.freeRolls,
+      xpBoostCombats: this.xpBoostCombats,
+      pullHistory:    this.pullHistory,
     });
   }
 
@@ -97,12 +114,29 @@ export class PlayerData {
       this.currency        = p.currency || 0;
       this.pity5           = p.pity5    ?? 0;
       this.pity4           = p.pity4    ?? 0;
+      if (p.pullHistory) {
+        this.pullHistory = p.pullHistory;
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(this.pullHistory));
+      }
       // Persiste en local aussi
       localStorage.setItem(STORAGE_KEY,  JSON.stringify(this.collection));
       localStorage.setItem(PROGRESS_KEY, JSON.stringify(p));
     } catch (e) {
       console.warn('[PlayerData] loadFromCloud error:', e);
     }
+  }
+
+  /** Enregistre un lot de tirages dans l'historique (100 derniers). */
+  addPullHistory(results) {
+    const entries = results.map(char => ({
+      id:        char.id,
+      name:      char.name,
+      rarity:    char.rarity,
+      element:   char.element,
+      timestamp: Date.now(),
+    }));
+    this.pullHistory = [...entries, ...this.pullHistory].slice(0, HISTORY_MAX);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(this.pullHistory));
   }
 
   /** Met à jour les compteurs pity gacha et sauvegarde. */
@@ -241,6 +275,47 @@ export class PlayerData {
   isStageUnlocked(stage) {
     if (!stage.unlockAfter) return true;
     return this.completedStages.has(stage.unlockAfter);
+  }
+
+  /* ════════════════════════════════
+     BOUTIQUE
+  ════════════════════════════════ */
+
+  /**
+   * Déduit `amount` de la monnaie. Retourne false si fonds insuffisants.
+   */
+  spendCurrency(amount) {
+    if (this.currency < amount) return false;
+    this.currency -= amount;
+    this._saveProgress();
+    return true;
+  }
+
+  /** Ajoute des tirages gratuits (utilisables dans SummonUI). */
+  addFreeRolls(n) {
+    this.freeRolls = (this.freeRolls ?? 0) + n;
+    this._saveProgress();
+  }
+
+  /**
+   * Ajoute `combats` combats au boost ×2 EXP.
+   */
+  addXpBoost(combats) {
+    this.xpBoostCombats = (this.xpBoostCombats ?? 0) + combats;
+    this._saveProgress();
+  }
+
+  /**
+   * Consomme 1 charge de boost EXP.
+   * @returns {number} 2 si boost actif, 1 sinon.
+   */
+  consumeXpBoost() {
+    if ((this.xpBoostCombats ?? 0) > 0) {
+      this.xpBoostCombats--;
+      this._saveProgress();
+      return 2;
+    }
+    return 1;
   }
 
   /* ════════════════════════════════

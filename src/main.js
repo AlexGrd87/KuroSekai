@@ -2,24 +2,26 @@
  * main.js — Point d'entrée de KuroSekai
  */
 
-import { gsap }         from 'gsap';
-import { MenuScene }    from './scenes/MenuScene.js';
-import { MenuUI }       from './ui/MenuUI.js';
-import { SummonUI }     from './ui/SummonUI.js';
-import { CollectionUI } from './ui/CollectionUI.js';
-import { TeamSelectUI } from './ui/TeamSelectUI.js';
-import { CombatUI }     from './ui/CombatUI.js';
-import { HubUI }        from './ui/HubUI.js';
-import { SceneUI }      from './ui/SceneUI.js';
-import { PlayerData }   from './data/PlayerData.js';
-import { CHARACTERS }   from './data/characters.js';
-import { SCENARIO }     from './data/scenario.js';
-import { SettingsUI }   from './ui/SettingsUI.js';
-import { LevelUpUI }    from './ui/LevelUpUI.js';
-import { settings }     from './data/Settings.js';
-import { AuthUI }       from './ui/AuthUI.js';
-import { apiService }   from './data/ApiService.js';
-import { audio }        from './audio/AudioManager.js';
+import { gsap }           from 'gsap';
+import { MenuScene }      from './scenes/MenuScene.js';
+import { MenuUI }         from './ui/MenuUI.js';
+import { SummonUI }       from './ui/SummonUI.js';
+import { CollectionUI }   from './ui/CollectionUI.js';
+import { TeamSelectUI }   from './ui/TeamSelectUI.js';
+import { CombatUI }       from './ui/CombatUI.js';
+import { HubUI }          from './ui/HubUI.js';
+import { SceneUI }        from './ui/SceneUI.js';
+import { PlayerData }     from './data/PlayerData.js';
+import { CHARACTERS }     from './data/characters.js';
+import { SCENARIO }       from './data/scenario.js';
+import { SettingsUI }     from './ui/SettingsUI.js';
+import { LevelUpUI }      from './ui/LevelUpUI.js';
+import { RewardPopupUI }  from './ui/RewardPopupUI.js';
+import { settings }       from './data/Settings.js';
+import { AuthUI }         from './ui/AuthUI.js';
+import { ShopUI }         from './ui/ShopUI.js';
+import { apiService }     from './data/ApiService.js';
+import { audio }          from './audio/AudioManager.js';
 
 /* ══════════════════════════════════════════
    DONNÉES JOUEUR
@@ -43,6 +45,7 @@ const sceneUI    = new SceneUI();
 const summon     = new SummonUI(playerData);
 const collection = new CollectionUI(playerData);
 const levelUpUI  = new LevelUpUI();
+const rewardPopup = new RewardPopupUI();
 
 /* ── Retour hub depuis les sous-écrans plein-écran ── */
 function goHub() {
@@ -54,6 +57,7 @@ function goHub() {
 }
 
 const settingsUI = new SettingsUI(playerData, goHub);
+const shopUI     = new ShopUI(playerData, goHub);
 
 /* ══════════════════════════════════════════
    COMBAT + SÉLECTION D'ÉQUIPE
@@ -66,7 +70,8 @@ function handleVictory(stage) {
   audio.play('victory');
   playerData.completeStage(stage.id, stage.rewards);
 
-  const expGained  = stage.rewards.exp ?? 0;
+  const xpMult    = playerData.consumeXpBoost();   // 2 si boost actif, sinon 1
+  const expGained = Math.round((stage.rewards.exp ?? 0) * xpMult);
   const lvlResults = _currentTeam.map(char => {
     const oldLevel = playerData.getLevel(char.id);
     const result   = playerData.addExp(char.id, expGained);
@@ -81,10 +86,17 @@ function handleVictory(stage) {
     else         goHub();
   };
 
-  if (lvlResults.some(r => r.leveled)) {
-    audio.play('level_up');
-    levelUpUI.play(lvlResults, goToHub);
-  } else goToHub();
+  const afterRewards = () => {
+    if (lvlResults.some(r => r.leveled)) {
+      audio.play('level_up');
+      levelUpUI.play(lvlResults, goToHub);
+    } else {
+      goToHub();
+    }
+  };
+
+  // Afficher la popup de récompenses avant level-up / débrief
+  rewardPopup.show(stage, expGained, afterRewards);
 }
 
 const combatUI = new CombatUI((winner, stage) => {
@@ -157,6 +169,9 @@ const hub = new HubUI(
       openMap();
     }
   },
+
+  /* onShop */
+  () => shopUI.show(),
 );
 
 /* Retour hub depuis summon et collection */

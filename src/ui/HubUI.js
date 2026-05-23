@@ -11,13 +11,14 @@ import { STAGES } from '../data/enemies.js';
 import { audio }  from '../audio/AudioManager.js';
 
 export class HubUI {
-  constructor(playerData, onDeploy, onSummon, onCollection, onSettings, onCampaign) {
+  constructor(playerData, onDeploy, onSummon, onCollection, onSettings, onCampaign, onShop) {
     this.playerData   = playerData;
     this.onDeploy     = onDeploy;
     this.onSummon     = onSummon;
     this.onCollection = onCollection;
     this.onSettings   = onSettings;
     this.onCampaign   = onCampaign;
+    this.onShop       = onShop;
 
     this.screen      = document.getElementById('hub-screen');
     this.homeView    = document.getElementById('hub-home');
@@ -42,6 +43,8 @@ export class HubUI {
       ?.addEventListener('click', () => { audio.play('ui_navigate'); this.hide(); this.onSummon?.(); });
     document.getElementById('hub-bld-collection')
       ?.addEventListener('click', () => { audio.play('ui_navigate'); this.hide(); this.onCollection?.(); });
+    document.getElementById('hub-bld-shop')
+      ?.addEventListener('click', () => { audio.play('ui_navigate'); this.hide(); this.onShop?.(); });
     document.getElementById('hub-bld-settings')
       ?.addEventListener('click', () => { audio.play('ui_navigate'); this.hide(); this.onSettings?.(); });
 
@@ -137,50 +140,107 @@ export class HubUI {
   }
 
   /* ══════════════════════════════════════
-     CONSTRUCTION DE LA CARTE
+     CONSTRUCTION DE LA CARTE (verticale, chapitres)
   ══════════════════════════════════════ */
 
   _buildMap() {
     this.mapWrap.innerHTML = '';
 
-    STAGES.forEach((stage, i) => {
-      const unlocked  = this.playerData.isStageUnlocked(stage);
-      const completed = this.playerData.isStageCompleted(stage.id);
-      const diffStars = '★'.repeat(stage.difficulty) + '☆'.repeat(5 - stage.difficulty);
+    const CHAPTERS = [
+      { id: 1, name: 'PÉRIPHÉRIE',  subtitle: 'Districts extérieurs de Neo-Osaka', color: '#0099ff',
+        stageIds: ['stage_01', 'stage_02', 'stage_03'] },
+      { id: 2, name: 'PROFONDEUR',  subtitle: 'Nœuds industriels et réseaux souterrains', color: '#ffcc00',
+        stageIds: ['stage_04', 'stage_05', 'stage_06'] },
+      { id: 3, name: 'ABÎME',       subtitle: 'Fracturation de la réalité — Fin des temps', color: '#cc00ff',
+        stageIds: ['stage_07', 'stage_08', 'stage_09'] },
+    ];
 
-      const node = document.createElement('div');
-      node.className = `hub-node${unlocked ? '' : ' hub-node--locked'}${completed ? ' hub-node--done' : ''}`;
-      node.dataset.stageId = stage.id;
-      node.style.setProperty('--el',   stage.color);
-      node.style.setProperty('--glow', stage.glow);
-      node.innerHTML = `
-        <div class="hub-node-order">0${stage.order}</div>
-        <div class="hub-node-card">
-          <div class="hub-node-bg"></div>
-          ${completed ? '<div class="hub-node-done-badge">✓</div>' : ''}
-          ${!unlocked  ? '<div class="hub-node-lock">🔒</div>' : ''}
-          <div class="hub-node-element">${this._elementKanji(stage.element)}</div>
-          <div class="hub-node-info">
-            <div class="hub-node-name">${stage.name}</div>
-            <div class="hub-node-subtitle">${stage.subtitle}</div>
-            <div class="hub-node-diff" style="color:${stage.glow}">${diffStars}</div>
-          </div>
-        </div>`;
+    for (const chapter of CHAPTERS) {
+      const chStages = chapter.stageIds
+        .map(id => STAGES.find(s => s.id === id))
+        .filter(Boolean);
 
-      node.addEventListener('click', unlocked
-        ? () => this._openDetail(stage)
-        : () => this._shakeNode(node));
+      const allDone = chStages.every(s => this.playerData.isStageCompleted(s.id));
 
-      this.mapWrap.appendChild(node);
+      // En-tête de chapitre
+      this.mapWrap.appendChild(this._buildChapterHeader(chapter, allDone));
 
-      if (i < STAGES.length - 1) {
-        const conn = document.createElement('div');
-        conn.className = `hub-connector${completed ? ' hub-connector--active' : ''}`;
-        conn.style.setProperty('--from', stage.color);
-        conn.style.setProperty('--to',   STAGES[i + 1].color);
-        this.mapWrap.appendChild(conn);
-      }
-    });
+      // Stages du chapitre
+      chStages.forEach((stage, idx) => {
+        // Connecteur vertical entre deux stages
+        if (idx > 0) {
+          const prevDone = this.playerData.isStageCompleted(chStages[idx - 1].id);
+          const conn = document.createElement('div');
+          conn.className = `map-vconn${prevDone ? ' map-vconn--active' : ''}`;
+          conn.style.setProperty('--glow', stage.glow);
+          this.mapWrap.appendChild(conn);
+        }
+
+        const unlocked  = this.playerData.isStageUnlocked(stage);
+        const completed = this.playerData.isStageCompleted(stage.id);
+        this.mapWrap.appendChild(
+          this._buildMapStageNode(stage, unlocked, completed)
+        );
+      });
+    }
+  }
+
+  _buildChapterHeader(chapter, allDone) {
+    const el = document.createElement('div');
+    el.className = `map-chapter${allDone ? ' map-chapter--done' : ''}`;
+    el.style.setProperty('--cc', chapter.color);
+    el.innerHTML = `
+      <div class="map-ch-bar"></div>
+      <div class="map-ch-content">
+        <span class="map-ch-label">CHAPITRE ${chapter.id}${allDone ? ' <span class="map-ch-check">✓</span>' : ''}</span>
+        <span class="map-ch-name">${chapter.name}</span>
+        <span class="map-ch-sub">${chapter.subtitle}</span>
+      </div>
+      <div class="map-ch-bar"></div>`;
+    return el;
+  }
+
+  _buildMapStageNode(stage, unlocked, completed) {
+    const diffStars = '★'.repeat(stage.difficulty) + '☆'.repeat(5 - stage.difficulty);
+
+    const node = document.createElement('div');
+    node.className = [
+      'map-snode',
+      unlocked  ? '' : 'map-snode--locked',
+      completed ? 'map-snode--done' : '',
+      stage.isBoss ? 'map-snode--boss' : '',
+    ].filter(Boolean).join(' ');
+    node.dataset.stageId = stage.id;
+    node.style.setProperty('--el',   stage.color);
+    node.style.setProperty('--glow', stage.glow);
+
+    node.innerHTML = `
+      <div class="msn-glow-bg"></div>
+      <div class="msn-el-kanji">${this._elementKanji(stage.element)}</div>
+      <div class="msn-body">
+        <div class="msn-head">
+          <span class="msn-order">0${stage.order}</span>
+          <span class="msn-name">${stage.name}</span>
+          ${stage.isBoss ? '<span class="msn-boss-badge">BOSS</span>' : ''}
+          ${completed   ? '<span class="msn-done-badge">✓</span>' : ''}
+        </div>
+        <div class="msn-subtitle">${stage.subtitle}</div>
+        <div class="msn-diff">${diffStars}</div>
+      </div>
+      <div class="msn-meta">
+        <div class="msn-rewards">
+          <span>+${stage.rewards.exp} EXP</span>
+          <span class="msn-cur">+${stage.rewards.currency} ◈</span>
+        </div>
+        <div class="msn-waves">${stage.waves.length} vague${stage.waves.length > 1 ? 's' : ''}</div>
+      </div>
+      ${!unlocked ? '<div class="msn-lock-overlay"><span>🔒</span></div>' : ''}`;
+
+    node.addEventListener('click', unlocked
+      ? () => this._openDetail(stage)
+      : () => this._shakeNode(node));
+
+    return node;
   }
 
   /* ══════════════════════════════════════
