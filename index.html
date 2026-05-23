@@ -121,6 +121,57 @@
     </div><!-- /scene-screen -->
 
     <!-- ══════════════════════════════════════════
+         AUTHENTIFICATION
+    ══════════════════════════════════════════ -->
+    <div id="auth-screen">
+      <div id="auth-deco-left"></div>
+      <div id="auth-deco-right"></div>
+
+      <div id="auth-box">
+        <!-- Logo -->
+        <div id="auth-logo">
+          <span class="auth-logo-kuro">KURO</span><span class="auth-logo-sekai">SEKAI</span>
+          <div class="auth-logo-sub">NEO-OSAKA 2087</div>
+        </div>
+
+        <!-- Titre mode -->
+        <h2 id="auth-title">CONNEXION</h2>
+
+        <!-- Formulaire -->
+        <form id="auth-form" autocomplete="off">
+          <div class="auth-field">
+            <label class="auth-label">PSEUDO</label>
+            <input id="auth-username" class="auth-input" type="text"
+                   maxlength="20" autocomplete="off" spellcheck="false"
+                   placeholder="Ton identifiant…" />
+          </div>
+          <div class="auth-field">
+            <label class="auth-label">MOT DE PASSE</label>
+            <input id="auth-password" class="auth-input" type="password"
+                   maxlength="64" autocomplete="off"
+                   placeholder="••••••••" />
+          </div>
+
+          <p id="auth-error"></p>
+
+          <button id="auth-submit-btn" class="auth-btn auth-btn--primary" type="submit">
+            Se connecter
+          </button>
+        </form>
+
+        <button id="auth-toggle-btn" class="auth-btn auth-btn--link">
+          Pas de compte ? S'inscrire
+        </button>
+
+        <div class="auth-separator"><span>ou</span></div>
+
+        <button id="auth-guest-btn" class="auth-btn auth-btn--ghost">
+          Continuer sans compte
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
          HUB — CARTE DES OPÉRATIONS
     ══════════════════════════════════════════ -->
     <div id="hub-screen">
@@ -139,6 +190,11 @@
               <span id="hub-player-name">Commandant</span>
               <div id="hub-player-stages"></div>
             </div>
+          </div>
+          <div id="hub-account-badge">
+            <span id="hub-account-icon">◉</span>
+            <span id="hub-account-name">—</span>
+            <button id="hub-logout-btn" title="Déconnexion">⏻</button>
           </div>
           <div id="hub-nav-currency">
             <span class="hub-currency-icon">◈</span>

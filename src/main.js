@@ -17,6 +17,8 @@ import { SCENARIO }     from './data/scenario.js';
 import { SettingsUI }   from './ui/SettingsUI.js';
 import { LevelUpUI }    from './ui/LevelUpUI.js';
 import { settings }     from './data/Settings.js';
+import { AuthUI }       from './ui/AuthUI.js';
+import { apiService }   from './data/ApiService.js';
 
 /* ══════════════════════════════════════════
    DONNÉES JOUEUR
@@ -156,24 +158,83 @@ document.addEventListener('kuro:character-obtained', (e) => {
 });
 
 /* ══════════════════════════════════════════
+   AUTHENTIFICATION
+══════════════════════════════════════════ */
+
+const authUI = new AuthUI(async (username) => {
+  // Charge la progression cloud si connecté
+  if (username) {
+    const cloudSave = await apiService.loadSave();
+    if (cloudSave) playerData.loadFromCloud(cloudSave);
+
+    // Badge compte dans le hub
+    const nameEl = document.getElementById('hub-account-name');
+    if (nameEl) nameEl.textContent = username;
+    const badge = document.getElementById('hub-account-badge');
+    if (badge) badge.style.display = 'flex';
+  } else {
+    // Invité : pas de badge
+    const badge = document.getElementById('hub-account-badge');
+    if (badge) badge.style.display = 'none';
+  }
+
+  authUI.hide();
+  goSplash();
+});
+
+/* Déconnexion depuis le hub */
+document.getElementById('hub-logout-btn')?.addEventListener('click', () => {
+  apiService.logout();
+  // Retour à l'écran auth
+  hub.hide?.();
+  const badge = document.getElementById('hub-account-badge');
+  if (badge) badge.style.display = 'none';
+  authUI.show();
+});
+
+/* ══════════════════════════════════════════
    DÉMARRAGE — PAGE D'ACCUEIL
 ══════════════════════════════════════════ */
 
 settings.applyAll();
 scene.animate();
 
-/* Animation du splash (logo + glitch titre) */
-const splashUI = new MenuUI();
-splashUI.playIntro();
+function goSplash() {
+  /* Animation du splash (logo + glitch titre) */
+  const splashUI = new MenuUI();
+  splashUI.playIntro();
 
-/* Bouton COMMENCER — clic manuel */
-document.getElementById('btn-start')?.addEventListener('click', () => {
-  const overlay = document.getElementById('ui-overlay');
-  gsap.to(overlay, {
-    opacity: 0, duration: 0.45, ease: 'power2.in',
-    onComplete: () => {
-      overlay.style.display = 'none';
-      goHub();
-    },
-  });
-});
+  /* Bouton COMMENCER — clic manuel */
+  document.getElementById('btn-start')?.addEventListener('click', () => {
+    const overlay = document.getElementById('ui-overlay');
+    gsap.to(overlay, {
+      opacity: 0, duration: 0.45, ease: 'power2.in',
+      onComplete: () => {
+        overlay.style.display = 'none';
+        goHub();
+      },
+    });
+  }, { once: true });
+}
+
+// Démarre par l'écran d'auth si déjà un token valide → on skip
+if (apiService.isLoggedIn) {
+  // Token présent : on essaie de charger le save directement
+  (async () => {
+    const cloudSave = await apiService.loadSave();
+    if (cloudSave) {
+      playerData.loadFromCloud(cloudSave);
+    } else {
+      // Token expiré ou invalide
+      apiService.logout();
+    }
+    const name = apiService.username;
+    const nameEl = document.getElementById('hub-account-name');
+    if (nameEl && name) nameEl.textContent = name;
+    const badge = document.getElementById('hub-account-badge');
+    if (badge) badge.style.display = name ? 'flex' : 'none';
+    goSplash();
+  })();
+} else {
+  authUI.show();
+}

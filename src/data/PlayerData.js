@@ -4,6 +4,7 @@
  */
 
 import { CONSTELLATION_BONUSES } from './characters.js';
+import { apiService }            from './ApiService.js';
 
 const STORAGE_KEY  = 'kuro_player_collection';
 const PROGRESS_KEY = 'kuro_player_progress';
@@ -56,14 +57,52 @@ export class PlayerData {
   }
 
   /* ── Sauvegarde ── */
-  _save()         { localStorage.setItem(STORAGE_KEY,  JSON.stringify(this.collection)); }
+  _save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.collection));
+    this._scheduleCloudSync();
+  }
+
   _saveProgress() {
-    localStorage.setItem(PROGRESS_KEY, JSON.stringify({
+    const progress = {
       completedStages: [...this.completedStages],
       currency: this.currency,
       pity5:    this.pity5,
       pity4:    this.pity4,
-    }));
+    };
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+    this._scheduleCloudSync();
+  }
+
+  /** Envoie une synchro cloud dé-bouncée */
+  _scheduleCloudSync() {
+    apiService.scheduleSync(this.collection, {
+      completedStages: [...this.completedStages],
+      currency: this.currency,
+      pity5:    this.pity5,
+      pity4:    this.pity4,
+    });
+  }
+
+  /** Remplace la progression locale par des données cloud */
+  loadFromCloud(data) {
+    if (!data) return;
+    try {
+      this.collection = data.collection || {};
+      Object.values(this.collection).forEach(e => {
+        if (e.exp   === undefined) e.exp   = 0;
+        if (!e.level)              e.level = 1;
+      });
+      const p = data.progress || {};
+      this.completedStages = new Set(p.completedStages || []);
+      this.currency        = p.currency || 0;
+      this.pity5           = p.pity5    ?? 0;
+      this.pity4           = p.pity4    ?? 0;
+      // Persiste en local aussi
+      localStorage.setItem(STORAGE_KEY,  JSON.stringify(this.collection));
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify(p));
+    } catch (e) {
+      console.warn('[PlayerData] loadFromCloud error:', e);
+    }
   }
 
   /** Met à jour les compteurs pity gacha et sauvegarde. */
