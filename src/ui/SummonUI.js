@@ -15,6 +15,19 @@ import { audio }       from '../audio/AudioManager.js';
 const COST_X1  = 300;
 const COST_X10 = 2700;
 
+/* Couleurs élémentaires pour la cinématique 5★ */
+const ELEMENT_COLORS = {
+  Fire:    { color: '#ff5500', glow: '#ff2200', kanji: '火', bg: 'rgba(255,60,0,0.18)'    },
+  Dark:    { color: '#8800ff', glow: '#5500cc', kanji: '闇', bg: 'rgba(120,0,200,0.22)'   },
+  Wind:    { color: '#00cc66', glow: '#00ff88', kanji: '風', bg: 'rgba(0,200,100,0.18)'   },
+  Water:   { color: '#0099cc', glow: '#00ccff', kanji: '水', bg: 'rgba(0,160,220,0.18)'   },
+  Thunder: { color: '#cccc00', glow: '#ffff00', kanji: '雷', bg: 'rgba(200,200,0,0.18)'   },
+  Earth:   { color: '#886600', glow: '#bbaa00', kanji: '土', bg: 'rgba(140,110,0,0.18)'   },
+  Light:   { color: '#ccccff', glow: '#ffffff', kanji: '光', bg: 'rgba(180,180,255,0.18)' },
+  Void:    { color: '#cc00ff', glow: '#880099', kanji: '虚', bg: 'rgba(180,0,240,0.22)'   },
+  Neutral: { color: '#99aacc', glow: '#667799', kanji: '無', bg: 'rgba(100,130,180,0.15)' },
+};
+
 export class SummonUI {
   constructor(playerData) {
     this.playerData  = playerData;
@@ -105,14 +118,22 @@ export class SummonUI {
     this._cinematic = document.createElement('div');
     this._cinematic.id = 'summon-cinematic';
     this._cinematic.innerHTML = `
-      <!-- Rayons de lumière -->
+      <!-- Flash blanc initial -->
+      <div id="cin-flash"></div>
+      <!-- Vignette pulsante -->
+      <div id="cin-vignette"></div>
+      <!-- Rayons de lumière (18 = plus dense) -->
       <div class="cin-rays">
-        ${Array.from({ length: 12 }, (_, i) =>
-          `<div class="cin-ray" style="--angle:${i * 30}deg"></div>`
+        ${Array.from({ length: 18 }, (_, i) =>
+          `<div class="cin-ray" style="--angle:${i * 20}deg"></div>`
         ).join('')}
       </div>
+      <!-- Grand kanji de l'élément -->
+      <div id="cin-element-kanji"></div>
       <!-- Particules flottantes -->
       <div id="cin-particles"></div>
+      <!-- Particules burst (sortant du centre) -->
+      <div id="cin-burst"></div>
       <!-- Grande carte -->
       <div id="cin-card-wrap"></div>
       <!-- Texte personnage -->
@@ -234,78 +255,157 @@ export class SummonUI {
 
   _playCinematic5star(char) {
     return new Promise(resolve => {
-      const el     = this._cinematic;
-      const rarity = RARITIES[char.rarity];
+      const el      = this._cinematic;
+      const rarity  = RARITIES[char.rarity];
+      const elData  = ELEMENT_COLORS[char.element] || ELEMENT_COLORS.Neutral;
 
-      // Grande carte
-      const wrap = el.querySelector('#cin-card-wrap');
+      /* ── Éléments DOM ── */
+      const wrap       = el.querySelector('#cin-card-wrap');
+      const flashEl    = el.querySelector('#cin-flash');
+      const kanjiEl    = el.querySelector('#cin-element-kanji');
+      const vignetteEl = el.querySelector('#cin-vignette');
+      const burstEl    = el.querySelector('#cin-burst');
+
+      /* ── Grande carte ── */
       wrap.innerHTML = '';
       const bigCard = this._createCard(char);
       bigCard.classList.add('cin-card--big');
       wrap.appendChild(bigCard);
 
-      // Textes
+      /* ── Textes ── */
       const rarityLabel = el.querySelector('#cin-rarity-label');
-      rarityLabel.textContent  = rarity.label.toUpperCase();
-      rarityLabel.style.color  = rarity.color;
+      rarityLabel.textContent      = rarity.label.toUpperCase();
+      rarityLabel.style.color      = rarity.color;
       rarityLabel.style.textShadow = `0 0 20px ${rarity.glow}, 0 0 40px ${rarity.glow}`;
       el.querySelector('#cin-char-name').textContent  = char.name;
       el.querySelector('#cin-char-title').textContent = char.title;
 
-      // Particules
-      this._spawnParticles(el.querySelector('#cin-particles'), rarity.glow);
+      /* ── Kanji élément ── */
+      kanjiEl.textContent  = elData.kanji;
+      kanjiEl.style.color  = elData.color;
+      kanjiEl.style.textShadow = `0 0 60px ${elData.glow}, 0 0 120px ${elData.glow}`;
 
-      // States initiaux
-      gsap.set(el, { display: 'flex', opacity: 0 });
+      /* ── Rayons teintés élément ── */
+      el.querySelectorAll('.cin-ray').forEach(r => {
+        r.style.background = `linear-gradient(to right,
+          transparent 0%, ${elData.color}44 40%,
+          ${elData.color}99 70%, transparent 100%)`;
+      });
+
+      /* ── Couleur background dynamique ── */
+      el.style.background = `
+        radial-gradient(ellipse 60% 60% at 50% 50%, ${elData.bg} 0%, transparent 70%),
+        radial-gradient(ellipse at 50% 50%, #050218 0%, #020010 100%)
+      `;
+
+      /* ── Particules flottantes ── */
+      this._spawnParticles(el.querySelector('#cin-particles'), elData.glow);
+
+      /* ── États initiaux ── */
+      gsap.set(el,     { display: 'flex', opacity: 1 });
+      gsap.set(flashEl,  { opacity: 1 });
+      gsap.set(kanjiEl,  { opacity: 0, scale: 3, y: 0 });
+      gsap.set(vignetteEl, { opacity: 0 });
       gsap.set(el.querySelectorAll('.cin-ray'), { scaleX: 0 });
-      gsap.set(wrap, { opacity: 0, scale: 0.25, rotateY: 180 });
-      gsap.set('#cin-info', { opacity: 0, y: 28 });
+      gsap.set(wrap,   { opacity: 0, scale: 0.15, rotateY: 180 });
+      gsap.set('#cin-info', { opacity: 0, y: 32 });
       gsap.set('#cin-continue', { opacity: 0 });
+      if (burstEl) burstEl.innerHTML = '';
 
       const tl = gsap.timeline();
 
-      // Fond noir
-      tl.to(el, { opacity: 1, duration: 0.35, ease: 'power2.in' });
+      /* ── Phase 1 : Flash blanc ── */
+      tl.to(flashEl, { opacity: 0, duration: 0.55, ease: 'power3.in' });
 
-      // Rayons explosent
+      /* ── Phase 2 : Vignette + shake ── */
+      tl.to(vignetteEl, { opacity: 1, duration: 0.3 }, '<+=0.15');
+      tl.to(el, { x: -10, duration: 0.06, yoyo: true, repeat: 5, ease: 'none' }, '<');
+
+      /* ── Phase 3 : Kanji élément (monte et s'évanouit) ── */
+      tl.to(kanjiEl, {
+        opacity: 0.85, scale: 1.2, duration: 0.45, ease: 'back.out(2)',
+      });
+      tl.to(kanjiEl, {
+        opacity: 0, scale: 0.8, y: -40, duration: 0.7, ease: 'power2.in',
+      }, '+=0.25');
+
+      /* ── Phase 4 : Rayons explosent ── */
       tl.to(el.querySelectorAll('.cin-ray'), {
         scaleX: 1,
-        duration: 0.55,
-        stagger: { each: 0.04, from: 'random' },
+        duration: 0.5,
+        stagger: { each: 0.025, from: 'random' },
         ease: 'power3.out',
-      }, '-=0.05');
+      }, '-=0.6');
 
-      // Carte flip-in dramatique
+      /* ── Phase 5 : Burst de particules ── */
+      tl.call(() => {
+        if (burstEl) this._spawnBurstParticles(burstEl, elData.color, elData.glow);
+      }, [], '-=0.3');
+
+      /* ── Phase 6 : Carte flip-in dramatique ── */
       tl.to(wrap, {
         opacity: 1, scale: 1, rotateY: 0,
-        duration: 0.85,
-        ease: 'back.out(1.7)',
-      }, '-=0.25');
+        duration: 0.9,
+        ease: 'back.out(1.8)',
+      }, '-=0.2');
 
-      // Glow pulsant sur la grande carte
-      tl.call(() => this._addGlowPulse(bigCard), [], '-=0.2');
+      /* ── Phase 7 : Glow pulsant sur la carte ── */
+      tl.call(() => this._addGlowPulse(bigCard), [], '-=0.3');
 
-      // Infos personnage
-      tl.to('#cin-info', { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' }, '-=0.3');
+      /* ── Phase 8 : Nom (scale dramatique) → titre ── */
+      tl.set('#cin-info', { opacity: 1, y: 0 }, '-=0.1');
+      tl.fromTo('#cin-rarity-label',
+        { opacity: 0, letterSpacing: '1em' },
+        { opacity: 1, letterSpacing: '0.5em', duration: 0.4, ease: 'power2.out' }, '-=0.1');
+      tl.fromTo('#cin-char-name',
+        { opacity: 0, scale: 1.6, y: 12 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.55, ease: 'back.out(1.6)' }, '-=0.2');
+      tl.fromTo('#cin-char-title',
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' }, '-=0.15');
 
-      // Prompt continuer (clignotant)
-      tl.to('#cin-continue', { opacity: 1, duration: 0.4 });
+      /* ── Phase 9 : Prompt continuer ── */
+      tl.to('#cin-continue', { opacity: 1, duration: 0.5 }, '+=0.2');
 
-      // Fermeture au clic/tap
+      /* ── Fermeture au clic/tap ── */
       const finish = () => {
         el.removeEventListener('click', finish);
         gsap.killTweensOf(bigCard);
+        gsap.killTweensOf(el);
         gsap.to(el, {
-          opacity: 0, duration: 0.38, ease: 'power2.in',
+          opacity: 0, scale: 1.04, duration: 0.4, ease: 'power2.in',
           onComplete: () => {
             el.style.display = 'none';
+            el.style.transform = '';
             el.querySelector('#cin-particles').innerHTML = '';
+            if (burstEl) burstEl.innerHTML = '';
+            gsap.set(el, { scale: 1, opacity: 1, x: 0 });
             resolve();
           },
         });
       };
-      el.addEventListener('click', finish);
+      // Permettre la fermeture après un délai minimum
+      setTimeout(() => el.addEventListener('click', finish), 1200);
     });
+  }
+
+  _spawnBurstParticles(container, color, glow) {
+    container.innerHTML = '';
+    for (let i = 0; i < 24; i++) {
+      const angle = (i / 24) * 360;
+      const dist  = 80 + Math.random() * 160;
+      const p     = document.createElement('div');
+      p.className = 'cin-burst-particle';
+      p.style.cssText = [
+        `--bx:${Math.cos((angle * Math.PI) / 180) * dist}px`,
+        `--by:${Math.sin((angle * Math.PI) / 180) * dist}px`,
+        `--bc:${color}`,
+        `--bg:${glow}`,
+        `--bd:${0.4 + Math.random() * 0.5}s`,
+        `--bs:${3 + Math.random() * 7}px`,
+      ].join(';');
+      container.appendChild(p);
+    }
   }
 
   _spawnParticles(container, color) {

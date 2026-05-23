@@ -5705,31 +5705,6 @@ html, body {
   overflow: hidden;
 }
 
-/* ── Rayons de lumière ── */
-.cin-rays {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-.cin-ray {
-  position: absolute;
-  width: 60vmax;
-  height: 3px;
-  background: linear-gradient(to right, transparent 0%, rgba(255,215,0,0.25) 40%, rgba(255,215,0,0.5) 70%, transparent 100%);
-  transform-origin: left center;
-  transform: rotate(var(--angle)) scaleX(0);
-  left: 50%; top: 50%;
-  translate: 0 -50%;
-}
-
-/* Couleur des rayons selon rareté — surcharge via inline CSS si besoin */
-#summon-cinematic[data-rarity="5"] .cin-ray {
-  background: linear-gradient(to right, transparent 0%, rgba(255,200,50,0.2) 40%, rgba(255,215,0,0.45) 70%, transparent 100%);
-}
-
 /* ── Particules ── */
 #cin-particles {
   position: absolute;
@@ -5793,6 +5768,87 @@ html, body {
   font-size: clamp(0.58rem, 1.8vw, 0.75rem);
   letter-spacing: 0.25em;
   color: rgba(224,238,255,0.45);
+}
+
+/* ── Flash blanc initial ── */
+#cin-flash {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  pointer-events: none;
+  z-index: 20;
+  opacity: 1;
+}
+
+/* ── Vignette pulsante ── */
+#cin-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 70% at 50% 50%,
+    transparent 40%, rgba(0,0,8,0.75) 100%);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+}
+
+/* ── Kanji élément (grand symbole central) ── */
+#cin-element-kanji {
+  position: absolute;
+  z-index: 2;
+  font-size: clamp(8rem, 25vmin, 18rem);
+  font-weight: 900;
+  opacity: 0;
+  pointer-events: none;
+  text-align: center;
+  line-height: 1;
+  filter: blur(1px);
+  will-change: transform, opacity;
+}
+
+/* ── Burst particles ── */
+#cin-burst {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+}
+.cin-burst-particle {
+  position: absolute;
+  width: var(--bs, 4px);
+  height: var(--bs, 4px);
+  border-radius: 50%;
+  background: var(--bc, #fff);
+  box-shadow: 0 0 calc(var(--bs, 4px) * 2) var(--bg, #fff);
+  animation: cin-burst-out var(--bd, 0.5s) ease-out forwards;
+}
+@keyframes cin-burst-out {
+  0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+  60%  { opacity: 0.8; }
+  100% { transform: translate(var(--bx, 0), var(--by, 0)) scale(0.3); opacity: 0; }
+}
+
+/* ── Rayons (18, teintés par JS via inline style) ── */
+.cin-rays {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 0;
+}
+.cin-ray {
+  position: absolute;
+  width: 70vmax;
+  height: 2.5px;
+  background: linear-gradient(to right, transparent 0%, rgba(255,215,0,0.25) 40%, rgba(255,215,0,0.5) 70%, transparent 100%);
+  transform-origin: left center;
+  transform: rotate(var(--angle)) scaleX(0);
+  left: 50%; top: 50%;
+  translate: 0 -50%;
 }
 
 /* ── Prompt "continuer" ── */
