@@ -50,11 +50,11 @@ export class DailyLoginUI {
     gsap.to(this._box,      { scale: 1, y: 0, opacity: 1,
                                duration: 0.4, ease: 'back.out(1.6)', delay: 0.05 });
 
-    // Stagger des cartes
+    // Stagger des cartes (30 cartes → délai réduit)
     gsap.fromTo('.dlb-day-card',
-      { opacity: 0, y: 16, scale: 0.88 },
+      { opacity: 0, y: 10, scale: 0.9 },
       { opacity: 1, y: 0,  scale: 1,
-        duration: 0.25, stagger: 0.06, ease: 'power2.out', delay: 0.2 });
+        duration: 0.2, stagger: 0.02, ease: 'power2.out', delay: 0.18 });
   }
 
   hide() {
@@ -90,31 +90,43 @@ export class DailyLoginUI {
       this._claimBtn.classList.toggle('dlb-claim-btn--done', claimedToday);
     }
 
-    // Grille 7 jours
+    // Grille 30 jours
     if (!this._grid) return;
     this._grid.innerHTML = '';
     allRewards.forEach(r => {
-      const isPast     = r.day < dayInCycle;
-      const isCurrent  = r.day === dayInCycle;
-      const isFuture   = r.day > dayInCycle;
-      const isClaimed  = isPast || (isCurrent && claimedToday);
+      const isPast    = r.day < dayInCycle;
+      const isCurrent = r.day === dayInCycle;
+      const isFuture  = r.day > dayInCycle;
+      const isClaimed = isPast || (isCurrent && claimedToday);
 
       const card = document.createElement('div');
       card.className = [
         'dlb-day-card',
-        isCurrent ? 'dlb-day-card--current' : '',
-        isClaimed ? 'dlb-day-card--claimed' : '',
-        isFuture  ? 'dlb-day-card--future'  : '',
-        r.special ? 'dlb-day-card--special' : '',
+        isCurrent      ? 'dlb-day-card--current' : '',
+        isClaimed      ? 'dlb-day-card--claimed'  : '',
+        isFuture       ? 'dlb-day-card--future'   : '',
+        r.special      ? 'dlb-day-card--special'  : '',
+        r.grand        ? 'dlb-day-card--grand'     : '',
       ].filter(Boolean).join(' ');
+
+      const milestoneBadge = r.milestone
+        ? `<span class="dlb-milestone-badge">${r.milestone}</span>`
+        : '';
 
       card.innerHTML = `
         <div class="dlb-day-label">${r.label}</div>
+        ${milestoneBadge}
         <div class="dlb-day-icon">${isClaimed ? '✓' : r.icon}</div>
         <div class="dlb-day-desc">${r.desc}</div>
       `;
 
       this._grid.appendChild(card);
+    });
+
+    // Scroll automatique vers la carte active
+    requestAnimationFrame(() => {
+      const current = this._grid?.querySelector('.dlb-day-card--current');
+      current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     });
   }
 
