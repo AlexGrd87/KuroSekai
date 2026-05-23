@@ -6,6 +6,7 @@
 
 import { gsap }     from 'gsap';
 import { settings } from '../data/Settings.js';
+import { audio }    from '../audio/AudioManager.js';
 
 export class SettingsUI {
   constructor(playerData, onBack) {
@@ -75,17 +76,21 @@ export class SettingsUI {
 
     /* ── Sliders audio ── */
     document.getElementById('set-music-vol')?.addEventListener('input', e => {
-      const v = e.target.value / 100;
-      settings.set('musicVolume', v);
-      this._setSliderLabel('set-music-label', e.target.value);
+      const v = parseInt(e.target.value);
+      settings.set('musicVolume', v / 100);
+      audio.setBgmVolume(v);
+      this._setSliderLabel('set-music-label', v);
       this._updateSliderFill(e.target);
     });
 
     document.getElementById('set-sfx-vol')?.addEventListener('input', e => {
-      const v = e.target.value / 100;
-      settings.set('sfxVolume', v);
-      this._setSliderLabel('set-sfx-label', e.target.value);
+      const v = parseInt(e.target.value);
+      settings.set('sfxVolume', v / 100);
+      audio.setSfxVolume(v);
+      this._setSliderLabel('set-sfx-label', v);
       this._updateSliderFill(e.target);
+      // Joue un son de test
+      audio.play('ui_click');
     });
 
     /* ── Toggles ── */

@@ -12,6 +12,7 @@ import { STAGES }           from '../data/enemies.js';
 import { RARITIES }         from '../data/characters.js';
 import { settings }         from '../data/Settings.js';
 import { buildPortraitSVG } from './portrait.js';
+import { audio }            from '../audio/AudioManager.js';
 
 const ELEMENT_DATA = {
   Fire:    { color: '#ff5500', glow: '#ff2200' },
@@ -212,9 +213,9 @@ export class CombatUI {
   ════════════════════════════════ */
 
   _bindActions() {
-    this._onAtk  = () => { this._pendingAction = { type: 'attack' };               this._enterTargetMode(); };
-    this._onSk1  = () => { this._pendingAction = { type: 'skill', skillIndex: 0 }; this._enterTargetMode(); };
-    this._onSk2  = () => { this._pendingAction = { type: 'skill', skillIndex: 1 }; this._enterTargetMode(); };
+    this._onAtk  = () => { audio.play('ui_click'); this._pendingAction = { type: 'attack' };               this._enterTargetMode(); };
+    this._onSk1  = () => { audio.play('skill_activate'); this._pendingAction = { type: 'skill', skillIndex: 0 }; this._enterTargetMode(); };
+    this._onSk2  = () => { audio.play('skill_activate'); this._pendingAction = { type: 'skill', skillIndex: 1 }; this._enterTargetMode(); };
     document.getElementById('cbtn-attack')?.addEventListener('click', this._onAtk);
     document.getElementById('cbtn-skill1')?.addEventListener('click', this._onSk1);
     document.getElementById('cbtn-skill2')?.addEventListener('click', this._onSk2);
@@ -419,7 +420,13 @@ export class CombatUI {
 
   _applyResult(source, target, dmg, tag) {
     this._updateUnit(target);
-    if (dmg > 0) this._floatDamage(target.uid, dmg);
+    if (dmg > 0) {
+      this._floatDamage(target.uid, dmg);
+      // SFX selon contexte
+      const isCrit = this.engine.log.slice(-3).some(e => e.tag === 'crit');
+      audio.play(isCrit ? 'hit_crit' : 'hit_normal');
+      if (!target.alive) setTimeout(() => audio.play('unit_ko'), 120);
+    }
     this._shakeUnit(target.uid, source.side === 'enemy');
   }
 
@@ -429,6 +436,7 @@ export class CombatUI {
     for (const ev of this.engine.pendingPassives) {
       if (ev.type === 'heal') {
         this._floatDamage(ev.uid, ev.amount, 'heal');
+        audio.play('heal');
         const u = this.engine.playerUnits.find(u => u.uid === ev.uid);
         if (u) this._updateUnit(u);
         const logEntry = this.engine.log.find(e => e.tag === 'heal' &&

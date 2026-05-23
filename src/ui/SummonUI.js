@@ -13,6 +13,7 @@
 import { gsap } from 'gsap';
 import { GachaEngine } from '../gacha/GachaEngine.js';
 import { RARITIES } from '../data/characters.js';
+import { audio } from '../audio/AudioManager.js';
 
 const COST_X1  = 300;
 const COST_X10 = 2700; // 10% de réduction
@@ -129,6 +130,11 @@ export class SummonUI {
 
     // Détermine la meilleure rareté pour calibrer l'effet flash
     const bestRarity = Math.max(...results.map(r => r.rarity));
+
+    // SFX selon meilleure rareté du tirage
+    if (bestRarity >= 5) audio.play('summon_legendary');
+    else if (bestRarity >= 4) audio.play('summon_rare');
+    else audio.play('summon_pull');
 
     await this._playFlash(bestRarity);
     await this._revealCards(results);

@@ -19,6 +19,7 @@ import { LevelUpUI }    from './ui/LevelUpUI.js';
 import { settings }     from './data/Settings.js';
 import { AuthUI }       from './ui/AuthUI.js';
 import { apiService }   from './data/ApiService.js';
+import { audio }        from './audio/AudioManager.js';
 
 /* ══════════════════════════════════════════
    DONNÉES JOUEUR
@@ -44,7 +45,13 @@ const collection = new CollectionUI(playerData);
 const levelUpUI  = new LevelUpUI();
 
 /* ── Retour hub depuis les sous-écrans plein-écran ── */
-function goHub() { hub.show(); }
+function goHub() {
+  hub.show();
+  if (!audio.ready || audio._bgmTheme !== 'hub') {
+    audio.stopBgm(600);
+    setTimeout(() => audio.playBgm('hub'), 650);
+  }
+}
 
 const settingsUI = new SettingsUI(playerData, goHub);
 
@@ -56,6 +63,7 @@ let _pendingStage = null;
 let _currentTeam  = [];
 
 function handleVictory(stage) {
+  audio.play('victory');
   playerData.completeStage(stage.id, stage.rewards);
 
   const expGained  = stage.rewards.exp ?? 0;
@@ -73,17 +81,25 @@ function handleVictory(stage) {
     else         goHub();
   };
 
-  if (lvlResults.some(r => r.leveled)) levelUpUI.play(lvlResults, goToHub);
-  else goToHub();
+  if (lvlResults.some(r => r.leveled)) {
+    audio.play('level_up');
+    levelUpUI.play(lvlResults, goToHub);
+  } else goToHub();
 }
 
 const combatUI = new CombatUI((winner, stage) => {
   if (winner === 'player' && stage) handleVictory(stage);
-  else goHub();
+  else {
+    if (winner === 'enemy') audio.play('defeat');
+    audio.stopBgm();
+    setTimeout(() => { audio.playBgm('hub'); goHub(); }, 800);
+  }
 });
 
 const teamSelect = new TeamSelectUI(playerData, (team) => {
   _currentTeam = team;
+  audio.stopBgm(500);
+  setTimeout(() => audio.playBgm('combat'), 550);
   combatUI.start(
     team.map(char => {
       const { cd0, cd1 } = playerData.getCooldownReductions(char);
@@ -197,6 +213,10 @@ document.getElementById('hub-logout-btn')?.addEventListener('click', () => {
 ══════════════════════════════════════════ */
 
 settings.applyAll();
+// Applique les volumes sauvegardés
+audio.setBgmVolume(Math.round((settings.get('musicVolume') ?? 0.7) * 100));
+audio.setSfxVolume(Math.round((settings.get('sfxVolume')   ?? 0.8) * 100));
+audio.playBgm('hub'); // démarre la BGM (sera réellement jouée après premier geste)
 scene.animate();
 
 function goSplash() {

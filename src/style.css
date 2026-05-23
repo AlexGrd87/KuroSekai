@@ -2628,6 +2628,11 @@ html, body {
   padding: 0.15rem 0.5rem;
   border-radius: 3px;
 }
+.settings-soon-tag--active {
+  background: rgba(0,212,255,0.12);
+  border-color: rgba(0,212,255,0.35);
+  color: var(--cyan);
+}
 
 /* ── Ligne de paramètre ── */
 .settings-row {

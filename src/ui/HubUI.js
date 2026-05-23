@@ -8,6 +8,7 @@
 
 import { gsap }   from 'gsap';
 import { STAGES } from '../data/enemies.js';
+import { audio }  from '../audio/AudioManager.js';
 
 export class HubUI {
   constructor(playerData, onDeploy, onSummon, onCollection, onSettings, onCampaign) {
@@ -33,15 +34,16 @@ export class HubUI {
     // Bâtiments cliquables
     document.getElementById('hub-bld-combat')
       ?.addEventListener('click', () => {
+        audio.play('ui_navigate');
         if (this.onCampaign) this.onCampaign(() => this._openMap());
         else this._openMap();
       });
     document.getElementById('hub-bld-summon')
-      ?.addEventListener('click', () => { this.hide(); this.onSummon?.(); });
+      ?.addEventListener('click', () => { audio.play('ui_navigate'); this.hide(); this.onSummon?.(); });
     document.getElementById('hub-bld-collection')
-      ?.addEventListener('click', () => { this.hide(); this.onCollection?.(); });
+      ?.addEventListener('click', () => { audio.play('ui_navigate'); this.hide(); this.onCollection?.(); });
     document.getElementById('hub-bld-settings')
-      ?.addEventListener('click', () => { this.hide(); this.onSettings?.(); });
+      ?.addEventListener('click', () => { audio.play('ui_navigate'); this.hide(); this.onSettings?.(); });
 
     // Carte des stages
     document.getElementById('hub-map-back-btn')
