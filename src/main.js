@@ -26,6 +26,7 @@ import { QuestsUI }       from './ui/QuestsUI.js';
 import { ProfileUI }      from './ui/ProfileUI.js';
 import { apiService }     from './data/ApiService.js';
 import { audio }          from './audio/AudioManager.js';
+import { DailyLoginUI }   from './ui/DailyLoginUI.js';
 
 /* ══════════════════════════════════════════
    DONNÉES JOUEUR
@@ -169,6 +170,17 @@ document.getElementById('hub-profile-btn')
     profileUI.show();
   });
 
+// Depuis le picker profil → ouvre le shop sur l'onglet cosmétiques
+document.addEventListener('kuro:open-shop-cosmetique', () => {
+  profileUI.hide();
+  shopUI._setTab('cosmetique');
+  shopUI.show();
+});
+// Depuis le shop → notifie le profil qu'un cosmétique a été débloqué
+document.addEventListener('kuro:cosmetic-unlocked', () => {
+  profileUI.notifyUnlock();
+});
+
 /* ── MISSIONS & QUÊTES ── */
 const questsUI = new QuestsUI(playerData, goHub);
 document.getElementById('hub-missions-btn')
@@ -217,6 +229,13 @@ const hub = new HubUI(
   /* onShop */
   () => shopUI.show(),
 );
+
+/* Bouton daily login dans le hub */
+document.getElementById('hub-daily-btn')
+  ?.addEventListener('click', () => {
+    audio.play('ui_navigate');
+    dailyLoginUI.show(true); // force=true → affiche même si déjà réclamé
+  });
 
 /* Retour hub depuis summon et collection */
 summon.overlay?.querySelector('#summon-back')
@@ -283,6 +302,20 @@ audio.setSfxVolume(Math.round((settings.get('sfxVolume')   ?? 0.8) * 100));
 audio.playBgm('hub'); // démarre la BGM (sera réellement jouée après premier geste)
 scene.animate();
 
+/* ── Daily Login ── */
+const dailyLoginUI = new DailyLoginUI(playerData, () => {
+  // Callback appelé quand la popup se ferme → rafraîchit le hub
+  hub?._updateStats?.();
+  questsUI?.refreshBadge();
+  _refreshDailyBadge();
+});
+
+function _refreshDailyBadge() {
+  const state  = playerData.getDailyLoginState();
+  const badge  = document.getElementById('hub-daily-badge');
+  if (badge) badge.style.display = state.claimedToday ? 'none' : 'block';
+}
+
 function goSplash() {
   /* Animation du splash (logo + glitch titre) */
   const splashUI = new MenuUI();
@@ -296,6 +329,15 @@ function goSplash() {
       onComplete: () => {
         overlay.style.display = 'none';
         goHub();
+        // Affiche le daily login si pas encore réclamé aujourd'hui
+        setTimeout(() => {
+          const state = playerData.getDailyLoginState();
+          if (!state.claimedToday) {
+            audio.play('ui_navigate');
+            dailyLoginUI.show();
+          }
+          _refreshDailyBadge();
+        }, 600);
       },
     });
   }, { once: true });
@@ -318,6 +360,7 @@ if (apiService.isLoggedIn) {
     const badge = document.getElementById('hub-account-badge');
     if (badge) badge.style.display = name ? 'flex' : 'none';
     goSplash();
+    _refreshDailyBadge();
   })();
 } else {
   authUI.show();

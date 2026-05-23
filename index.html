@@ -227,6 +227,10 @@
             <span id="hub-nav-currency-val">0</span>
           </div>
           <button id="hub-lb-btn" title="Classement">🏆</button>
+          <button id="hub-daily-btn" title="Connexion quotidienne">
+            🗓
+            <span id="hub-daily-badge" class="hub-daily-badge" style="display:none"></span>
+          </button>
           <button id="hub-missions-btn" class="hub-missions-btn" title="Missions">
             📋
             <span id="hub-missions-badge" class="hub-missions-badge" style="display:none">0</span>
@@ -948,6 +952,7 @@
         <button class="shop-tab-btn shop-tab-btn--active" data-tab="items">🧪 OBJETS</button>
         <button class="shop-tab-btn" data-tab="summon">🔮 INVOCATIONS</button>
         <button class="shop-tab-btn" data-tab="boost">⚡ BOOST</button>
+        <button class="shop-tab-btn" data-tab="cosmetique">✦ COSMÉTIQUES</button>
       </div>
 
       <!-- Grille d'articles -->
@@ -1131,6 +1136,38 @@
 
       <!-- Toast récompense -->
       <div id="quests-toast" class="quests-toast" style="opacity:0"></div>
+    </div>
+
+    <!-- ══ CONNEXION QUOTIDIENNE ══ -->
+    <div id="daily-login-overlay" style="display:none">
+      <div id="daily-login-box">
+        <!-- En-tête -->
+        <div id="dlb-header">
+          <div id="dlb-title">CONNEXION QUOTIDIENNE</div>
+          <div id="dlb-streak">
+            <span id="dlb-streak-icon">🔥</span>
+            <span id="dlb-streak-val">0</span>
+            <span id="dlb-streak-label">JOURS</span>
+          </div>
+        </div>
+
+        <!-- Grille 7 jours -->
+        <div id="dlb-grid">
+          <!-- Rempli par DailyLoginUI -->
+        </div>
+
+        <!-- Mise en avant de la récompense du jour -->
+        <div id="dlb-reward-spotlight">
+          <div id="dlb-reward-icon"></div>
+          <div id="dlb-reward-desc"></div>
+        </div>
+
+        <!-- Actions -->
+        <div id="dlb-actions">
+          <button id="dlb-claim-btn">✦ RÉCLAMER</button>
+          <button id="dlb-close-btn">Revenir demain</button>
+        </div>
+      </div>
     </div>
 
     <script type="module" src="/src/main.js"></script>

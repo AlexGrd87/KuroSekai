@@ -7,12 +7,14 @@ import { CONSTELLATION_BONUSES }                         from './characters.js';
 import { apiService }                                    from './ApiService.js';
 import { DAILY_QUESTS, WEEKLY_QUESTS,
          todayMidnight, weekStart }                      from './quests.js';
+import { DAILY_REWARDS, getDayInCycle }                  from './dailyRewards.js';
 
-const STORAGE_KEY  = 'kuro_player_collection';
-const PROGRESS_KEY = 'kuro_player_progress';
-const HISTORY_KEY  = 'kuro_pull_history';
-const QUESTS_KEY   = 'kuro_quests';
-const HISTORY_MAX  = 100;
+const STORAGE_KEY   = 'kuro_player_collection';
+const PROGRESS_KEY  = 'kuro_player_progress';
+const HISTORY_KEY   = 'kuro_pull_history';
+const QUESTS_KEY    = 'kuro_quests';
+const DAILY_KEY     = 'kuro_daily_login';
+const HISTORY_MAX   = 100;
 
 export const MAX_LEVEL   = 50;
 export const STAT_GROWTH = 0.04; // +4% par niveau sur HP, ATK, DEF
@@ -73,6 +75,7 @@ export class PlayerData {
       this.pullHistory = [];
     }
     this._loadQuests();
+    this._loadDailyLogin();
   }
 
   /* ── Quêtes ── */
@@ -481,6 +484,109 @@ export class PlayerData {
   incrementSummons(n = 1) {
     this.totalSummons = (this.totalSummons ?? 0) + n;
     this._saveProgress();
+  }
+
+  /* ════════════════════════════════
+     CONNEXION QUOTIDIENNE
+  ════════════════════════════════ */
+
+  _loadDailyLogin() {
+    try {
+      const raw  = localStorage.getItem(DAILY_KEY);
+      const data = raw ? JSON.parse(raw) : {};
+      this._daily = {
+        streak:        data.streak        ?? 0,
+        lastClaimDate: data.lastClaimDate ?? 0,  // timestamp minuit du dernier claim
+        claimedToday:  false,                     // recalculé ci-dessous
+      };
+      // Vérifie si le claim d'aujourd'hui a déjà été fait
+      const today = todayMidnight();
+      this._daily.claimedToday = (this._daily.lastClaimDate >= today);
+
+      // Si plus d'un jour s'est écoulé sans claim → streak cassé (repart à 0)
+      const yesterday = today - 86_400_000;
+      if (this._daily.lastClaimDate < yesterday && this._daily.streak > 0) {
+        // Le streak ne se reset qu'au moment du claim, pour ne pas pénaliser en
+        // affichage : on laisse streak tel quel jusqu'au prochain claim.
+      }
+    } catch {
+      this._daily = { streak: 0, lastClaimDate: 0, claimedToday: false };
+    }
+  }
+
+  _saveDailyLogin() {
+    localStorage.setItem(DAILY_KEY, JSON.stringify({
+      streak:        this._daily.streak,
+      lastClaimDate: this._daily.lastClaimDate,
+    }));
+  }
+
+  /**
+   * Retourne l'état courant pour l'UI de connexion journalière.
+   * @returns {{ streak, dayInCycle, reward, claimedToday, streakBroken }}
+   */
+  getDailyLoginState() {
+    const today     = todayMidnight();
+    const yesterday = today - 86_400_000;
+
+    // Streak cassé si dernier claim avant hier (pas aujourd'hui ni hier)
+    const streakBroken = (
+      this._daily.streak > 0 &&
+      this._daily.lastClaimDate < yesterday
+    );
+    const effectiveStreak = streakBroken ? 0 : this._daily.streak;
+    const nextDay         = getDayInCycle(effectiveStreak + 1);
+    const reward          = DAILY_REWARDS.find(r => r.day === nextDay);
+
+    return {
+      streak:       effectiveStreak,
+      dayInCycle:   nextDay,
+      reward,
+      claimedToday: this._daily.claimedToday,
+      streakBroken,
+      allRewards:   DAILY_REWARDS,
+    };
+  }
+
+  /**
+   * Réclame la récompense de connexion du jour.
+   * @returns {Object|null} récompenses appliquées, ou null si déjà réclamé
+   */
+  claimDailyLogin() {
+    if (this._daily.claimedToday) return null;
+
+    const today     = todayMidnight();
+    const yesterday = today - 86_400_000;
+
+    // Reset du streak si cassé
+    if (this._daily.lastClaimDate < yesterday && this._daily.streak > 0) {
+      this._daily.streak = 0;
+    }
+
+    this._daily.streak++;
+    this._daily.lastClaimDate = today;
+    this._daily.claimedToday  = true;
+
+    const dayInCycle = getDayInCycle(this._daily.streak);
+    const reward     = DAILY_REWARDS.find(r => r.day === dayInCycle);
+
+    // Applique les récompenses
+    if (reward) {
+      if (reward.type === 'currency') {
+        this.currency += reward.amount;
+      } else if (reward.type === 'pulls') {
+        this.addFreeRolls(reward.amount);
+      } else if (reward.type === 'xpBoost') {
+        this.addXpBoost(reward.amount);
+      } else if (reward.type === 'grand') {
+        if (reward.currency) this.currency += reward.currency;
+        if (reward.pulls)    this.addFreeRolls(reward.pulls);
+      }
+    }
+
+    this._saveProgress();
+    this._saveDailyLogin();
+    return reward;
   }
 
   /* ════════════════════════════════

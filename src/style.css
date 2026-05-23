@@ -8059,3 +8059,259 @@ html, body {
   .qr-claim-btn    { font-size: 0.62rem; padding: 0.4rem 0.65rem; }
 }
 
+
+
+/* ═══════════════════════════════════════════════════════════
+   CONNEXION QUOTIDIENNE — Daily Login Popup
+   ═══════════════════════════════════════════════════════════ */
+
+/* Fond overlay */
+#daily-login-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+
+/* Boîte principale */
+#daily-login-box {
+  width: min(480px, 94vw);
+  background: linear-gradient(160deg, #0c1124 0%, #07091a 60%, #0a0d1e 100%);
+  border: 1px solid rgba(0, 212, 255, 0.22);
+  border-radius: 18px;
+  padding: 1.5rem 1.4rem 1.3rem;
+  box-shadow:
+    0 0 40px rgba(0, 212, 255, 0.08),
+    0 20px 60px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+/* En-tête */
+#dlb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.1rem;
+}
+#dlb-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--cyan);
+  text-transform: uppercase;
+}
+#dlb-streak {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255, 150, 0, 0.1);
+  border: 1px solid rgba(255, 150, 0, 0.3);
+  border-radius: 20px;
+  padding: 0.25rem 0.7rem;
+}
+#dlb-streak-icon  { font-size: 0.85rem; }
+#dlb-streak-val   { font-size: 0.85rem; font-weight: 800; color: #ffaa33; }
+#dlb-streak-label {
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.12em; color: rgba(255, 170, 51, 0.7);
+}
+
+/* Grille 7 jours */
+#dlb-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+}
+
+/* Cartes journalières */
+.dlb-day-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 0.5rem 0.2rem 0.45rem;
+  transition: border-color 0.2s;
+}
+
+/* Jour courant */
+.dlb-day-card--current {
+  border-color: var(--cyan);
+  background: rgba(0, 212, 255, 0.07);
+  box-shadow: 0 0 14px rgba(0, 212, 255, 0.15);
+}
+
+/* Jours déjà réclamés */
+.dlb-day-card--claimed {
+  opacity: 0.45;
+  border-color: rgba(76, 222, 138, 0.2);
+  background: rgba(76, 222, 138, 0.03);
+}
+.dlb-day-card--claimed .dlb-day-icon {
+  color: #4cde8a;
+  font-size: 0.9rem;
+}
+
+/* Jours futurs */
+.dlb-day-card--future {
+  opacity: 0.35;
+}
+
+/* Jour spécial (Jour 7) */
+.dlb-day-card--special {
+  border-color: rgba(255, 200, 0, 0.35);
+  background: rgba(255, 200, 0, 0.05);
+}
+.dlb-day-card--special.dlb-day-card--current {
+  border-color: #ffd700;
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.2);
+}
+
+.dlb-day-label {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(200, 220, 255, 0.4);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.dlb-day-card--current .dlb-day-label { color: var(--cyan); }
+.dlb-day-card--special .dlb-day-label { color: #ffd700; font-size: 0.48rem; }
+
+.dlb-day-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  user-select: none;
+}
+.dlb-day-card--current .dlb-day-icon { filter: drop-shadow(0 0 6px var(--cyan)); }
+.dlb-day-card--special.dlb-day-card--current .dlb-day-icon { filter: drop-shadow(0 0 8px #ffd700); }
+
+.dlb-day-desc {
+  font-size: 0.46rem;
+  color: rgba(200, 220, 255, 0.35);
+  text-align: center;
+  line-height: 1.2;
+  padding: 0 1px;
+}
+.dlb-day-card--current .dlb-day-desc { color: rgba(0, 212, 255, 0.6); }
+
+/* Spotlight récompense */
+#dlb-reward-spotlight {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+}
+#dlb-reward-icon {
+  font-size: 2rem;
+  line-height: 1;
+  min-width: 2rem;
+  text-align: center;
+}
+#dlb-reward-desc {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(200, 220, 255, 0.75);
+  letter-spacing: 0.04em;
+}
+
+/* Actions */
+#dlb-actions {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+#dlb-claim-btn {
+  flex: 1;
+  background: linear-gradient(135deg, rgba(0,212,255,0.22), rgba(0,212,255,0.12));
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, opacity 0.2s;
+  text-transform: uppercase;
+}
+#dlb-claim-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(0,212,255,0.38), rgba(0,212,255,0.22));
+  box-shadow: 0 0 20px rgba(0,212,255,0.3);
+}
+#dlb-claim-btn:disabled,
+#dlb-claim-btn.dlb-claim-btn--done {
+  opacity: 0.5;
+  cursor: default;
+  border-color: rgba(76, 222, 138, 0.4);
+  color: #4cde8a;
+  background: rgba(76, 222, 138, 0.06);
+  box-shadow: none;
+}
+
+#dlb-close-btn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(200, 220, 255, 0.35);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 0.65rem 0.9rem;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s, border-color 0.2s;
+}
+#dlb-close-btn:hover {
+  color: rgba(200, 220, 255, 0.65);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* Bouton hub pour ouvrir manuellement le daily */
+#hub-daily-btn {
+  position: relative;
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px;
+  transition: transform 0.15s;
+}
+#hub-daily-btn:hover { transform: scale(1.15); }
+#hub-daily-btn .hub-daily-badge {
+  position: absolute;
+  top: -2px; right: -4px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #ff5533;
+  border: 1px solid #07091a;
+}
+
+/* Particule cosmétique (GSAP) */
+.dlb-particle {
+  user-select: none;
+  font-weight: 700;
+}
+
+/* ═══ responsive ═══ */
+@media (max-width: 500px) {
+  #daily-login-box   { padding: 1.1rem 0.9rem 1rem; }
+  #dlb-grid          { gap: 0.3rem; }
+  .dlb-day-card      { padding: 0.4rem 0.1rem 0.35rem; border-radius: 8px; }
+  .dlb-day-icon      { font-size: 0.95rem; }
+  .dlb-day-desc      { display: none; }
+  #dlb-claim-btn     { font-size: 0.72rem; }
+}
