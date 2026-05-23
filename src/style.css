@@ -1937,6 +1937,46 @@ html, body {
 .cu-shield-icon { position: absolute; top: -4px; right: -4px; font-size: 0.7rem; }
 
 .cu-info { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; }
+
+/* ── Statuts sur unités combat ── */
+.cu-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  min-height: 14px;
+}
+.cu-status-badge {
+  font-size: 0.6rem;
+  color: var(--sc, #fff);
+  background: rgba(0,0,0,0.5);
+  border: 1px solid var(--sc, #fff);
+  border-radius: 3px;
+  padding: 0px 3px;
+  white-space: nowrap;
+  text-shadow: 0 0 6px var(--sc, #fff);
+  line-height: 1.4;
+}
+.cu-status-badge sup { font-size: 0.55em; margin-left: 1px; }
+
+/* ── File de tour ── */
+#combat-turn-queue {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.tq-chip {
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  color: var(--tc, #99aacc);
+  border: 1px solid var(--tc, #99aacc);
+  border-radius: 3px;
+  padding: 1px 6px;
+  background: rgba(0,0,0,0.4);
+  opacity: 0.75;
+}
+.tq-chip--player { opacity: 0.9; }
+.tq-chip--enemy  { opacity: 0.6; }
 .cu-name { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; }
 .cu-hp-bar-wrap { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
 .cu-hp-bar { height: 100%; border-radius: 2px; transition: background 0.3s; }

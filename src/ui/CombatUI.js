@@ -161,6 +161,21 @@ export class CombatUI {
     const txt = div.querySelector('.cu-hp-text');
     if (txt) txt.textContent = `${unit.hp.toLocaleString()} / ${unit.maxHp.toLocaleString()}`;
 
+    // Statuts actifs
+    const statusDiv = div.querySelector('.cu-statuses');
+    if (statusDiv) {
+      const META = this.engine.STATUS_META;
+      let html = unit.statuses.map(s => {
+        const m = META[s.type] || { icon: '?', color: '#fff' };
+        return `<span class="cu-status-badge" style="--sc:${m.color}" title="${m.label}">${m.icon}<sup>${s.duration}</sup></span>`;
+      }).join('');
+      if (unit.shield > 0) {
+        const pct = Math.round(unit.shield / unit.maxHp * 100);
+        html += `<span class="cu-status-badge" style="--sc:#00aaff" title="Bouclier ${pct}%">🛡<sup>${pct}%</sup></span>`;
+      }
+      statusDiv.innerHTML = html;
+    }
+
     if (!unit.alive) {
       gsap.to(div, { opacity: 0.3, scale: 0.92, duration: 0.4 });
       div.classList.add('combat-unit--dead');
@@ -442,9 +457,26 @@ export class CombatUI {
     document.getElementById('combat-turn-name').textContent = unit.name;
     this._highlightUnit(unit.uid);
     this._updateSkillButtons(unit);
+    this._updateTurnQueue();
     const isPlayerTurn = unit.side === 'player';
-    // En auto, les boutons d'action restent verrouillés même pendant le tour joueur
     this._lockActions(!isPlayerTurn || this._autoMode);
+  }
+
+  _updateTurnQueue() {
+    const wrap = document.getElementById('combat-turn-queue');
+    if (!wrap || !this.engine) return;
+    const upcoming = this.engine.getUpcoming(4);
+    const ELCOL = {
+      Fire:'#ff5500', Dark:'#8800ff', Wind:'#00cc66', Water:'#0099cc',
+      Thunder:'#cccc00', Earth:'#886600', Light:'#ccccff',
+      Void:'#cc00ff', Neutral:'#99aacc',
+    };
+    wrap.innerHTML = upcoming.map(u => {
+      const c = ELCOL[u.element] || '#99aacc';
+      const icon = u.side === 'player' ? '◈' : '◆';
+      return `<span class="tq-chip tq-chip--${u.side}" style="--tc:${c}"
+                    title="${u.name}">${icon} ${u.name.length > 6 ? u.name.slice(0,6)+'…' : u.name}</span>`;
+    }).join('');
   }
 
   _updateAutoUI() {

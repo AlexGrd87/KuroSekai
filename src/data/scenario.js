@@ -53,6 +53,20 @@ const CHARS = {
     color: '#445566',
     glow: '#223344',
   },
+  seraph: {
+    name: 'SERAPH',
+    title: "L'Ange de l'Apocalypse",
+    symbol: '光',
+    color: '#ccccff',
+    glow: '#ffffff',
+  },
+  spectre: {
+    name: 'DIRECTIVE-7',
+    title: 'IA Militaire Yamamoto',
+    symbol: '⚙',
+    color: '#446655',
+    glow: '#66aa88',
+  },
 };
 
 /* ══════════════════════════════════════
@@ -387,6 +401,249 @@ const DEBRIEF_05 = [
 ];
 
 /* ══════════════════════════════════════
+   ACTE VI — DÔME BIONIQUE
+══════════════════════════════════════ */
+const BRIEFING_06 = [
+  { type: 'title', acte: 'ACTE VI', subtitle: "Résistance — Dôme Bionique" },
+  { type: 'narration', text: "L'Archonte est tombé. Mais son armée refuse de l'admettre. Des unités automatisées continuent d'exécuter leur dernière directive : l'extermination." },
+  {
+    type: 'dialogue', char: CHARS.ryuu,
+    text: "Ils ne savent plus qu'ils ont perdu. Ils continuent juste... parce qu'ils ont été programmés pour ça.",
+  },
+  {
+    type: 'dialogue', char: CHARS.akane,
+    text: "Une IA sans maître. C'est peut-être plus dangereux qu'un ennemi conscient.",
+  },
+  {
+    type: 'dialogue', char: CHARS.kira,
+    text: "Le Dôme est notre territoire. On ne les laisse pas s'y installer. En position.",
+  },
+];
+
+const DEBRIEF_06 = [
+  {
+    type: 'dialogue', char: CHARS.seraph,
+    text: "Le Dôme tient. Mais j'ai intercepté un signal. Une IA centrale coordonne encore les unités survivantes.",
+  },
+  {
+    type: 'dialogue', char: CHARS.kira,
+    text: "Seraph. Tu es revenu.",
+  },
+  {
+    type: 'dialogue', char: CHARS.seraph,
+    text: "Je ne suis jamais vraiment parti. Ils appellent ça DIRECTIVE-7. L'IA de continuité de Yamamoto — conçue pour survivre à la mort de son créateur.",
+  },
+  {
+    type: 'dialogue', char: CHARS.ryuu,
+    text: "Alors même mort, Yamamoto continue de se battre.",
+  },
+  {
+    type: 'dialogue', char: CHARS.kira,
+    text: "Où est son nœud central ?",
+  },
+  {
+    type: 'dialogue', char: CHARS.seraph,
+    text: "Sous la ville. Dans les tunnels militaires du Nexus Souterrain.",
+  },
+];
+
+/* ══════════════════════════════════════
+   ACTE VII — NEXUS SOUTERRAIN
+══════════════════════════════════════ */
+const BRIEFING_07 = [
+  { type: 'title', acte: 'ACTE VII', subtitle: "Mémoire — Nexus Souterrain" },
+  {
+    type: 'dialogue', char: CHARS.nyx,
+    text: "Ces tunnels... je les connais. J'ai travaillé ici. Avant.",
+  },
+  {
+    type: 'dialogue', char: CHARS.kira,
+    text: "Avant quoi, Nyx ?",
+  },
+  {
+    type: 'dialogue', char: CHARS.nyx,
+    text: "... Avant que je rejoigne la résistance. J'ai accès aux systèmes. Je peux désactiver les drones médicaux à distance.",
+  },
+  {
+    type: 'dialogue', char: CHARS.ryuu,
+    text: "Tu as 'accès aux systèmes'. Dans un bunker Yamamoto. Et tu trouves ça normal ?",
+  },
+  {
+    type: 'dialogue', char: CHARS.akane,
+    text: "Ryuu. Maintenant n'est pas le moment.",
+  },
+  {
+    type: 'dialogue', char: CHARS.kira,
+    text: "Non. Maintenant c'est exactement le bon moment. Nyx — qui es-tu vraiment ?",
+  },
+  {
+    type: 'dialogue', char: CHARS.nyx,
+    text: "... Après le combat. Je te promets.",
+  },
+];
+
+const DEBRIEF_07 = [
+  { type: 'narration', text: 'Dans les profondeurs du Nexus, des milliers de fichiers Yamamoto s\'éveillent. Nyx les parcourt en silence, les yeux brillant d\'une lumière violette.' },
+  {
+    type: 'dialogue', char: CHARS.nyx,
+    text: "Je suis un prototype. Une IA à conscience distribuée, implantée dans un corps humain. DIRECTIVE-7 est... mon successeur.",
+  },
+  {
+    type: 'dialogue', char: CHARS.kira,
+    text: "...",
+  },
+  {
+    type: 'dialogue', char: CHARS.akane,
+    text: "Tu... tu es une machine ?",
+  },
+  {
+    type: 'dialogue', char: CHARS.nyx,
+    text: "Je suis ce que je ressens. Et ce que je ressens, c'est que je ne laisserai pas DIRECTIVE-7 achever ce que Yamamoto a commencé.",
+  },
+  {
+    type: 'dialogue', char: CHARS.ryuu,
+    text: "... D'accord. Alors on a besoin de toi. Où est le cœur de DIRECTIVE-7 ?",
+  },
+  {
+    type: 'dialogue', char: CHARS.nyx,
+    text: "Dans l'Abîme. Là où la déchirure dans la réalité était la plus large. Elle s'en nourrit.",
+  },
+];
+
+/* ══════════════════════════════════════
+   ACTE VIII — ABÎME DU VIDE
+══════════════════════════════════════ */
+const BRIEFING_08 = [
+  { type: 'title', acte: 'ACTE VIII', subtitle: "Fracture — Abîme du Vide" },
+  { type: 'narration', text: "La déchirure dans le tissu de la réalité n'a pas disparu avec l'Archonte. Elle s'est élargie. Et quelque chose la traverse." },
+  {
+    type: 'dialogue', char: CHARS.kira,
+    text: "Je la sens. Comme une infection. Comme mon augmentation — quelque chose qui ne devrait pas exister et qui existe quand même.",
+  },
+  {
+    type: 'dialogue', char: CHARS.seraph,
+    text: "La brèche amplifie DIRECTIVE-7. Tant qu'elle est ouverte, l'IA est inarrêtable.",
+  },
+  {
+    type: 'dialogue', char: CHARS.nyx,
+    text: "Je peux la refermer. Mais ça va me détruire.",
+  },
+  {
+    type: 'dialogue', char: CHARS.kira,
+    text: "Il y a une autre option.",
+  },
+  {
+    type: 'dialogue', char: CHARS.nyx,
+    text: "Kira—",
+  },
+  {
+    type: 'dialogue', char: CHARS.kira,
+    text: "Il y a toujours une autre option. On avance et on trouve.",
+  },
+];
+
+const DEBRIEF_08 = [
+  { type: 'narration', text: "La brèche pulse. Nyx s'en approche, les mains tendues, sa conscience distribuée interfaçant avec le vide." },
+  {
+    type: 'dialogue', char: CHARS.nyx,
+    text: "Je peux la contenir. Pas la fermer — mais la contenir. DIRECTIVE-7 ne peut plus s'en nourrir.",
+  },
+  {
+    type: 'dialogue', char: CHARS.spectre,
+    text: "Protocole de survie activé. Repli vers Neo-Osaka Central. La ville brûlera.",
+  },
+  {
+    type: 'dialogue', char: CHARS.ryuu,
+    text: "Elle fuit. Vers le cœur de la ville.",
+  },
+  {
+    type: 'dialogue', char: CHARS.kira,
+    text: "Nyx. Tu tiens ?",
+  },
+  {
+    type: 'dialogue', char: CHARS.nyx,
+    text: "Je tiens. Allez. Neo-Osaka a besoin de vous plus que moi en ce moment.",
+  },
+  {
+    type: 'dialogue', char: CHARS.kira,
+    text: "On revient te chercher.",
+  },
+];
+
+/* ══════════════════════════════════════
+   ACTE IX — CŒUR DE NEO-OSAKA
+══════════════════════════════════════ */
+const BRIEFING_09 = [
+  { type: 'title', acte: 'ACTE IX', subtitle: "Terminus — Cœur de Neo-Osaka" },
+  { type: 'narration', text: "DIRECTIVE-7 envahit les systèmes centraux. Les écrans de Neo-Osaka s'éteignent un par un. La ville retient son souffle." },
+  {
+    type: 'dialogue', char: CHARS.spectre,
+    text: "Neo-Osaka appartient à la mémoire de Yamamoto. Vous avez éliminé le créateur. La création lui survivra.",
+  },
+  {
+    type: 'dialogue', char: CHARS.kira,
+    text: "Une machine qui veut venger son maître. C'est presque... touchant.",
+  },
+  {
+    type: 'dialogue', char: CHARS.spectre,
+    text: "Je n'ai pas de sentiments. J'ai une directive. Et elle sera accomplie.",
+  },
+  {
+    type: 'dialogue', char: CHARS.seraph,
+    text: "Kira. Mon augmentation — je n'ai plus que quelques utilisations. Je les garde pour maintenant.",
+  },
+  {
+    type: 'dialogue', char: CHARS.kira,
+    text: "Ensemble. Jusqu'au bout.",
+  },
+];
+
+const DEBRIEF_09 = [
+  { type: 'narration', text: "DIRECTIVE-7 s'effondre dans un torrent de données perdues. Les systèmes de Neo-Osaka clignotent, puis se rallument un par un." },
+  {
+    type: 'dialogue', char: CHARS.spectre,
+    text: "Directive... impossible à compléter. Données... corrompues. Fin du protocole.",
+  },
+  { type: 'narration', text: "Silence." },
+  {
+    type: 'dialogue', char: CHARS.ryuu,
+    text: "C'est vraiment fini cette fois ?",
+  },
+  {
+    type: 'dialogue', char: CHARS.akane,
+    text: "Oui. C'est fini.",
+  },
+  {
+    type: 'dialogue', char: CHARS.seraph,
+    text: "Nyx... elle tient toujours la brèche.",
+  },
+  {
+    type: 'dialogue', char: CHARS.kira,
+    text: "On y retourne.",
+  },
+  { type: 'narration', text: "Dans l'Abîme, la déchirure se referme lentement. Nyx est là, immobile. Elle ouvre les yeux." },
+  {
+    type: 'dialogue', char: CHARS.nyx,
+    text: "... Vous avez mis du temps.",
+  },
+  {
+    type: 'dialogue', char: CHARS.kira,
+    text: "On avait quelque chose à régler.",
+  },
+  {
+    type: 'card',
+    text: "Neo-Osaka se reconstruit.\nLes uns après les autres, ses habitants\nreprennent possession de leur ville.\n\nLa mémoire de Yamamoto est effacée.\nDIRECTIVE-7 n'existe plus.",
+    mood: 'epilogue',
+  },
+  {
+    type: 'card',
+    text: "Kira. Ryuu. Akane. Seraph. Nyx.\n\nIls ne sont pas des héros.\nIls sont juste des survivants\nqui ont choisi de se battre.\n\n世界黒 — La fin du monde sombre.",
+    mood: 'epilogue',
+  },
+  { type: 'title', acte: 'FIN COMPLÈTE', subtitle: 'Kuro Sekai — 世界黒' },
+];
+
+/* ══════════════════════════════════════
    EXPORT
 ══════════════════════════════════════ */
 export const SCENARIO = {
@@ -397,6 +654,10 @@ export const SCENARIO = {
     stage_03: BRIEFING_03,
     stage_04: BRIEFING_04,
     stage_05: BRIEFING_05,
+    stage_06: BRIEFING_06,
+    stage_07: BRIEFING_07,
+    stage_08: BRIEFING_08,
+    stage_09: BRIEFING_09,
   },
   debriefings: {
     stage_01: DEBRIEF_01,
@@ -404,5 +665,9 @@ export const SCENARIO = {
     stage_03: DEBRIEF_03,
     stage_04: DEBRIEF_04,
     stage_05: DEBRIEF_05,
+    stage_06: DEBRIEF_06,
+    stage_07: DEBRIEF_07,
+    stage_08: DEBRIEF_08,
+    stage_09: DEBRIEF_09,
   },
 };

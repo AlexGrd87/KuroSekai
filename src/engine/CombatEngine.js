@@ -395,6 +395,17 @@ export class CombatEngine {
     return entry;
   }
 
+  /** Retourne les N prochaines unités dans l'ordre de tour (sans l'actuelle) */
+  getUpcoming(n = 3) {
+    const len = this.turnOrder.length;
+    if (len === 0) return [];
+    const result = [];
+    for (let i = 1; i <= n; i++) {
+      result.push(this.turnOrder[(this.turnIndex + i) % len]);
+    }
+    return result;
+  }
+
   /* Getter public */
   get STATUS_META() { return STATUS; }
 }
