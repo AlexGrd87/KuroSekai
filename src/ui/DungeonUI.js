@@ -12,6 +12,7 @@
 
 import { gsap }                                    from 'gsap';
 import { DUNGEON_ROOMS, DUNGEON_BUFFS, buildDungeonStage } from '../data/dungeon.js';
+import { saveDungeonBest }                         from './LeaderboardUI.js';
 import { audio }                                   from '../audio/AudioManager.js';
 
 const VICTORY_CURRENCY = 2000;
@@ -129,12 +130,16 @@ export class DungeonUI {
 
   _onRoomEnd(winner) {
     if (winner !== 'player') {
-      // Défaite
+      // Défaite — sauvegarde la meilleure salle atteinte
+      saveDungeonBest(this._roomIndex);
       audio.stopBgm();
       setTimeout(() => audio.playBgm('hub'), 700);
       setTimeout(() => this._showEnd(false), 350);
       return;
     }
+
+    // Victoire de salle — sauvegarde progression
+    saveDungeonBest(this._roomIndex);
 
     const isLast = this._roomIndex >= DUNGEON_ROOMS.length - 1;
     if (isLast) {

@@ -226,6 +226,7 @@
             <span class="hub-currency-icon">◈</span>
             <span id="hub-nav-currency-val">0</span>
           </div>
+          <button id="hub-lb-btn" title="Classement">🏆</button>
         </header>
 
         <!-- Scène ville plein écran -->
@@ -961,6 +962,33 @@
       <div id="shop-toast"></div>
 
     </div><!-- /shop-screen -->
+
+    <!-- ══════════════════════════════════════════
+         CLASSEMENT
+    ══════════════════════════════════════════ -->
+    <div id="lb-screen" style="display:none">
+
+      <header id="lb-header">
+        <button id="lb-back" class="col-back-btn">
+          <span class="col-back-arrow">←</span> HUB
+        </button>
+        <div id="lb-title-block">
+          <span class="lb-kanji">順位</span>
+          <h2>CLASSEMENT</h2>
+          <p id="lb-subtitle" class="lb-subtitle">Classement toutes catégories</p>
+        </div>
+        <div id="lb-tabs">
+          <button class="lb-tab lb-tab--active" data-tab="global">GLOBAL</button>
+          <button class="lb-tab" data-tab="campaign">CAMPAGNE</button>
+          <button class="lb-tab" data-tab="dungeon">DONJON</button>
+        </div>
+      </header>
+
+      <div id="lb-list">
+        <!-- Lignes injectées par JS -->
+      </div>
+
+    </div><!-- /lb-screen -->
 
     <!-- ══════════════════════════════════════════
          DONJON ABYSSAL — Overlays

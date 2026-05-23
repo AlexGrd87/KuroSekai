@@ -21,6 +21,7 @@ import { settings }       from './data/Settings.js';
 import { AuthUI }         from './ui/AuthUI.js';
 import { ShopUI }         from './ui/ShopUI.js';
 import { DungeonUI }      from './ui/DungeonUI.js';
+import { LeaderboardUI }  from './ui/LeaderboardUI.js';
 import { apiService }     from './data/ApiService.js';
 import { audio }          from './audio/AudioManager.js';
 
@@ -141,6 +142,14 @@ document.getElementById('hub-dungeon-btn')
   ?.addEventListener('click', () => {
     audio.play('ui_navigate');
     dungeonUI.show();
+  });
+
+/* ── CLASSEMENT ── */
+const leaderboardUI = new LeaderboardUI(playerData, goHub);
+document.getElementById('hub-lb-btn')
+  ?.addEventListener('click', () => {
+    audio.play('ui_navigate');
+    leaderboardUI.show();
   });
 
 /* ══════════════════════════════════════════
