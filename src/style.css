@@ -4701,6 +4701,375 @@ html, body {
   box-shadow: 0 0 20px rgba(255,187,51,0.2);
 }
 
+/* ═══════════════════════════════════════════════════════════
+   DONJON ABYSSAL
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Bouton DONJON dans hub-map-header ── */
+.hub-dungeon-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.18rem;
+  padding: 0.4rem 0.8rem;
+  background: rgba(140,0,255,0.12);
+  border: 1px solid rgba(140,0,255,0.35);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.12s;
+  flex-shrink: 0;
+}
+.hub-dungeon-btn:hover {
+  background: rgba(140,0,255,0.25);
+  border-color: #8c00ff;
+  transform: translateY(-1px);
+}
+.hub-dng-icon {
+  font-size: 1.1rem;
+  color: #cc66ff;
+  line-height: 1;
+}
+.hub-dng-label {
+  font-size: 0.52rem;
+  letter-spacing: 0.18em;
+  color: rgba(200,160,255,0.8);
+  font-family: var(--font-ui);
+}
+
+/* ── Overlays communs ── */
+#dungeon-intro,
+#dungeon-buff-overlay,
+#dungeon-end-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 65;
+  background: rgba(0,0,8,0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+}
+
+/* ── Intro ── */
+#dungeon-intro-box {
+  position: relative;
+  width: min(480px, 94vw);
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(140,0,255,0.18) 0%, transparent 70%),
+    rgba(8,12,28,0.97);
+  border: 1px solid rgba(140,0,255,0.35);
+  border-radius: 16px;
+  padding: 2rem 2rem 1.8rem;
+  box-shadow: 0 0 60px rgba(140,0,255,0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4rem;
+}
+#dungeon-intro-back {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+}
+.dng-intro-header {
+  text-align: center;
+}
+.dng-intro-kanji {
+  display: block;
+  font-size: 2.2rem;
+  color: rgba(180,100,255,0.7);
+  line-height: 1;
+  margin-bottom: 0.3rem;
+  text-shadow: 0 0 20px rgba(180,100,255,0.5);
+}
+.dng-intro-title {
+  font-size: 1.5rem;
+  font-family: var(--font-ui);
+  letter-spacing: 0.2em;
+  color: #e0c8ff;
+  margin: 0 0 0.3rem;
+  text-shadow: 0 0 18px rgba(180,100,255,0.5);
+}
+.dng-intro-sub {
+  font-size: 0.65rem;
+  color: rgba(180,150,220,0.55);
+  letter-spacing: 0.12em;
+  margin: 0;
+}
+
+/* ── Track de salles (intro) ── */
+.dng-room-track {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  justify-content: center;
+}
+.dng-room-dot {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid rgba(140,0,255,0.45);
+  background: rgba(140,0,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.dng-room-dot--boss {
+  border-color: rgba(220,50,255,0.6);
+  background: rgba(220,50,255,0.15);
+  width: 54px;
+  height: 54px;
+}
+.dng-dot-num {
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  color: rgba(200,160,255,0.8);
+  letter-spacing: 0.04em;
+}
+.dng-room-conn {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(140,0,255,0.4) 0%, rgba(140,0,255,0.4) 100%);
+  max-width: 40px;
+}
+
+/* ── Règles ── */
+.dng-intro-rules {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.dng-rule {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.72rem;
+  color: rgba(200,185,230,0.75);
+}
+.dng-rule-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.dng-rule b { color: #e0c8ff; }
+
+/* ── Bouton START ── */
+.dng-start-btn {
+  width: 100%;
+  padding: 0.85rem;
+  background: linear-gradient(135deg, rgba(140,0,255,0.3), rgba(80,0,160,0.35));
+  border: 1px solid rgba(160,60,255,0.55);
+  border-radius: 10px;
+  color: #e8d0ff;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.1s;
+  text-shadow: 0 0 10px rgba(200,100,255,0.4);
+}
+.dng-start-btn:hover {
+  background: linear-gradient(135deg, rgba(160,30,255,0.45), rgba(100,0,200,0.5));
+  border-color: #aa44ff;
+  transform: translateY(-1px);
+}
+
+/* ── Buff overlay ── */
+#dungeon-buff-box {
+  width: min(580px, 96vw);
+  background:
+    radial-gradient(ellipse 55% 45% at 50% 0%, rgba(0,200,150,0.1) 0%, transparent 65%),
+    rgba(6,12,26,0.97);
+  border: 1px solid rgba(0,200,150,0.25);
+  border-radius: 16px;
+  padding: 1.8rem 1.8rem 1.6rem;
+  box-shadow: 0 0 60px rgba(0,200,150,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+}
+.dng-buff-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.dng-buff-title {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: rgba(180,255,220,0.7);
+  font-family: var(--font-ui);
+}
+.dng-buff-room-label {
+  font-size: 0.62rem;
+  color: rgba(160,220,200,0.5);
+  font-family: var(--font-ui);
+  letter-spacing: 0.08em;
+}
+/* Points de progression (buff overlay) */
+.dng-prog-track {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.dng-prog-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: background 0.3s, border-color 0.3s;
+}
+.dng-prog-dot--boss {
+  width: 14px;
+  height: 14px;
+  background: rgba(200,50,255,0.2);
+  border-color: rgba(200,50,255,0.5);
+}
+.dng-prog-dot--done {
+  background: #00e896;
+  border-color: #00e896;
+  box-shadow: 0 0 8px rgba(0,232,150,0.6);
+}
+.dng-prog-dot--current {
+  background: rgba(0,232,150,0.5);
+  border-color: #00e896;
+}
+/* Grille de buffs */
+.dng-buff-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.9rem;
+  width: 100%;
+}
+.dng-buff-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.1rem 0.7rem 0.9rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid color-mix(in srgb, var(--bc, #0df) 30%, transparent);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, transform 0.12s, box-shadow 0.18s;
+  position: relative;
+  overflow: hidden;
+}
+.dng-buff-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--bc, #0df) 18%, transparent) 0%, transparent 70%);
+  pointer-events: none;
+}
+.dng-buff-card:hover {
+  background: color-mix(in srgb, var(--bc, #0df) 12%, transparent);
+  border-color: var(--bc, #0df);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--bc, #0df) 25%, transparent);
+}
+.dng-buff-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+.dng-buff-name {
+  font-family: var(--font-ui);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: var(--bc, #0df);
+  text-align: center;
+}
+.dng-buff-desc {
+  font-size: 0.6rem;
+  color: rgba(200,215,240,0.65);
+  text-align: center;
+  line-height: 1.4;
+}
+.dng-buff-select-hint {
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  color: rgba(255,255,255,0.25);
+  font-family: var(--font-ui);
+  margin-top: 0.2rem;
+}
+.dng-buff-card:hover .dng-buff-select-hint {
+  color: var(--bc, #0df);
+}
+
+/* ── Écran de fin ── */
+#dungeon-end-box {
+  width: min(420px, 92vw);
+  background:
+    radial-gradient(ellipse 55% 45% at 50% 0%, rgba(180,80,255,0.15) 0%, transparent 65%),
+    rgba(6,10,24,0.98);
+  border: 1px solid rgba(160,80,255,0.3);
+  border-radius: 16px;
+  padding: 2.2rem 2rem 1.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 0 60px rgba(140,0,255,0.18);
+}
+.dng-end-icon {
+  font-size: 3.5rem;
+  line-height: 1;
+}
+.dng-end-title {
+  font-family: var(--font-ui);
+  font-size: 1.4rem;
+  letter-spacing: 0.18em;
+  color: #e8d0ff;
+  text-shadow: 0 0 20px rgba(200,100,255,0.4);
+}
+.dng-end-sub {
+  font-size: 0.7rem;
+  color: rgba(200,185,230,0.65);
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+.dng-end-rooms {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0.5rem 0;
+}
+.dng-end-room {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.25);
+  transition: all 0.3s;
+}
+.dng-end-room--boss {
+  width: 50px;
+  height: 50px;
+  font-size: 0.52rem;
+}
+.dng-end-room--done {
+  border-color: #00e896;
+  background: rgba(0,232,150,0.15);
+  color: #00e896;
+  box-shadow: 0 0 12px rgba(0,232,150,0.35);
+}
+.dng-end-room--failed {
+  border-color: #ff3355;
+  background: rgba(255,50,85,0.15);
+  color: #ff3355;
+  box-shadow: 0 0 12px rgba(255,50,85,0.3);
+}
+
 /* =====================================================
    HUB — RESPONSIVE
    ===================================================== */

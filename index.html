@@ -471,6 +471,10 @@
             <h2>CARTE DES OPÉRATIONS</h2>
           </div>
           <div id="hub-player-stats"></div>
+          <button id="hub-dungeon-btn" class="hub-dungeon-btn">
+            <span class="hub-dng-icon">奈落</span>
+            <span class="hub-dng-label">DONJON</span>
+          </button>
         </header>
 
         <!-- Carte horizontale des stages -->
@@ -957,6 +961,76 @@
       <div id="shop-toast"></div>
 
     </div><!-- /shop-screen -->
+
+    <!-- ══════════════════════════════════════════
+         DONJON ABYSSAL — Overlays
+    ══════════════════════════════════════════ -->
+
+    <!-- Intro du donjon -->
+    <div id="dungeon-intro" style="display:none">
+      <div id="dungeon-intro-box">
+        <button id="dungeon-intro-back" class="col-back-btn">← RETOUR</button>
+        <div class="dng-intro-header">
+          <span class="dng-intro-kanji">奈落</span>
+          <h2 class="dng-intro-title">DONJON ABYSSAL</h2>
+          <p class="dng-intro-sub">Mode survie · 5 salles · 0 continue</p>
+        </div>
+        <div class="dng-room-track">
+          <div class="dng-room-dot"><span class="dng-dot-num">1</span></div>
+          <div class="dng-room-conn"></div>
+          <div class="dng-room-dot"><span class="dng-dot-num">2</span></div>
+          <div class="dng-room-conn"></div>
+          <div class="dng-room-dot"><span class="dng-dot-num">3</span></div>
+          <div class="dng-room-conn"></div>
+          <div class="dng-room-dot"><span class="dng-dot-num">4</span></div>
+          <div class="dng-room-conn"></div>
+          <div class="dng-room-dot dng-room-dot--boss"><span class="dng-dot-num">BOSS</span></div>
+        </div>
+        <div class="dng-intro-rules">
+          <div class="dng-rule"><span class="dng-rule-icon">🎲</span><span>Choisissez un <b>buff</b> entre chaque salle</span></div>
+          <div class="dng-rule"><span class="dng-rule-icon">💀</span><span>Défaite = <b>tout recommencer</b></span></div>
+          <div class="dng-rule"><span class="dng-rule-icon">🏆</span><span>Victoire finale = <b>2 000 ◈</b></span></div>
+        </div>
+        <button id="dungeon-start-btn" class="dng-start-btn">
+          ENTRER DANS L'ABÎME
+        </button>
+      </div>
+    </div>
+
+    <!-- Sélection de buff entre les salles -->
+    <div id="dungeon-buff-overlay" style="display:none">
+      <div id="dungeon-buff-box">
+        <div class="dng-buff-header">
+          <span class="dng-buff-title">✦ CHOISIR UN RENFORT</span>
+          <span id="dungeon-buff-room" class="dng-buff-room-label"></span>
+        </div>
+        <div class="dng-prog-track">
+          <div class="dng-prog-dot"></div>
+          <div class="dng-prog-dot"></div>
+          <div class="dng-prog-dot"></div>
+          <div class="dng-prog-dot"></div>
+          <div class="dng-prog-dot dng-prog-dot--boss"></div>
+        </div>
+        <div id="dungeon-buff-grid" class="dng-buff-grid"></div>
+      </div>
+    </div>
+
+    <!-- Écran de résultat final du donjon -->
+    <div id="dungeon-end-overlay" style="display:none">
+      <div id="dungeon-end-box">
+        <div id="dungeon-end-icon"  class="dng-end-icon">🏆</div>
+        <div id="dungeon-end-title" class="dng-end-title">ABÎME CONQUIS !</div>
+        <div id="dungeon-end-sub"   class="dng-end-sub"></div>
+        <div class="dng-end-rooms">
+          <div class="dng-end-room"><span>1</span></div>
+          <div class="dng-end-room"><span>2</span></div>
+          <div class="dng-end-room"><span>3</span></div>
+          <div class="dng-end-room"><span>4</span></div>
+          <div class="dng-end-room dng-end-room--boss"><span>BOSS</span></div>
+        </div>
+        <button id="dungeon-end-back" class="dng-start-btn">RETOUR AU HUB</button>
+      </div>
+    </div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

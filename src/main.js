@@ -20,6 +20,7 @@ import { RewardPopupUI }  from './ui/RewardPopupUI.js';
 import { settings }       from './data/Settings.js';
 import { AuthUI }         from './ui/AuthUI.js';
 import { ShopUI }         from './ui/ShopUI.js';
+import { DungeonUI }      from './ui/DungeonUI.js';
 import { apiService }     from './data/ApiService.js';
 import { audio }          from './audio/AudioManager.js';
 
@@ -133,6 +134,14 @@ const teamSelect = new TeamSelectUI(playerData, (team) => {
 
 /* Retour team-select → hub */
 document.getElementById('ts-back')?.addEventListener('click', goHub);
+
+/* ── DONJON ABYSSAL ── */
+const dungeonUI = new DungeonUI(playerData, combatUI, teamSelect, goHub);
+document.getElementById('hub-dungeon-btn')
+  ?.addEventListener('click', () => {
+    audio.play('ui_navigate');
+    dungeonUI.show();
+  });
 
 /* ══════════════════════════════════════════
    HUB — ÉCRAN PRINCIPAL

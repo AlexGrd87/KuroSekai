@@ -37,7 +37,7 @@ export class CombatEngine {
 
     /* ── Combattants ennemis ── */
     this.enemyUnits = enemyIds.map((id, i) => {
-      const data = ENEMIES.find(e => e.id === id);
+      const data = typeof id === 'string' ? ENEMIES.find(e => e.id === id) : id;
       if (!data) throw new Error(`Enemy not found: ${id}`);
       return this._buildUnit(data, 'enemy', i);
     });
@@ -351,7 +351,7 @@ export class CombatEngine {
    */
   loadNextWave(enemyIds) {
     this.enemyUnits = enemyIds.map((id, i) => {
-      const data = ENEMIES.find(e => e.id === id);
+      const data = typeof id === 'string' ? ENEMIES.find(e => e.id === id) : id;
       if (!data) throw new Error(`Enemy not found: ${id}`);
       return this._buildUnit(data, 'enemy', i);
     });
