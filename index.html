@@ -227,6 +227,10 @@
             <span id="hub-nav-currency-val">0</span>
           </div>
           <button id="hub-lb-btn" title="Classement">🏆</button>
+          <button id="hub-missions-btn" class="hub-missions-btn" title="Missions">
+            📋
+            <span id="hub-missions-badge" class="hub-missions-badge" style="display:none">0</span>
+          </button>
         </header>
 
         <!-- Scène ville plein écran -->
@@ -1058,6 +1062,38 @@
         </div>
         <button id="dungeon-end-back" class="dng-start-btn">RETOUR AU HUB</button>
       </div>
+    </div>
+
+    <!-- ══ MISSIONS & QUÊTES ══ -->
+    <div id="quests-screen" style="display:none">
+      <div id="quests-bg"></div>
+
+      <header id="quests-header">
+        <button id="quests-back-btn" class="col-back-btn">
+          <span class="col-back-arrow">←</span> HUB
+        </button>
+        <div class="quests-title-block">
+          <h2>MISSIONS</h2>
+          <span class="quests-subtitle">Objectifs journaliers &amp; hebdomadaires</span>
+        </div>
+        <div id="quests-timer" class="quests-timer"></div>
+      </header>
+
+      <!-- Onglets -->
+      <div id="quests-tab-bar">
+        <button id="tab-daily"  class="qt-tab qt-tab--active">
+          JOURNALIÈRES <span class="qt-tab-badge" style="display:none">0</span>
+        </button>
+        <button id="tab-weekly" class="qt-tab">
+          HEBDOMADAIRES <span class="qt-tab-badge" style="display:none">0</span>
+        </button>
+      </div>
+
+      <!-- Liste des quêtes -->
+      <div id="quests-list" class="quests-list"></div>
+
+      <!-- Toast récompense -->
+      <div id="quests-toast" class="quests-toast" style="opacity:0"></div>
     </div>
 
     <script type="module" src="/src/main.js"></script>

@@ -22,6 +22,7 @@ import { AuthUI }         from './ui/AuthUI.js';
 import { ShopUI }         from './ui/ShopUI.js';
 import { DungeonUI }      from './ui/DungeonUI.js';
 import { LeaderboardUI }  from './ui/LeaderboardUI.js';
+import { QuestsUI }       from './ui/QuestsUI.js';
 import { apiService }     from './data/ApiService.js';
 import { audio }          from './audio/AudioManager.js';
 
@@ -52,6 +53,7 @@ const rewardPopup = new RewardPopupUI();
 /* ── Retour hub depuis les sous-écrans plein-écran ── */
 function goHub() {
   hub.show();
+  questsUI?.refreshBadge();
   if (!audio.ready || audio._bgmTheme !== 'hub') {
     audio.stopBgm(600);
     setTimeout(() => audio.playBgm('hub'), 650);
@@ -71,6 +73,10 @@ let _currentTeam  = [];
 function handleVictory(stage) {
   audio.play('victory');
   playerData.completeStage(stage.id, stage.rewards);
+  // Progression quêtes
+  playerData.incrementQuest('COMBAT_WIN',     1);
+  playerData.incrementQuest('STAGE_COMPLETE', 1);
+  questsUI?.refreshBadge();
 
   const xpMult    = playerData.consumeXpBoost();   // 2 si boost actif, sinon 1
   const expGained = Math.round((stage.rewards.exp ?? 0) * xpMult);
@@ -152,6 +158,15 @@ document.getElementById('hub-lb-btn')
     leaderboardUI.show();
   });
 
+/* ── MISSIONS & QUÊTES ── */
+const questsUI = new QuestsUI(playerData, goHub);
+document.getElementById('hub-missions-btn')
+  ?.addEventListener('click', () => {
+    audio.play('ui_navigate');
+    hub.hide();
+    questsUI.show();
+  });
+
 /* ══════════════════════════════════════════
    HUB — ÉCRAN PRINCIPAL
 ══════════════════════════════════════════ */
@@ -203,7 +218,11 @@ document.getElementById('col-back')
 ══════════════════════════════════════════ */
 
 document.addEventListener('kuro:character-obtained', (e) => {
-  if (e.detail?.id) playerData.addCharacter(e.detail.id);
+  if (e.detail?.id) {
+    playerData.addCharacter(e.detail.id);
+    playerData.incrementQuest('SUMMON', 1);
+    questsUI?.refreshBadge();
+  }
 });
 
 /* ══════════════════════════════════════════

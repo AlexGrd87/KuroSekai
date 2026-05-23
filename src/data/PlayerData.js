@@ -3,12 +3,15 @@
  * Gestion de la collection et de la progression du joueur via localStorage.
  */
 
-import { CONSTELLATION_BONUSES } from './characters.js';
-import { apiService }            from './ApiService.js';
+import { CONSTELLATION_BONUSES }                         from './characters.js';
+import { apiService }                                    from './ApiService.js';
+import { DAILY_QUESTS, WEEKLY_QUESTS,
+         todayMidnight, weekStart }                      from './quests.js';
 
 const STORAGE_KEY  = 'kuro_player_collection';
 const PROGRESS_KEY = 'kuro_player_progress';
 const HISTORY_KEY  = 'kuro_pull_history';
+const QUESTS_KEY   = 'kuro_quests';
 const HISTORY_MAX  = 100;
 
 export const MAX_LEVEL   = 50;
@@ -66,6 +69,145 @@ export class PlayerData {
     } catch {
       this.pullHistory = [];
     }
+    this._loadQuests();
+  }
+
+  /* ── Quêtes ── */
+  _loadQuests() {
+    try {
+      const raw  = localStorage.getItem(QUESTS_KEY);
+      const data = raw ? JSON.parse(raw) : {};
+      this._quests = {
+        daily: {
+          lastReset: data.daily?.lastReset ?? 0,
+          progress:  data.daily?.progress  ?? {},
+        },
+        weekly: {
+          lastReset: data.weekly?.lastReset ?? 0,
+          progress:  data.weekly?.progress  ?? {},
+        },
+      };
+    } catch {
+      this._quests = {
+        daily:  { lastReset: 0, progress: {} },
+        weekly: { lastReset: 0, progress: {} },
+      };
+    }
+  }
+
+  _saveQuests() {
+    localStorage.setItem(QUESTS_KEY, JSON.stringify(this._quests));
+  }
+
+  /** Réinitialise la progression des quêtes si le jour / la semaine a changé. */
+  _resetIfNeeded() {
+    const today = todayMidnight();
+    const week  = weekStart();
+
+    if (this._quests.daily.lastReset < today) {
+      this._quests.daily = { lastReset: today, progress: {} };
+    }
+    if (this._quests.weekly.lastReset < week) {
+      this._quests.weekly = { lastReset: week, progress: {} };
+    }
+  }
+
+  /**
+   * Retourne l'état de toutes les quêtes pour un tab ('daily' | 'weekly').
+   * @returns {{ quest, current, claimed, done }[]}
+   */
+  getQuestState(tab) {
+    this._resetIfNeeded();
+    const defs     = tab === 'daily' ? DAILY_QUESTS : WEEKLY_QUESTS;
+    const progress = this._quests[tab].progress;
+    return defs.map(quest => {
+      const p = progress[quest.id] ?? { current: 0, claimed: false };
+      return {
+        quest,
+        current: Math.min(p.current, quest.target),
+        claimed: p.claimed,
+        done:    p.current >= quest.target,
+      };
+    });
+  }
+
+  /**
+   * Incrémente la progression de toutes les quêtes actives du type donné.
+   * @param {'COMBAT_WIN'|'SUMMON'|'STAGE_COMPLETE'} type
+   * @param {number} amount
+   */
+  incrementQuest(type, amount = 1) {
+    this._resetIfNeeded();
+    let changed = false;
+
+    for (const tab of ['daily', 'weekly']) {
+      const defs     = tab === 'daily' ? DAILY_QUESTS : WEEKLY_QUESTS;
+      const progress = this._quests[tab].progress;
+
+      for (const quest of defs) {
+        if (quest.type !== type) continue;
+        if (!progress[quest.id]) progress[quest.id] = { current: 0, claimed: false };
+        const p = progress[quest.id];
+        if (p.current < quest.target) {
+          p.current = Math.min(quest.target, p.current + amount);
+          changed = true;
+        }
+      }
+    }
+
+    if (changed) {
+      this._saveQuests();
+      document.dispatchEvent(new CustomEvent('kuro:quests-updated'));
+    }
+  }
+
+  /**
+   * Réclame les récompenses d'une quête terminée.
+   * @param {string} questId
+   * @param {'daily'|'weekly'} tab
+   * @returns {{ currency?, freeRolls? } | null} récompenses ou null si non réclamable
+   */
+  claimQuest(questId, tab) {
+    this._resetIfNeeded();
+    const defs = tab === 'daily' ? DAILY_QUESTS : WEEKLY_QUESTS;
+    const quest = defs.find(q => q.id === questId);
+    if (!quest) return null;
+
+    const progress = this._quests[tab].progress;
+    if (!progress[questId]) progress[questId] = { current: 0, claimed: false };
+    const p = progress[questId];
+
+    if (p.current < quest.target || p.claimed) return null;
+
+    p.claimed = true;
+
+    // Applique les récompenses
+    if (quest.rewards.currency) {
+      this.currency += quest.rewards.currency;
+      this._saveProgress();
+    }
+    if (quest.rewards.freeRolls) {
+      this.addFreeRolls(quest.rewards.freeRolls);
+    }
+
+    this._saveQuests();
+    document.dispatchEvent(new CustomEvent('kuro:quests-updated'));
+    return quest.rewards;
+  }
+
+  /** Nombre de quêtes réclamables (badge notification) */
+  claimableQuestCount() {
+    this._resetIfNeeded();
+    let count = 0;
+    for (const tab of ['daily', 'weekly']) {
+      const defs     = tab === 'daily' ? DAILY_QUESTS : WEEKLY_QUESTS;
+      const progress = this._quests[tab].progress;
+      for (const quest of defs) {
+        const p = progress[quest.id] ?? { current: 0, claimed: false };
+        if (p.current >= quest.target && !p.claimed) count++;
+      }
+    }
+    return count;
   }
 
   /* ── Sauvegarde ── */
