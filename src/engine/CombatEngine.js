@@ -25,11 +25,12 @@ export class CombatEngine {
    * @param {Array} enemyIds    - tableau d'IDs ennemis (depuis ENEMIES)
    */
   constructor(playerTeam, enemyIds) {
-    this.turn    = 0;
-    this.round   = 1;
-    this.log     = [];
-    this.over    = false;
-    this.winner  = null; // 'player' | 'enemy'
+    this.turn           = 0;
+    this.round          = 1;
+    this.log            = [];
+    this.over           = false;
+    this.winner         = null; // 'player' | 'enemy'
+    this.pendingPassives = []; // événements passifs à afficher par CombatUI
 
     /* ── Combattants joueur ── */
     this.playerUnits = playerTeam.map((char, i) => this._buildUnit(char, 'player', i));
@@ -43,6 +44,14 @@ export class CombatEngine {
 
     /* ── Ordre de tour initial par SPD décroissant ── */
     this._buildTurnOrder();
+
+    /* ── Passif Gardien : DEF équipe +15% si Gardien présent ── */
+    if (this.playerUnits.some(u => u.class === 'Gardien')) {
+      this.playerUnits.forEach(u => {
+        if (u.class !== 'Gardien') u.def = Math.round(u.def * 1.15);
+      });
+      this._log('🛡 Passif Gardien — DEF équipe +15% !', null, null, 0, 'buff');
+    }
   }
 
   /* ════════════════════════════════
@@ -196,14 +205,15 @@ export class CombatEngine {
 
     let result;
     if (availSkill >= 0 && Math.random() > 0.4) {
-      // Cible : le plus faible pour assassin, aléatoire sinon
-      let target = players[0];
-      if (unit.ai === 'assassin') target = [...players].sort((a, b) => a.hp - b.hp)[0];
-      else                        target = players[Math.floor(Math.random() * players.length)];
+      const skillData = unit.skills[availSkill];
+      // AOE ignore le taunt ; single-target respecte le taunt Tank
+      const target = (skillData.target === 'all')
+        ? players[0]
+        : this._pickEnemyTarget(unit);
       result = this.useSkill(unit.uid, availSkill, target.uid);
     } else {
-      // Attaque de base
-      const target = players[Math.floor(Math.random() * players.length)];
+      // Attaque de base — respecte le taunt
+      const target = this._pickEnemyTarget(unit);
       const dmg    = this._calcDamage(unit, target, 1.0);
       this._applyDamage(target, dmg);
       const entry  = this._log(`${unit.name} attaque ${target.name} pour ${dmg} dégâts.`, unit, target, dmg);
@@ -214,18 +224,41 @@ export class CombatEngine {
     return result;
   }
 
+  /** Choisit la cible ennemie en tenant compte du taunt Tank. */
+  _pickEnemyTarget(unit) {
+    const players = this.playerUnits.filter(u => u.alive);
+    if (!players.length) return null;
+
+    // Tank taunt : force toutes les attaques sur le Tank s'il est vivant
+    const tank = players.find(u => u.class === 'Tank');
+    if (tank) return tank;
+
+    // IA assassin : cible le plus faible
+    if (unit.ai === 'assassin') return [...players].sort((a, b) => a.hp - b.hp)[0];
+
+    return players[Math.floor(Math.random() * players.length)];
+  }
+
   /* ════════════════════════════════
      CALCULS
   ════════════════════════════════ */
 
   _calcDamage(att, def, multiplier) {
     if (multiplier === 0) return 0;
-    const atk    = Number(att.atk)    || 0;
-    const defVal = Number(def.def)    || 0;
+    const atk    = Number(att.atk) || 0;
+    const defVal = Number(def.def) || 0;
     const base   = atk * multiplier;
     const reduce = defVal * 0.30;
     const variance = 0.9 + Math.random() * 0.2;
-    const dmg = Math.max(1, Math.round((base - reduce) * variance));
+
+    /* Assassin — critique 25% : ×2 dégâts */
+    let critMult = 1;
+    if (att.class === 'Assassin' && Math.random() < 0.25) {
+      critMult = 2;
+      this._log(`💥 CRITIQUE — ${att.name} !`, att, def, 0, 'crit');
+    }
+
+    const dmg = Math.max(1, Math.round((base - reduce) * variance * critMult));
     return isNaN(dmg) ? 1 : dmg;
   }
 
@@ -294,6 +327,21 @@ export class CombatEngine {
       this._log(`— Manche ${this.round} —`, null, null, 0, 'round');
     }
     this.turn++;
+
+    /* Passif Soutien : soigne l'allié le plus blessé en début de tour */
+    const next = this.currentUnit;
+    if (next && next.side === 'player' && next.class === 'Soutien' && next.alive) {
+      const wounded = this.playerUnits
+        .filter(u => u.alive && u.uid !== next.uid)
+        .sort((a, b) => (a.hp / a.maxHp) - (b.hp / b.maxHp))[0];
+      if (wounded && wounded.hp < wounded.maxHp) {
+        const heal = Math.round(next.atk * 0.12);
+        wounded.hp = Math.min(wounded.maxHp, wounded.hp + heal);
+        this._log(`✚ ${next.name} soigne ${wounded.name} de ${heal} PV (passif Soutien).`,
+          next, wounded, heal, 'heal');
+        this.pendingPassives.push({ type: 'heal', uid: wounded.uid, amount: heal });
+      }
+    }
   }
 
   /**

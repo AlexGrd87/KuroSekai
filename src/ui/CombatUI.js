@@ -271,6 +271,7 @@ export class CombatUI {
 
     this._pendingAction = null;
     this._addLog(this.engine.log[this.engine.log.length - 1]?.msg || '');
+    this._flushPassives();
     this._updateSkillButtons(this.engine.currentUnit);
 
     if (this.engine.over) { this._showResult(); return; }
@@ -311,6 +312,7 @@ export class CombatUI {
 
     const lastLog = this.engine.log[this.engine.log.length - 1];
     if (lastLog) this._addLog(lastLog.msg, lastLog.tag);
+    this._flushPassives();
 
     if (this.engine.over) { this._showResult(); return; }
 
@@ -371,6 +373,7 @@ export class CombatUI {
 
     const lastLog = this.engine.log[this.engine.log.length - 1];
     if (lastLog) this._addLog(lastLog.msg, lastLog.tag);
+    this._flushPassives();
     this._updateSkillButtons(this.engine.currentUnit);
 
     if (this.engine.over) { this._showResult(); return; }
@@ -398,6 +401,22 @@ export class CombatUI {
     this._updateUnit(target);
     if (dmg > 0) this._floatDamage(target.uid, dmg);
     this._shakeUnit(target.uid, source.side === 'enemy');
+  }
+
+  /** Traite les événements passifs enregistrés par CombatEngine (heal, crit…) */
+  _flushPassives() {
+    if (!this.engine?.pendingPassives?.length) return;
+    for (const ev of this.engine.pendingPassives) {
+      if (ev.type === 'heal') {
+        this._floatDamage(ev.uid, ev.amount, 'heal');
+        const u = this.engine.playerUnits.find(u => u.uid === ev.uid);
+        if (u) this._updateUnit(u);
+        const logEntry = this.engine.log.find(e => e.tag === 'heal' &&
+          e.target === u?.name && !e._displayed);
+        if (logEntry) { logEntry._displayed = true; this._addLog(logEntry.msg, 'heal'); }
+      }
+    }
+    this.engine.pendingPassives = [];
   }
 
   _highlightUnit(uid) {

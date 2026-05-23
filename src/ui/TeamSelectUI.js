@@ -3,9 +3,10 @@
  * Écran de sélection d'équipe (max 3 personnages possédés).
  */
 
-import { gsap }       from 'gsap';
+import { gsap }             from 'gsap';
 import { CHARACTERS, RARITIES } from '../data/characters.js';
-import { statMultiplier } from '../data/PlayerData.js';
+import { statMultiplier }   from '../data/PlayerData.js';
+import { buildPortraitSVG } from './portrait.js';
 
 const ELEMENT_DATA = {
   Fire:    { color: '#ff5500', glow: '#ff2200', kanji: '火' },
@@ -68,7 +69,7 @@ export class TeamSelectUI {
       card.innerHTML = `
         <div class="ts-char-bg" style="--el:${el.color};--glow:${el.glow};--rar:${rar.color}">
           <div class="ts-char-el">${el.kanji}</div>
-          <div class="ts-char-initial">${char.name[0]}</div>
+          <div class="ts-char-portrait">${buildPortraitSVG(char, 'team')}</div>
           <div class="ts-char-stars" style="color:${rar.color}">${'★'.repeat(char.rarity)}</div>
           <div class="ts-char-name">${char.name}</div>
           <div class="ts-char-class">${char.class}</div>

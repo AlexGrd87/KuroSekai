@@ -1712,6 +1712,22 @@ html, body {
 }
 .ts-char-el     { font-size: 1.4rem; color: var(--el); text-shadow: 0 0 10px var(--glow,var(--el)); position: absolute; top: 6px; right: 7px; opacity: 0.7; }
 .ts-char-initial { font-size: 2.8rem; font-weight: 900; color: var(--el); opacity: 0.5; font-family: var(--font-titre); }
+.ts-char-portrait { display: flex; align-items: center; justify-content: center; }
+.char-portrait-svg--team {
+  width: 58px;
+  height: 58px;
+  display: block;
+  filter: drop-shadow(0 0 7px var(--el, #00d4ff));
+  transition: filter 0.2s;
+}
+.ts-char-card:hover .char-portrait-svg--team,
+.ts-char-card.ts-char-selected .char-portrait-svg--team {
+  filter: drop-shadow(0 0 16px var(--el, #00d4ff)) brightness(1.18);
+}
+/* Log combat */
+.log-heal  { color: #00ff88; }
+.log-crit  { color: #ffdd00; font-weight: 700; }
+.log-buff  { color: #aaddff; }
 .ts-char-stars  { font-size: 0.65rem; color: var(--rar); letter-spacing: 0.05em; }
 .ts-char-name   { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; }
 .ts-char-class  { font-size: 0.55rem; letter-spacing: 0.14em; color: rgba(224,238,255,0.45); }
