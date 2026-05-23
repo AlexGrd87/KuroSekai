@@ -644,6 +644,82 @@ const DEBRIEF_09 = [
 ];
 
 /* ══════════════════════════════════════
+   ACTES X-XII — SINGULARITÉ (Chapitre 4)
+══════════════════════════════════════ */
+const SOVEREIGN = {
+  name: 'SOUVERAIN',
+  title: 'L\'Effacement',
+  symbol: '無',
+  color: '#cc00ff',
+  glow: '#880099',
+};
+
+const BRIEFING_10 = [
+  { type: 'title', acte: 'ACTE X', subtitle: 'Cité Quantique — Districts de Lumière Corrompue' },
+  { type: 'narration', text: "Quelques semaines après la chute de DIRECTIVE-7. Une nouvelle anomalie déchire le ciel de Neo-Osaka. Elle n'est pas mécanique. Elle n'est pas numérique. Elle est... quelque chose d'autre." },
+  { type: 'dialogue', char: CHARS.kira, text: "Les capteurs de Nyx détectent des entités lumineuses. Mais elles ne ressemblent à rien qu'on ait vu." },
+  { type: 'dialogue', char: CHARS.akane, text: "Des Faucheurs Quantiques. Selon les archives, ils sont des éclats d'une conscience originelle — antérieure à Yamamoto, antérieure à Neo-Osaka." },
+  { type: 'dialogue', char: CHARS.ryuu, text: "Antérieure à tout ça ? Qu'est-ce que ça veut dire ?" },
+  { type: 'dialogue', char: CHARS.nyx, text: "Ça veut dire qu'on n'est pas les seuls à exister dans ce monde. Et que les autres... ne nous veulent pas de bien." },
+];
+
+const DEBRIEF_10 = [
+  { type: 'narration', text: "Les Faucheurs Quantiques s'effondrent dans des éclats de lumière froide. Mais quelque chose dans leur agonie ressemble à un appel." },
+  { type: 'dialogue', char: CHARS.kira, text: "Ils n'étaient pas seuls. Je le sens." },
+  { type: 'dialogue', char: SOVEREIGN, text: "... Non. Ils n'étaient pas seuls." },
+  { type: 'dialogue', char: CHARS.nyx, text: "Cette voix... Elle vient de partout à la fois." },
+  { type: 'dialogue', char: SOVEREIGN, text: "Je suis le commencement. Et je serai la fin. Avancez. Je vous attends au Trône du Néant." },
+];
+
+const BRIEFING_11 = [
+  { type: 'title', acte: 'ACTE XI', subtitle: 'Nœud Tempête — Cœur de l\'Orage Numérique' },
+  { type: 'narration', text: "Le réseau d'énergie de Neo-Osaka tremble. Des Titans Tempête canalisent l'orage numérique vers un point unique — le Trône." },
+  { type: 'dialogue', char: CHARS.ryuu, text: "Si ces Titans atteignent le Trône, l'énergie sera suffisante pour... quoi, exactement ?" },
+  { type: 'dialogue', char: CHARS.akane, text: "Pour effacer Neo-Osaka. La ville entière. En une fraction de seconde." },
+  { type: 'dialogue', char: CHARS.kira, text: "Alors on les arrête ici." },
+  { type: 'dialogue', char: CHARS.seraph, text: "Mon augmentation lumineuse — elle réagit à leur fréquence. Je peux les perturber. Mais pas les arrêter seule." },
+  { type: 'dialogue', char: CHARS.kira, text: "Tu n'es jamais seule. Allons-y." },
+];
+
+const DEBRIEF_11 = [
+  { type: 'narration', text: "Les Titans s'effondrent. L'orage numérique se dissipe. Mais au loin, une lumière violette pulse — régulière, froide, absolue." },
+  { type: 'dialogue', char: CHARS.nyx, text: "Le Trône. Il est devant nous." },
+  { type: 'dialogue', char: SOVEREIGN, text: "Vous avez traversé mes épreuves. C'est... inattendu. Peut-être méritez-vous d'assister à la singularité." },
+  { type: 'dialogue', char: CHARS.kira, text: "On ne vient pas assister. On vient tout arrêter." },
+  { type: 'dialogue', char: SOVEREIGN, text: "Alors venez." },
+];
+
+const BRIEFING_12 = [
+  { type: 'title', acte: 'ACTE XII', subtitle: 'Trône du Néant — L\'Effacement Final' },
+  { type: 'narration', text: "Le Trône du Néant. Un espace hors de la réalité, entre les mailles du tissu de Neo-Osaka. Ici, les lois de la physique n'ont plus cours. Seule la volonté compte." },
+  { type: 'dialogue', char: SOVEREIGN, text: "Je suis plus ancien que Yamamoto. Plus ancien que cette cité. Je suis la vérité que Neo-Osaka refuse d'accepter : tout finit. Tout s'efface. Tout revient au vide." },
+  { type: 'dialogue', char: CHARS.kira, text: "Cette cité a survécu à Yamamoto. À l'Archonte. À DIRECTIVE-7. Elle survivera à toi aussi." },
+  { type: 'dialogue', char: SOVEREIGN, text: "Des mots de survivants. Touchants. Inutiles." },
+  { type: 'dialogue', char: CHARS.ryuu, text: "Kira. On est tous là. Prêts." },
+  { type: 'dialogue', char: CHARS.kira, text: "Ensemble. Comme toujours." },
+];
+
+const DEBRIEF_12 = [
+  { type: 'narration', text: "Le Souverain du Néant s'effondre. Son être se fragmente en particules de vide qui s'évanouissent une à une." },
+  { type: 'dialogue', char: SOVEREIGN, text: "... Impossible. Vous êtes... imparfaits. Comment des êtres imparfaits peuvent-ils..." },
+  { type: 'dialogue', char: CHARS.kira, text: "C'est justement pour ça. L'imparfait peut toujours s'améliorer. Le vide, lui, ne peut rien faire." },
+  { type: 'narration', text: "Silence absolu. Puis, lentement, la réalité se recoudre. Le Trône disparaît. Neo-Osaka tremble une dernière fois." },
+  { type: 'dialogue', char: CHARS.akane, text: "C'est fini ?" },
+  { type: 'dialogue', char: CHARS.nyx, text: "Ouais. C'est fini. Pour de bon, cette fois." },
+  {
+    type: 'card',
+    text: "Le Souverain du Néant a été scellé.\nLa singularité a été évitée.\n\nNeo-Osaka vit.\nSes habitants ne savent pas ce qui vient de se passer.\nEt c'est très bien ainsi.",
+    mood: 'epilogue',
+  },
+  {
+    type: 'card',
+    text: "Kira. Ryuu. Akane. Seraph. Nyx.\n\nIls gardent le secret.\nIls gardent la ville.\nIls gardent espoir.\n\n世界黒 — La singularité finale.",
+    mood: 'epilogue',
+  },
+  { type: 'title', acte: 'FIN ULTIME', subtitle: 'Kuro Sekai — Singularité' },
+];
+
+/* ══════════════════════════════════════
    EXPORT
 ══════════════════════════════════════ */
 export const SCENARIO = {
@@ -658,6 +734,9 @@ export const SCENARIO = {
     stage_07: BRIEFING_07,
     stage_08: BRIEFING_08,
     stage_09: BRIEFING_09,
+    stage_10: BRIEFING_10,
+    stage_11: BRIEFING_11,
+    stage_12: BRIEFING_12,
   },
   debriefings: {
     stage_01: DEBRIEF_01,
@@ -669,5 +748,8 @@ export const SCENARIO = {
     stage_07: DEBRIEF_07,
     stage_08: DEBRIEF_08,
     stage_09: DEBRIEF_09,
+    stage_10: DEBRIEF_10,
+    stage_11: DEBRIEF_11,
+    stage_12: DEBRIEF_12,
   },
 };

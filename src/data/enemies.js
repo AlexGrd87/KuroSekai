@@ -196,6 +196,51 @@ export const ENEMIES = [
     symbol: '⛏',
   },
 
+  /* ── Tier 4 — Singularité ── */
+  {
+    id: 'quantum_reaper',
+    name: 'FAUCHEUR QUANTIQUE',
+    class: 'Assassin',
+    element: 'Light',
+    color: '#aaaaff',
+    stats: { hp: 4400, atk: 1380, def: 340, spd: 190 },
+    skills: [
+      { name: 'Lame Photonique', desc: 'Inflige 200% ATK. Ignore bouclier.',            multiplier: 2.0, target: 'single',  cooldown: 0 },
+      { name: 'Transcendance',   desc: 'Inflige 360% ATK au plus faible. Hémorragie.',  multiplier: 3.6, target: 'weakest', debuff: 'bleed', cooldown: 3 },
+    ],
+    ai: 'assassin',
+    symbol: '光',
+  },
+  {
+    id: 'storm_titan',
+    name: 'TITAN TEMPÊTE',
+    class: 'Berserker',
+    element: 'Thunder',
+    color: '#ccaa00',
+    stats: { hp: 9800, atk: 1420, def: 720, spd: 128 },
+    skills: [
+      { name: 'Maelström',         desc: 'Inflige 220% ATK à tous. Paralysie.',          multiplier: 2.2, target: 'all',    debuff: 'paralyze', cooldown: 0 },
+      { name: 'Foudre Absolue',    desc: 'Inflige 360% ATK × 2 aléatoires.',             multiplier: 3.6, target: 'random', hits: 2,            cooldown: 4 },
+    ],
+    ai: 'aggressive',
+    symbol: '嵐',
+  },
+  {
+    id: 'null_sovereign',
+    name: 'SOUVERAIN DU NÉANT',
+    class: 'Boss Absolu',
+    element: 'Void',
+    color: '#660099',
+    stats: { hp: 24000, atk: 1880, def: 1200, spd: 150 },
+    skills: [
+      { name: 'Dissolution',       desc: 'Inflige 260% ATK à tous. DEF ennemi -.',       multiplier: 2.6, target: 'all',    debuff: 'def_down', cooldown: 0 },
+      { name: 'Singularité Noire', desc: 'Inflige 400% ATK au plus faible.',              multiplier: 4.0, target: 'weakest',                    cooldown: 3 },
+      { name: 'Effacement Total',  desc: 'Inflige 220% ATK × 3 aléatoires. Hémorragie.', multiplier: 2.2, target: 'random', hits: 3, debuff: 'bleed', cooldown: 5 },
+    ],
+    ai: 'assassin',
+    symbol: '無',
+  },
+
   /* ── Tier 4 / Boss ── */
   {
     id: 'mech_overlord',
@@ -402,5 +447,66 @@ export const STAGES = [
     ],
     rewards: { exp: 2000, currency: 5000 },
     chapter: 3, isBoss: true,
+  },
+
+  /* ═══════════════════════
+     CHAPITRE 4 — SINGULARITÉ
+  ═══════════════════════ */
+  {
+    id: 'stage_10',
+    order: 10,
+    name: 'Cité Quantique',
+    subtitle: 'Districts de Lumière Corrompue',
+    lore: 'Une onde de singularité balaie les districts supérieurs de Neo-Osaka. La lumière elle-même est devenue une arme entre les mains des Faucheurs Quantiques.',
+    element: 'Light',
+    color: '#aaaaff',
+    glow: '#ddddff',
+    difficulty: 4,
+    unlockAfter: 'stage_09',
+    waves: [
+      ['quantum_reaper', 'arc_sentinel', 'phantom_hacker'],
+      ['quantum_reaper', 'quantum_reaper', 'cyber_witch'],
+      ['quantum_reaper', 'storm_titan', 'arc_sentinel'],
+    ],
+    rewards: { exp: 2500, currency: 6000 },
+    chapter: 4, isBoss: false,
+  },
+  {
+    id: 'stage_11',
+    order: 11,
+    name: 'Nœud Tempête',
+    subtitle: 'Cœur de l\'Orage Numérique',
+    lore: 'Le cœur énergétique de Neo-Osaka est en surcharge. Les Titans Tempête puisent dans le réseau d\'énergie de la cité pour frapper sans répit. Chaque éclair en appelle cent autres.',
+    element: 'Thunder',
+    color: '#ccaa00',
+    glow: '#ffdd44',
+    difficulty: 5,
+    unlockAfter: 'stage_10',
+    waves: [
+      ['storm_titan', 'cyber_witch', 'network_spider'],
+      ['storm_titan', 'quantum_reaper', 'void_specter'],
+      ['storm_titan', 'storm_titan', 'quantum_reaper'],
+    ],
+    rewards: { exp: 3200, currency: 7500 },
+    chapter: 4, isBoss: false,
+  },
+  {
+    id: 'stage_12',
+    order: 12,
+    name: 'Trône du Néant',
+    subtitle: 'L\'Effacement Final',
+    lore: 'Le Souverain du Néant s\'éveille. Il est l\'entité qui a engendré l\'Archonte, la fracturation, la Purge. Sa seule existence efface la réalité autour de lui. C\'est la fin de tout — ou le début d\'un nouveau monde.',
+    element: 'Void',
+    color: '#770099',
+    glow: '#dd00ff',
+    difficulty: 5,
+    unlockAfter: 'stage_11',
+    waves: [
+      ['mech_overlord', 'quantum_reaper', 'storm_titan'],
+      ['null_sovereign', 'void_specter', 'quantum_reaper'],
+      ['null_sovereign', 'storm_titan', 'void_archon'],
+    ],
+    rewards: { exp: 5000, currency: 12000 },
+    chapter: 4, isBoss: true,
   },
 ];

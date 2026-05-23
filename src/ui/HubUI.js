@@ -153,6 +153,8 @@ export class HubUI {
         stageIds: ['stage_04', 'stage_05', 'stage_06'] },
       { id: 3, name: 'ABÎME',       subtitle: 'Fracturation de la réalité — Fin des temps', color: '#cc00ff',
         stageIds: ['stage_07', 'stage_08', 'stage_09'] },
+      { id: 4, name: 'SINGULARITÉ', subtitle: 'L\'effacement final — Au-delà du vide',       color: '#dd00ff',
+        stageIds: ['stage_10', 'stage_11', 'stage_12'] },
     ];
 
     for (const chapter of CHAPTERS) {
