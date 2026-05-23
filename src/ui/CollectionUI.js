@@ -32,10 +32,12 @@ export class CollectionUI {
     this.grid          = document.getElementById('col-grid');
     this.modal         = document.getElementById('col-modal');
     this.modalCardWrap = document.getElementById('col-modal-card-wrap');
-    this._activeFilter  = 'all';
-    this._activeElement = 'all';
-    this._activeSort    = 'rarity';
-    this._tiltCleanup   = null;
+    this._activeFilter   = 'all';
+    this._activeElement  = 'all';
+    this._activeSort     = 'rarity';
+    this._tiltCleanup    = null;
+    this._amlCleanup     = null;
+    this._currentModalChar = null;
 
     this._bindFilters();
     this._bindBack();
@@ -223,11 +225,134 @@ export class CollectionUI {
     /* -- Constellation -- */
     this._buildConstellationUI(char, el);
 
+    /* -- Boutons Améliorer -- */
+    this._currentModalChar = char;
+    this._bindAmeliorerButtons(char, el);
+
     /* -- Stagger des blocs de droite -- */
-    const infoSections = ['#det-header', '#det-stats', '#det-skills', '#det-constellation', '#det-lore-block'];
+    const infoSections = ['#det-header', '#det-ameliorer', '#det-stats', '#det-skills', '#det-constellation', '#det-lore-block'];
     gsap.fromTo(infoSections.map(s => document.querySelector(s)).filter(Boolean),
       { opacity: 0, x: 18 },
       { opacity: 1, x: 0, stagger: 0.07, duration: 0.35, ease: 'power2.out', delay: 0.15 }
+    );
+  }
+
+  /* ════════════════════════════════
+     SECTION AMÉLIORER
+  ════════════════════════════════ */
+
+  _bindAmeliorerButtons(char, el) {
+    // Cleanup des anciens listeners
+    if (this._amlCleanup) { this._amlCleanup(); this._amlCleanup = null; }
+
+    // Met à jour l'affichage de la monnaie dans le header améliorer
+    const currDisp = document.getElementById('det-aml-currency-val');
+    if (currDisp) currDisp.textContent = this.playerData.currency.toLocaleString();
+
+    const btns    = document.querySelectorAll('.det-aml-btn');
+    const entries = [];
+
+    btns.forEach(btn => {
+      const expAmt  = parseInt(btn.dataset.exp,  10);
+      const costAmt = parseInt(btn.dataset.cost, 10);
+
+      const updateState = () => {
+        const prog     = this.playerData.expProgress(char.id);
+        const disabled = this.playerData.currency < costAmt || prog.maxed;
+        btn.classList.toggle('det-aml-btn--disabled', disabled);
+        btn.disabled = disabled;
+      };
+      updateState();
+
+      const handler = () => {
+        const prog = this.playerData.expProgress(char.id);
+        if (this.playerData.currency < costAmt || prog.maxed) {
+          gsap.fromTo(btn,
+            { x: -5 },
+            { x: 0, duration: 0.35, ease: 'elastic.out(1,0.3)' });
+          this._showAmlToast(prog.maxed ? '✦ Niveau maximum atteint !' : '◈ Fonds insuffisants');
+          return;
+        }
+
+        const oldLevel = this.playerData.getLevel(char.id);
+        this.playerData.spendCurrency(costAmt);
+        const result   = this.playerData.addExp(char.id, expAmt);
+        const leveled  = result.newLevel > oldLevel;
+
+        // Flash bouton
+        gsap.timeline()
+          .to(btn, { scale: 1.07, borderColor: '#00e896', duration: 0.12, ease: 'power2.out' })
+          .to(btn, { scale: 1, borderColor: '',           duration: 0.22, ease: 'power2.in'  });
+
+        this._refreshModalProgress(char, el);
+
+        const msg = leveled
+          ? `⬆ Niveau ${result.newLevel} atteint !`
+          : `✦ +${expAmt.toLocaleString()} EXP`;
+        this._showAmlToast(msg);
+      };
+
+      btn.addEventListener('click', handler);
+      entries.push({ btn, handler });
+    });
+
+    this._amlCleanup = () => entries.forEach(({ btn, handler }) =>
+      btn.removeEventListener('click', handler)
+    );
+  }
+
+  _refreshModalProgress(char, el) {
+    const prog   = this.playerData.expProgress(char.id);
+    const badge  = document.getElementById('det-level-badge');
+    const expTxt = document.getElementById('det-exp-text');
+    const expBar = document.getElementById('det-exp-bar');
+    const currDisp = document.getElementById('det-aml-currency-val');
+
+    if (badge)    badge.textContent    = prog.maxed ? 'Lv.MAX' : `Lv.${prog.level}`;
+    if (expTxt)   expTxt.textContent   = prog.maxed
+      ? 'Niveau maximum'
+      : `${prog.exp.toLocaleString()} / ${prog.needed.toLocaleString()} EXP`;
+    if (expBar) {
+      expBar.style.background = prog.maxed ? '#ffd700' : el.color;
+      expBar.style.boxShadow  = `0 0 8px ${prog.maxed ? '#ffaa00' : el.glow}`;
+      gsap.to(expBar, { width: `${prog.pct}%`, duration: 0.5, ease: 'power2.out' });
+    }
+    if (currDisp) currDisp.textContent = this.playerData.currency.toLocaleString();
+
+    // Stats scalées
+    const scaled   = this.playerData.getScaledStats(char);
+    const maxStats = { hp: 18000, atk: 2500, def: 2600, spd: 180 };
+    [['hp', scaled.hp, maxStats.hp], ['atk', scaled.atk, maxStats.atk],
+     ['def', scaled.def, maxStats.def], ['spd', scaled.spd, maxStats.spd]
+    ].forEach(([stat, val, max]) => {
+      const bar = document.getElementById(`det-${stat}-bar`);
+      const txt = document.getElementById(`det-${stat}-val`);
+      if (bar) gsap.to(bar, { width: `${Math.min((val / max) * 100, 100)}%`, duration: 0.45, ease: 'power2.out' });
+      if (txt) txt.textContent = stat === 'spd' ? val : val.toLocaleString();
+    });
+
+    // Re-check affordabilité des boutons
+    document.querySelectorAll('.det-aml-btn').forEach(btn => {
+      const costAmt  = parseInt(btn.dataset.cost, 10);
+      const disabled = this.playerData.currency < costAmt || prog.maxed;
+      btn.classList.toggle('det-aml-btn--disabled', disabled);
+      btn.disabled = disabled;
+    });
+
+    // Sync monnaie dans le hub
+    const hubCurr = document.getElementById('hub-nav-currency-val');
+    if (hubCurr) hubCurr.textContent = this.playerData.currency.toLocaleString();
+  }
+
+  _showAmlToast(msg) {
+    const toast = document.getElementById('det-aml-toast');
+    if (!toast) return;
+    gsap.killTweensOf(toast);
+    toast.textContent = msg;
+    gsap.fromTo(toast,
+      { opacity: 0, y: 5 },
+      { opacity: 1, y: 0, duration: 0.2, ease: 'power2.out',
+        onComplete: () => gsap.to(toast, { opacity: 0, y: -6, duration: 0.3, ease: 'power2.in', delay: 1.5 }) }
     );
   }
 
@@ -288,6 +413,8 @@ export class CollectionUI {
   _closeModal() {
     if (!this.modal || this.modal.style.display === 'none') return;
     if (this._tiltCleanup) { this._tiltCleanup(); this._tiltCleanup = null; }
+    if (this._amlCleanup)  { this._amlCleanup();  this._amlCleanup  = null; }
+    this._currentModalChar = null;
     gsap.to(this.modal, {
       opacity: 0, duration: 0.22, ease: 'power2.in',
       onComplete: () => {

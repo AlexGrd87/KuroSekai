@@ -1823,6 +1823,107 @@ html, body {
   letter-spacing: 0.04em;
 }
 
+/* ── Section AMÉLIORER ── */
+#det-ameliorer {
+  padding: 0.75rem 0 0.5rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.det-aml-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.55rem;
+}
+.det-aml-title {
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  color: rgba(180,200,255,0.6);
+  font-family: var(--font-ui);
+}
+.det-aml-currency {
+  font-size: 0.65rem;
+  font-family: var(--font-ui);
+  color: #f0c040;
+  letter-spacing: 0.06em;
+}
+.det-aml-btns {
+  display: flex;
+  gap: 0.45rem;
+}
+.det-aml-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.18rem;
+  flex: 1;
+  padding: 0.48rem 0.3rem 0.42rem;
+  background: rgba(0,212,255,0.06);
+  border: 1px solid rgba(0,212,255,0.22);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, transform 0.12s;
+  overflow: hidden;
+}
+.det-aml-btn:hover:not(:disabled) {
+  background: rgba(0,212,255,0.14);
+  border-color: var(--det-el-color, #0df);
+  transform: translateY(-1px);
+}
+.det-aml-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+.det-aml-btn--best {
+  background: rgba(0,232,150,0.08);
+  border-color: rgba(0,232,150,0.3);
+}
+.det-aml-btn--best:hover:not(:disabled) {
+  background: rgba(0,232,150,0.18);
+  border-color: #00e896;
+}
+.det-aml-btn--disabled,
+.det-aml-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  transform: none !important;
+}
+.aml-exp {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--det-el-color, #0df);
+  font-family: var(--font-ui);
+  letter-spacing: 0.04em;
+}
+.aml-cost {
+  font-size: 0.57rem;
+  color: #f0c040;
+  letter-spacing: 0.03em;
+}
+.aml-badge {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  font-size: 0.42rem;
+  font-family: var(--font-ui);
+  letter-spacing: 0.1em;
+  background: #00e896;
+  color: #001a10;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0 5px 0 5px;
+  font-weight: 700;
+}
+.det-aml-toast {
+  margin-top: 0.45rem;
+  font-size: 0.62rem;
+  font-family: var(--font-ui);
+  color: #00e896;
+  letter-spacing: 0.06em;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(4px);
+  min-height: 1em;
+}
+
 /* ═══════════════════════════════════════════════════════════
    SÉLECTION D'ÉQUIPE
    ═══════════════════════════════════════════════════════════ */
