@@ -161,6 +161,22 @@ export class CollectionUI {
     document.getElementById('det-desc').textContent    = char.description;
     document.getElementById('det-lore').textContent    = char.lore;
 
+    /* -- Niveau + EXP -- */
+    const prog = this.playerData.expProgress(char.id);
+    const badge = document.getElementById('det-level-badge');
+    const expTxt = document.getElementById('det-exp-text');
+    const expBar = document.getElementById('det-exp-bar');
+    if (badge)  badge.textContent  = prog.maxed ? 'Lv.MAX' : `Lv.${prog.level}`;
+    if (expTxt) expTxt.textContent = prog.maxed
+      ? 'Niveau maximum'
+      : `${prog.exp.toLocaleString()} / ${prog.needed.toLocaleString()} EXP`;
+    if (expBar) {
+      expBar.style.background = prog.maxed ? '#ffd700' : el.color;
+      expBar.style.boxShadow  = `0 0 8px ${prog.maxed ? '#ffaa00' : el.glow}`;
+      gsap.fromTo(expBar, { width: '0%' },
+        { width: `${prog.pct}%`, duration: 0.75, ease: 'power2.out', delay: 0.25 });
+    }
+
     /* -- Carte full design -- */
     this._buildModalCard(char);
 

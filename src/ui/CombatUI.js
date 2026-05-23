@@ -6,11 +6,12 @@
  *        tour ennemi automatique, dégâts flottants, résultat.
  */
 
-import { gsap }         from 'gsap';
-import { CombatEngine } from '../engine/CombatEngine.js';
-import { STAGES }       from '../data/enemies.js';
-import { RARITIES }     from '../data/characters.js';
-import { settings }     from '../data/Settings.js';
+import { gsap }             from 'gsap';
+import { CombatEngine }     from '../engine/CombatEngine.js';
+import { STAGES }           from '../data/enemies.js';
+import { RARITIES }         from '../data/characters.js';
+import { settings }         from '../data/Settings.js';
+import { buildPortraitSVG } from './portrait.js';
 
 const ELEMENT_DATA = {
   Fire:    { color: '#ff5500', glow: '#ff2200' },
@@ -104,9 +105,13 @@ export class CombatUI {
       div.className   = `combat-unit combat-unit--${side}`;
       div.dataset.uid = unit.uid;
 
+      const portraitContent = unit.side === 'player'
+        ? buildPortraitSVG(unit, 'combat')
+        : `<span class="cu-symbol">${unit.symbol || unit.name[0]}</span>`;
+
       div.innerHTML = `
         <div class="cu-portrait" style="--el:${el.color};--glow:${el.glow}">
-          <span class="cu-symbol">${unit.symbol || unit.name[0]}</span>
+          ${portraitContent}
           ${unit.shield > 0 ? `<span class="cu-shield-icon">🛡</span>` : ''}
         </div>
         <div class="cu-info">

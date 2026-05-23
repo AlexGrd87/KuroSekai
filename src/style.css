@@ -1527,6 +1527,59 @@ html, body {
   border-bottom: 1px solid rgba(255,255,255,0.07);
   padding: 0.9rem 0;
 }
+/* ── Bloc niveau / EXP ── */
+#det-level-block {
+  padding: 0.5rem 0 0.7rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 0.4rem;
+}
+.det-level-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.det-lv-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--det-el-color, #00d4ff);
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--det-el-color, #00d4ff);
+  border-radius: 3px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.det-exp-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.det-exp-bar {
+  height: 100%;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.75s;
+}
+.det-exp-label {
+  font-size: 0.58rem;
+  color: rgba(224,238,255,0.45);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Portrait SVG dans unité combat ── */
+.char-portrait-svg--combat {
+  width: 36px;
+  height: 36px;
+  display: block;
+  filter: drop-shadow(0 0 5px var(--el, #00d4ff));
+  pointer-events: none;
+  user-select: none;
+}
+
 .det-stat-row {
   display: flex;
   align-items: center;
