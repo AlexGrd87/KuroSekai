@@ -76,6 +76,11 @@ export class SummonUI {
           </div>
         </div>
 
+        <div id="summon-free-rolls">
+          <span class="sfr-icon">🔮</span>
+          <span id="sfr-count">0</span>&nbsp;tirage<span id="sfr-plural"></span> gratuit<span id="sfr-plural2"></span>
+        </div>
+
         <div id="summon-actions">
           <button class="pull-btn" id="pull-x1">
             <span class="pull-count">×1</span>
@@ -166,16 +171,24 @@ export class SummonUI {
   async _doPull(count) {
     if (this.isAnimating) return;
 
-    const cost = count === 1 ? COST_X1 : COST_X10;
-    if (this.playerData.currency < cost) {
+    const freeRolls = this.playerData.freeRolls ?? 0;
+    const isFree    = freeRolls >= count;
+    const cost      = isFree ? 0 : (count === 1 ? COST_X1 : COST_X10);
+
+    if (!isFree && this.playerData.currency < cost) {
       this._showInsufficientFunds(cost);
       return;
     }
 
     this.isAnimating = true;
 
-    this.playerData.currency -= cost;
-    this.playerData._saveProgress();
+    if (isFree) {
+      this.playerData.freeRolls -= count;
+      this.playerData._saveProgress();
+    } else {
+      this.playerData.currency -= cost;
+      this.playerData._saveProgress();
+    }
     this._updateCurrencyDisplay();
     this._updateButtonStates();
 
@@ -505,19 +518,52 @@ export class SummonUI {
   }
 
   _updateButtonStates() {
-    const currency = this.playerData?.currency ?? 0;
+    const currency  = this.playerData?.currency  ?? 0;
+    const freeRolls = this.playerData?.freeRolls ?? 0;
     const btn1  = this.overlay.querySelector('#pull-x1');
     const btn10 = this.overlay.querySelector('#pull-x10');
-    if (btn1)  btn1.disabled  = currency < COST_X1;
-    if (btn10) btn10.disabled = currency < COST_X10;
+
+    // ×1
+    if (btn1) {
+      btn1.disabled = currency < COST_X1 && freeRolls < 1;
+      const costEl = btn1.querySelector('.pull-cost');
+      if (costEl) {
+        costEl.innerHTML = freeRolls >= 1
+          ? '<span class="pull-free-badge">GRATUIT</span>'
+          : `<span class="pull-cost-icon">◈</span> ${COST_X1}`;
+      }
+    }
+
+    // ×10
+    if (btn10) {
+      btn10.disabled = currency < COST_X10 && freeRolls < 10;
+      const costEl = btn10.querySelector('.pull-cost');
+      if (costEl) {
+        costEl.innerHTML = freeRolls >= 10
+          ? '<span class="pull-free-badge">GRATUIT</span>'
+          : `<span class="pull-cost-icon">◈</span> ${COST_X10} <em class="pull-discount">−10%</em>`;
+      }
+    }
+
+    // Badge free rolls
+    const freeEl = this.overlay.querySelector('#summon-free-rolls');
+    if (freeEl) {
+      freeEl.style.display = freeRolls > 0 ? 'flex' : 'none';
+      const countEl   = freeEl.querySelector('#sfr-count');
+      const pluralEl  = freeEl.querySelector('#sfr-plural');
+      const plural2El = freeEl.querySelector('#sfr-plural2');
+      if (countEl)   countEl.textContent   = freeRolls;
+      if (pluralEl)  pluralEl.textContent  = freeRolls > 1 ? 's' : '';
+      if (plural2El) plural2El.textContent = freeRolls > 1 ? 's' : '';
+    }
 
     // Label dynamique "4★ dans N pulls" sur le bouton x10
     const g = this.overlay.querySelector('#pull-x10-guarantee');
     if (g) {
       const { next4Guaranteed } = this.engine.getPityInfo();
       if (next4Guaranteed <= 10) {
-        g.textContent   = `4★ DANS ${next4Guaranteed} PULLS`;
-        g.style.color   = '#b44fff';
+        g.textContent      = `4★ DANS ${next4Guaranteed} PULLS`;
+        g.style.color      = '#b44fff';
         g.style.textShadow = '0 0 8px rgba(180,79,255,0.6)';
       } else {
         g.textContent      = '3★ GARANTI';

@@ -713,6 +713,39 @@ html, body {
   pointer-events: none;
 }
 
+/* Badge GRATUIT sur les boutons pull */
+.pull-free-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #00e896;
+  text-shadow: 0 0 10px rgba(0,232,150,0.8);
+  animation: free-badge-pulse 1.4s ease-in-out infinite;
+}
+@keyframes free-badge-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.65; }
+}
+
+/* Compteur de tirages gratuits */
+#summon-free-rolls {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+  padding: 0.35rem 1rem;
+  background: rgba(0,232,150,0.08);
+  border: 1px solid rgba(0,232,150,0.35);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: #00e896;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 8px rgba(0,232,150,0.6);
+  animation: free-badge-pulse 2s ease-in-out infinite;
+}
+#sfr-count { font-weight: 800; font-size: 1rem; }
+
 /* Affichage de la monnaie dans le header */
 #summon-currency {
   display: flex;
