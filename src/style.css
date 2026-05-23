@@ -1324,6 +1324,33 @@ html, body {
   user-select: none;
 }
 
+/* ── Portrait SVG génératif ── */
+.char-portrait-svg {
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+.char-portrait-svg--grid {
+  width: 78%;
+  height: 78%;
+  filter: drop-shadow(0 0 6px var(--card-el-glow, #00d4ff));
+  transition: filter 0.2s;
+}
+.col-card--owned:hover .char-portrait-svg--grid {
+  filter: drop-shadow(0 0 14px var(--card-el-glow, #00d4ff)) brightness(1.15);
+}
+/* Variant carte modale (dans .card-portrait) */
+.char-portrait-svg--card {
+  position: absolute;
+  bottom: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 68%;
+  height: 62%;
+  filter: drop-shadow(0 0 10px var(--elem-glow, #00d4ff));
+  z-index: 2;
+}
+
 .col-card-footer {
   padding: 0.55rem 0.6rem 0.6rem;
   background: rgba(0,0,0,0.5);
