@@ -7290,73 +7290,95 @@ html, body {
 }
 
 /* ─── Cadres (frame-* classes) ─── */
-/* Chaque cadre modifie .prf-avatar-ring à l'intérieur du wrapper */
+/* ─── CADRES — formes statiques ─── */
+/* Le wrap a overflow:visible ; chaque frame modifie .prf-avatar-ring */
 
-/* Default */
+/* 1. Cercle — anneau simple */
 .frame-default .prf-avatar-ring {
+  border-radius: 50%;
   border: 2px solid var(--av-color, #00d4ff);
-  box-shadow: 0 0 18px var(--av-glow, rgba(0,212,255,0.4)),
-              inset 0 0 12px var(--av-glow, rgba(0,212,255,0.15));
+  box-shadow: 0 0 14px var(--av-glow, rgba(0,212,255,0.35));
 }
 
-/* Tech — double ring pointillé */
+/* 2. Double — deux anneaux concentriques */
 .frame-tech .prf-avatar-ring {
-  border: 2px dashed var(--av-color, #00d4ff);
-  box-shadow: 0 0 0 5px rgba(0,212,255,0.07),
-              0 0 16px var(--av-glow, rgba(0,212,255,0.35));
+  border-radius: 50%;
+  border: 2px solid var(--av-color, #00d4ff);
+  box-shadow:
+    0 0 0 5px rgba(0,212,255,0.06),
+    0 0 0 7px var(--av-color, #00d4ff),
+    0 0 16px var(--av-glow, rgba(0,212,255,0.3));
 }
 
-/* Fire — dégradé conic animé */
-@keyframes spin-frame { to { transform: translate(-50%,-50%) rotate(360deg); } }
-.frame-fire .prf-avatar-ring {
-  border: 3px solid transparent;
-  background: conic-gradient(from 0deg,#ff4400,#ffaa00,#ff6600,#ff4400) border-box;
-  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: destination-out;
-  mask-composite: exclude;
-  animation: spin-frame 2s linear infinite;
-  box-shadow: 0 0 20px rgba(255,100,0,0.5);
+/* 3. Hexagone — 6 côtés égaux */
+.prf-avatar-wrap { overflow: visible; }
+.frame-hex .prf-avatar-ring {
+  border: none;
+  inset: -6px;
+  background: #00ff88;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  box-shadow: 0 0 14px rgba(0,255,136,0.4);
+  border-radius: 0;
+}
+.frame-hex .prf-avatar-kanji {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: #07091c;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem;
 }
 
-/* Void — pulsation violet */
-@keyframes void-pulse {
-  0%,100% { box-shadow: 0 0 10px rgba(160,50,255,0.3),  inset 0 0 8px  rgba(160,50,255,0.1); }
-  50%      { box-shadow: 0 0 28px rgba(160,50,255,0.65), inset 0 0 16px rgba(160,50,255,0.2); }
+/* 4. Octogone — 8 côtés */
+.frame-oct .prf-avatar-ring {
+  border: none;
+  inset: -6px;
+  background: #ffdd00;
+  clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+  box-shadow: 0 0 14px rgba(255,221,0,0.4);
+  border-radius: 0;
 }
-.frame-void .prf-avatar-ring {
-  border: 2px solid #aa44ff;
-  animation: void-pulse 1.8s ease-in-out infinite;
+.frame-oct .prf-avatar-kanji {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: #07091c;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem;
 }
 
-/* Gold — double anneau doré */
-.frame-gold .prf-avatar-ring {
+/* 5. Carré — coins arrondis */
+.frame-carre .prf-avatar-ring {
+  border-radius: 14px;
   border: 3px solid #ffcc00;
-  box-shadow: 0 0 0 2px #6b5000,
-              0 0 22px rgba(255,200,0,0.55),
-              inset 0 0 10px rgba(255,200,0,0.12);
+  box-shadow: 0 0 0 1px #6b5400, 0 0 16px rgba(255,200,0,0.4);
 }
 
-/* Dragon — vert émeraude */
-@keyframes dragon-glow {
-  0%,100% { box-shadow: 0 0 14px rgba(0,255,136,0.4), inset 0 0 8px rgba(0,255,136,0.08); }
-  50%      { box-shadow: 0 0 28px rgba(0,255,136,0.7), inset 0 0 16px rgba(0,255,136,0.15); }
-}
-.frame-dragon .prf-avatar-ring {
-  border: 3px solid #00ff88;
-  box-shadow: 0 0 0 2px #003322, 0 0 20px rgba(0,255,136,0.5);
-  animation: dragon-glow 2.4s ease-in-out infinite;
+/* 6. Losange — carré pivoté 45° autour du cercle avatar */
+.frame-losange .prf-avatar-ring {
+  border-radius: 10px;
+  border: 3px solid #ff4466;
+  transform: rotate(45deg);
+  box-shadow: 0 0 14px rgba(255,68,102,0.4);
 }
 
-/* Céleste — blanc stellaire */
-@keyframes celeste-shimmer {
-  0%,100% { opacity: 1; }
-  50%      { opacity: 0.65; box-shadow: 0 0 40px rgba(255,255,255,0.6); }
+/* 7. Étoile — 10 branches */
+.frame-star .prf-avatar-ring {
+  border: none;
+  inset: -6px;
+  background: #ffffff;
+  clip-path: polygon(
+    50%  0%, 61% 35%, 98% 35%, 68% 57%,
+    79% 91%, 50% 70%, 21% 91%, 32% 57%,
+     2% 35%, 39% 35%
+  );
+  box-shadow: 0 0 16px rgba(255,255,255,0.45);
+  border-radius: 0;
 }
-.frame-celeste .prf-avatar-ring {
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.25),
-              0 0 24px rgba(255,255,255,0.45);
-  animation: celeste-shimmer 3s ease-in-out infinite;
+.frame-star .prf-avatar-kanji {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: #07091c;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem;
 }
 
 /* ─── Picker modal ─── */
@@ -7485,35 +7507,28 @@ html, body {
 /* Overlay verrouillé */
 .prf-pick-lock {
   position: absolute; inset: 0;
-  background: rgba(0,0,0,0.65);
+  background: rgba(0,0,0,0.72);
   border-radius: 10px;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  gap: 4px;
+  gap: 5px;
   padding: 4px;
 }
-.prf-pick-cost {
-  font-size: 0.6rem; font-weight: 700;
+.prf-pick-lock-price {
+  font-size: 0.58rem; font-weight: 700;
   color: #f0c040;
   letter-spacing: 0.06em;
 }
-.prf-pick-cost--poor { color: rgba(200,100,100,0.8); }
-.prf-pick-buy-btn {
+.prf-pick-goto-shop {
   background: rgba(0,212,255,0.15);
   border: 1px solid rgba(0,212,255,0.4);
   color: var(--cyan);
-  font-size: 0.55rem; font-weight: 700; letter-spacing: 0.1em;
-  padding: 3px 6px; border-radius: 4px;
+  font-size: 0.54rem; font-weight: 700; letter-spacing: 0.08em;
+  padding: 3px 7px; border-radius: 4px;
   cursor: pointer; transition: background 0.15s;
   white-space: nowrap;
 }
-.prf-pick-buy-btn:hover:not(.disabled) { background: rgba(0,212,255,0.3); }
-.prf-pick-buy-btn.disabled {
-  color: rgba(200,100,100,0.7);
-  border-color: rgba(200,100,100,0.3);
-  background: rgba(200,100,100,0.06);
-  cursor: not-allowed;
-}
+.prf-pick-goto-shop:hover { background: rgba(0,212,255,0.3); }
 
 /* ═══ responsive ═══ */
 @media (max-width: 600px) {
@@ -7523,6 +7538,177 @@ html, body {
   .prf-pull-row       { grid-template-columns: 80px 1fr auto; }
   .prf-pull-element   { display: none; }
   .prf-picker-grid    { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BOUTIQUE — COSMÉTIQUES
+   ═══════════════════════════════════════════════════════════ */
+
+/* Quand le grid est en mode cosmétiques, on retire le grid habituel */
+#shop-grid.shop-grid--cosmetique {
+  display: block;
+  padding: 0.4rem 0.9rem 2rem;
+}
+
+/* Titre de section (AVATARS / CADRES) */
+.shop-cosm-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: rgba(200,220,255,0.5);
+  text-transform: uppercase;
+  margin: 1.1rem 0 0.6rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.shop-cosm-section-title:first-child { margin-top: 0.2rem; }
+.sct-icon {
+  font-size: 0.85rem;
+  color: var(--cyan);
+  opacity: 0.7;
+}
+
+/* Grille de cartes cosmétiques */
+.shop-cosm-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+.shop-cosm-grid--frames {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.7rem;
+}
+
+/* Carte individuelle */
+.shop-cosm-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 0.75rem 0.5rem 0.7rem;
+  transition: border-color 0.2s, background 0.2s;
+  text-align: center;
+}
+.shop-cosm-card:hover:not(.shop-cosm-card--owned) {
+  background: rgba(0,212,255,0.05);
+  border-color: rgba(0,212,255,0.25);
+}
+.shop-cosm-card--owned {
+  border-color: rgba(76,222,138,0.3);
+  background: rgba(76,222,138,0.04);
+}
+
+/* Aperçu avatar */
+.scc-preview {
+  font-size: 2.2rem;
+  line-height: 1;
+  user-select: none;
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+/* Aperçu cadre — contient un mini prf-avatar-wrap */
+.scc-frame-preview {
+  width: 56px; height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 2px;
+}
+.scc-frame-preview .prf-avatar-wrap {
+  width: 44px; height: 44px;
+}
+.scc-frame-preview .prf-avatar-ring {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--av-color, #00d4ff);
+  box-shadow: 0 0 8px var(--av-glow, rgba(0,212,255,0.3));
+}
+/* Miniatures des formes dans le shop */
+.scc-frame-preview .frame-hex .prf-avatar-ring,
+.scc-frame-preview .frame-oct .prf-avatar-ring,
+.scc-frame-preview .frame-star .prf-avatar-ring {
+  inset: -4px;
+}
+.scc-frame-preview .prf-avatar-kanji {
+  font-size: 1.1rem;
+}
+
+/* Nom */
+.scc-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--blanc);
+}
+
+/* Description (frames seulement) */
+.scc-desc {
+  font-size: 0.58rem;
+  color: rgba(200,220,255,0.35);
+  letter-spacing: 0.02em;
+  line-height: 1.25;
+}
+
+/* Prix */
+.scc-price {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #f0c040;
+  letter-spacing: 0.08em;
+  margin-top: 2px;
+}
+
+/* Bouton acheter */
+.scc-buy-btn {
+  background: linear-gradient(135deg, rgba(0,212,255,0.18), rgba(0,212,255,0.1));
+  border: 1px solid rgba(0,212,255,0.45);
+  color: var(--cyan);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+.scc-buy-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(0,212,255,0.32), rgba(0,212,255,0.18));
+  box-shadow: 0 0 12px rgba(0,212,255,0.25);
+}
+.scc-buy-btn--poor,
+.scc-buy-btn:disabled {
+  border-color: rgba(200,100,100,0.35);
+  color: rgba(200,100,100,0.65);
+  background: rgba(200,100,100,0.06);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Badge possédé */
+.scc-owned-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #4cde8a;
+  letter-spacing: 0.1em;
+  background: rgba(76,222,138,0.1);
+  border: 1px solid rgba(76,222,138,0.3);
+  padding: 2px 8px;
+  border-radius: 5px;
+  margin-top: 2px;
+}
+
+/* ═══ responsive ═══ */
+@media (max-width: 600px) {
+  .shop-cosm-grid          { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+  .shop-cosm-grid--frames  { grid-template-columns: repeat(2, 1fr); }
+  .scc-preview             { font-size: 1.9rem; }
 }
 
 /* ═══════════════════════════════════════════════════════════

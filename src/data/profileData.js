@@ -28,52 +28,52 @@ export const AVATAR_OPTIONS = [
 export const FRAME_OPTIONS = [
   {
     id: 'default',
-    label: 'Standard',
-    desc: 'Anneau simple',
+    label: 'Cercle',
+    desc: 'Anneau circulaire simple',
     cost: 0,
-    preview: 'linear-gradient(135deg,#00d4ff,#0099bb)',
+    color: '#00d4ff',
   },
   {
     id: 'tech',
-    label: 'Techno',
-    desc: 'Double anneau pointillé',
+    label: 'Double',
+    desc: 'Deux anneaux concentriques',
     cost: 0,
-    preview: 'linear-gradient(135deg,#00d4ff,#004488)',
+    color: '#00d4ff',
   },
   {
-    id: 'fire',
-    label: 'Flammes',
-    desc: 'Anneau de feu animé',
+    id: 'hex',
+    label: 'Hexagone',
+    desc: 'Cadre à six faces',
     cost: 500,
-    preview: 'linear-gradient(135deg,#ff4400,#ffaa00)',
+    color: '#00ff88',
   },
   {
-    id: 'void',
-    label: 'Abîme',
-    desc: 'Pulsation violette du vide',
+    id: 'oct',
+    label: 'Octogone',
+    desc: 'Cadre à huit faces',
     cost: 800,
-    preview: 'linear-gradient(135deg,#aa44ff,#440088)',
+    color: '#ffdd00',
   },
   {
-    id: 'gold',
-    label: 'Or',
-    desc: 'Double anneau doré',
+    id: 'carre',
+    label: 'Carré',
+    desc: 'Cadre carré aux coins arrondis',
     cost: 1500,
-    preview: 'linear-gradient(135deg,#ffcc00,#aa8800)',
+    color: '#ffcc00',
   },
   {
-    id: 'dragon',
-    label: 'Dragon',
-    desc: 'Anneau émeraude du dragon',
+    id: 'losange',
+    label: 'Losange',
+    desc: 'Carré pivité à 45°',
     cost: 2000,
-    preview: 'linear-gradient(135deg,#00ff88,#007744)',
+    color: '#ff4466',
   },
   {
-    id: 'celeste',
-    label: 'Céleste',
-    desc: 'Shimmer blanc stellaire',
+    id: 'star',
+    label: 'Étoile',
+    desc: 'Cadre en étoile à 10 branches',
     cost: 3000,
-    preview: 'linear-gradient(135deg,#ffffff,#aaccff)',
+    color: '#ffffff',
   },
 ];
 
@@ -82,7 +82,7 @@ export const FRAME_OPTIONS = [
 ═══════════════════════════════════════ */
 
 const FREE_AVATARS = AVATAR_OPTIONS.filter(a => a.cost === 0).map(a => a.id);
-const FREE_FRAMES  = FRAME_OPTIONS .filter(f => f.cost === 0).map(f => f.id);
+const FREE_FRAMES  = FRAME_OPTIONS.filter(f => f.cost === 0).map(f => f.id);
 
 export function loadProfile() {
   try {

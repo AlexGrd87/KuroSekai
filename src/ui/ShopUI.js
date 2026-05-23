@@ -5,6 +5,10 @@
 
 import { gsap }  from 'gsap';
 import { audio } from '../audio/AudioManager.js';
+import {
+  AVATAR_OPTIONS, FRAME_OPTIONS,
+  loadProfile, saveProfile,
+} from '../data/profileData.js';
 
 /* ── Catalogue ──────────────────────────────────────────────── */
 
@@ -100,6 +104,7 @@ export class ShopUI {
   /* ── Grid ────────────────────────────────────────────── */
 
   _renderGrid(tab, silent = false) {
+    if (tab === 'cosmetique') { this._renderCosmetique(silent); return; }
     const grid  = document.getElementById('shop-grid');
     const items = SHOP_CATALOG.filter(i => i.tab === tab);
     grid.innerHTML = '';
@@ -194,6 +199,121 @@ export class ShopUI {
     this._updateCurrency();
     this._setTab(this._activeTab, true);
     this._showToast(toastMsg);
+  }
+
+  /* ── Cosmétiques ────────────────────────────────────── */
+
+  _renderCosmetique(silent = false) {
+    const grid = document.getElementById('shop-grid');
+    grid.innerHTML = '';
+    grid.classList.add('shop-grid--cosmetique');
+
+    const profile = loadProfile();
+
+    // Section Avatars
+    const avTitle = document.createElement('div');
+    avTitle.className = 'shop-cosm-section-title';
+    avTitle.innerHTML = '<span class="sct-icon">◉</span> AVATARS';
+    grid.appendChild(avTitle);
+
+    const avGrid = document.createElement('div');
+    avGrid.className = 'shop-cosm-grid';
+    AVATAR_OPTIONS.forEach((av, idx) => {
+      const owned = profile.unlockedAvatars.includes(av.id);
+      const canAfford = this.playerData.currency >= av.cost;
+      const card = document.createElement('div');
+      card.className = `shop-cosm-card${owned ? ' shop-cosm-card--owned' : ''}`;
+      card.innerHTML = `
+        <div class="scc-preview" style="color:${av.color};text-shadow:0 0 10px ${av.glow}">${av.kanji}</div>
+        <div class="scc-label">${av.label}</div>
+        ${owned
+          ? '<div class="scc-owned-badge">✓ Possédé</div>'
+          : `<div class="scc-price">◈ ${av.cost.toLocaleString()}</div>
+             <button class="scc-buy-btn${canAfford ? '' : ' scc-buy-btn--poor'}"
+                     ${canAfford ? '' : 'disabled'}>
+               ${canAfford ? 'ACHETER' : 'Fonds insuffisants'}
+             </button>`
+        }`;
+      if (!owned) {
+        card.querySelector('.scc-buy-btn')?.addEventListener('click', () => {
+          if (!canAfford) { this._shakeCard(card); return; }
+          this._buyCosmetic('avatar', av, card);
+        });
+      }
+      avGrid.appendChild(card);
+      if (!silent) gsap.fromTo(card,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.25, delay: idx * 0.05, ease: 'power2.out' });
+    });
+    grid.appendChild(avGrid);
+
+    // Section Cadres
+    const frTitle = document.createElement('div');
+    frTitle.className = 'shop-cosm-section-title';
+    frTitle.innerHTML = '<span class="sct-icon">◻</span> CADRES';
+    grid.appendChild(frTitle);
+
+    const frGrid = document.createElement('div');
+    frGrid.className = 'shop-cosm-grid shop-cosm-grid--frames';
+    FRAME_OPTIONS.forEach((fr, idx) => {
+      const owned = profile.unlockedFrames.includes(fr.id);
+      const canAfford = this.playerData.currency >= fr.cost;
+      const card = document.createElement('div');
+      card.className = `shop-cosm-card${owned ? ' shop-cosm-card--owned' : ''}`;
+      card.innerHTML = `
+        <div class="scc-frame-preview">
+          <div class="prf-avatar-wrap frame-${fr.id}" style="--av-color:#00d4ff;--av-glow:rgba(0,212,255,0.4)">
+            <div class="prf-avatar-ring"></div>
+            <span class="prf-avatar-kanji" style="font-size:1.2rem">黒</span>
+          </div>
+        </div>
+        <div class="scc-label">${fr.label}</div>
+        <div class="scc-desc">${fr.desc}</div>
+        ${owned
+          ? '<div class="scc-owned-badge">✓ Possédé</div>'
+          : `<div class="scc-price">◈ ${fr.cost.toLocaleString()}</div>
+             <button class="scc-buy-btn${canAfford ? '' : ' scc-buy-btn--poor'}"
+                     ${canAfford ? '' : 'disabled'}>
+               ${canAfford ? 'ACHETER' : 'Fonds insuff.'}
+             </button>`
+        }`;
+      if (!owned) {
+        card.querySelector('.scc-buy-btn')?.addEventListener('click', () => {
+          if (!canAfford) { this._shakeCard(card); return; }
+          this._buyCosmetic('frame', fr, card);
+        });
+      }
+      frGrid.appendChild(card);
+      if (!silent) gsap.fromTo(card,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.25, delay: (AVATAR_OPTIONS.length + idx) * 0.05, ease: 'power2.out' });
+    });
+    grid.appendChild(frGrid);
+  }
+
+  _buyCosmetic(type, item, cardEl) {
+    if (!this.playerData.spendCurrency(item.cost)) return;
+
+    const profile = loadProfile();
+    if (type === 'avatar') {
+      if (!profile.unlockedAvatars.includes(item.id)) profile.unlockedAvatars.push(item.id);
+    } else {
+      if (!profile.unlockedFrames.includes(item.id)) profile.unlockedFrames.push(item.id);
+    }
+    saveProfile(profile);
+    audio.play('shop_buy');
+
+    // Flash carte
+    gsap.timeline()
+      .to(cardEl, { scale: 1.06, borderColor: '#00e896', duration: 0.12, ease: 'power2.out' })
+      .to(cardEl, { scale: 1,    borderColor: '',        duration: 0.25, ease: 'power2.in' });
+
+    this._updateCurrency();
+    // Notifie le profil si ouvert
+    document.dispatchEvent(new CustomEvent('kuro:cosmetic-unlocked'));
+    this._showToast(`✦ ${item.label} débloqué ! Equipe-le dans ton Profil.`);
+    // Re-render pour marquer comme possédé
+    setTimeout(() => this._renderCosmetique(true), 400);
   }
 
   /* ── Character picker ────────────────────────────────── */

@@ -332,10 +332,8 @@ export class ProfileUI {
           <div class="prf-pick-label">${av.label}</div>
           ${isSelected  ? '<div class="prf-pick-check">✓</div>' : ''}
           ${!isUnlocked ? `<div class="prf-pick-lock">
-            <span class="prf-pick-cost${canAfford?'':' prf-pick-cost--poor'}">◈ ${av.cost.toLocaleString()}</span>
-            <button class="prf-pick-buy-btn${canAfford?'':' disabled'}" data-id="${av.id}" data-tab="avatar" data-cost="${av.cost}">
-              ${canAfford ? 'DÉBLOQUER' : 'Fonds insuff.'}
-            </button>
+            <span class="prf-pick-lock-price">◈ ${av.cost.toLocaleString()}</span>
+            <button class="prf-pick-goto-shop">→ Boutique</button>
           </div>` : ''}`;
       } else {
         const fr = opt;
@@ -345,13 +343,10 @@ export class ProfileUI {
             <span class="prf-pick-frame-kanji">黒</span>
           </div>
           <div class="prf-pick-label">${fr.label}</div>
-          <div class="prf-pick-desc">${fr.desc}</div>
           ${isSelected  ? '<div class="prf-pick-check">✓</div>' : ''}
           ${!isUnlocked ? `<div class="prf-pick-lock">
-            <span class="prf-pick-cost${canAfford?'':' prf-pick-cost--poor'}">◈ ${fr.cost.toLocaleString()}</span>
-            <button class="prf-pick-buy-btn${canAfford?'':' disabled'}" data-id="${fr.id}" data-tab="frame" data-cost="${fr.cost}">
-              ${canAfford ? 'DÉBLOQUER' : 'Fonds insuff.'}
-            </button>
+            <span class="prf-pick-lock-price">◈ ${fr.cost.toLocaleString()}</span>
+            <button class="prf-pick-goto-shop">→ Boutique</button>
           </div>` : ''}`;
       }
 
@@ -365,11 +360,13 @@ export class ProfileUI {
           this._renderHero();
         });
       }
-      // Achat si verrouillé
-      card.querySelector('.prf-pick-buy-btn:not(.disabled)')
+      // Verrouillé → redirige vers la boutique
+      card.querySelector('.prf-pick-goto-shop')
         ?.addEventListener('click', e => {
           e.stopPropagation();
-          this._unlockItem(tab, opt.id, opt.cost, overlay);
+          this._closePicker();
+          this.hide();
+          document.dispatchEvent(new CustomEvent('kuro:open-shop-cosmetique'));
         });
 
       grid.appendChild(card);
@@ -397,27 +394,10 @@ export class ProfileUI {
     this._flashSaved();
   }
 
-  _unlockItem(tab, id, cost, overlay) {
-    if (!this.playerData.spendCurrency(cost)) return;
-
-    if (tab === 'avatar') {
-      if (!this._profile.unlockedAvatars.includes(id)) this._profile.unlockedAvatars.push(id);
-      this._profile.avatarId = id;
-    } else {
-      if (!this._profile.unlockedFrames.includes(id)) this._profile.unlockedFrames.push(id);
-      this._profile.frameId = id;
-    }
-    saveProfile(this._profile);
-    audio.play('shop_buy');
-
-    // Refresh monnaie dans le picker et dans le hub
-    const pickerCur = overlay?.querySelector('#prf-picker-cur-val');
-    if (pickerCur) pickerCur.textContent = this.playerData.currency.toLocaleString();
-    const hubCur = document.getElementById('hub-nav-currency-val');
-    if (hubCur) hubCur.textContent = this.playerData.currency.toLocaleString();
-
-    this._renderPickerGrid(overlay, tab);
-    this._renderHero();
+  /** Appelée depuis ShopUI après un achat cosmetique */
+  notifyUnlock() {
+    this._profile = loadProfile();
+    if (this.screen.style.display !== 'none') this._renderHero();
   }
 
   _flashSaved() {
