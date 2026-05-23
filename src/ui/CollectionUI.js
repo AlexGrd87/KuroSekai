@@ -9,9 +9,9 @@
  *  - Transition GSAP depuis/vers le menu
  */
 
-import { gsap }                      from 'gsap';
-import { CHARACTERS, RARITIES }      from '../data/characters.js';
-import { buildPortraitSVG }          from './portrait.js';
+import { gsap }                                    from 'gsap';
+import { CHARACTERS, RARITIES, CONSTELLATION_BONUSES } from '../data/characters.js';
+import { buildPortraitSVG }                        from './portrait.js';
 
 const ELEMENT_DATA = {
   Fire:    { color: '#ff5500', glow: '#ff2200', kanji: '火' },
@@ -34,6 +34,7 @@ export class CollectionUI {
     this.modalCardWrap = document.getElementById('col-modal-card-wrap');
     this._activeFilter  = 'all';
     this._activeElement = 'all';
+    this._activeSort    = 'rarity';
     this._tiltCleanup   = null;
 
     this._bindFilters();
@@ -86,7 +87,13 @@ export class CollectionUI {
       const ownA = this.playerData.has(a.id) ? 1 : 0;
       const ownB = this.playerData.has(b.id) ? 1 : 0;
       if (ownA !== ownB) return ownB - ownA;
-      return b.rarity - a.rarity;
+      if (this._activeSort === 'level') {
+        return this.playerData.getLevel(b.id) - this.playerData.getLevel(a.id);
+      }
+      if (this._activeSort === 'name') {
+        return a.name.localeCompare(b.name);
+      }
+      return b.rarity - a.rarity; // default: rarity
     });
 
     filtered.forEach(char => {
@@ -192,13 +199,14 @@ export class CollectionUI {
       { scale: 1, y: 0, duration: 0.4, ease: 'back.out(1.5)' }
     );
 
-    /* -- Stats animées -- */
-    const maxStats = { hp: 12000, atk: 1700, def: 1800, spd: 180 };
+    /* -- Stats scalées (niveau + constellation) -- */
+    const scaled   = this.playerData.getScaledStats(char);
+    const maxStats = { hp: 18000, atk: 2500, def: 2600, spd: 180 };
     [
-      ['hp',  char.stats.hp,  maxStats.hp],
-      ['atk', char.stats.atk, maxStats.atk],
-      ['def', char.stats.def, maxStats.def],
-      ['spd', char.stats.spd, maxStats.spd],
+      ['hp',  scaled.hp,  maxStats.hp],
+      ['atk', scaled.atk, maxStats.atk],
+      ['def', scaled.def, maxStats.def],
+      ['spd', scaled.spd, maxStats.spd],
     ].forEach(([stat, val, max], i) => {
       const bar = document.getElementById(`det-${stat}-bar`);
       const txt = document.getElementById(`det-${stat}-val`);
@@ -212,12 +220,69 @@ export class CollectionUI {
       if (txt) txt.textContent = stat === 'spd' ? val : val.toLocaleString();
     });
 
+    /* -- Constellation -- */
+    this._buildConstellationUI(char, el);
+
     /* -- Stagger des blocs de droite -- */
-    const infoSections = ['#det-header', '#det-stats', '#det-skills', '#det-lore-block'];
+    const infoSections = ['#det-header', '#det-stats', '#det-skills', '#det-constellation', '#det-lore-block'];
     gsap.fromTo(infoSections.map(s => document.querySelector(s)).filter(Boolean),
       { opacity: 0, x: 18 },
       { opacity: 1, x: 0, stagger: 0.07, duration: 0.35, ease: 'power2.out', delay: 0.15 }
     );
+  }
+
+  _buildConstellationUI(char, el) {
+    const level   = this.playerData.getConstellationLevel(char.id);
+    const bonuses = CONSTELLATION_BONUSES[char.rarity] || [];
+    const rar     = RARITIES[char.rarity];
+
+    /* level badge */
+    const levelEl = document.getElementById('det-const-level');
+    if (levelEl) {
+      levelEl.textContent  = level === 0 ? 'C0' : `C${level}`;
+      levelEl.style.color  = level > 0 ? rar.color : '#666';
+    }
+
+    /* 6 nodes */
+    const nodesEl = document.getElementById('det-const-nodes');
+    if (nodesEl) {
+      nodesEl.innerHTML = bonuses.map((b, i) => {
+        const active  = i < level;
+        const current = i === level - 1;
+        return `
+          <div class="det-const-node ${active ? 'det-const-node--active' : ''}
+                                     ${current ? 'det-const-node--current' : ''}"
+               style="${active ? `--nc:${rar.color};--ng:${rar.glow}` : ''}"
+               title="${b.label}">
+            <span class="det-const-node-num">C${i + 1}</span>
+            <span class="det-const-node-label">${b.label}</span>
+          </div>
+        `;
+      }).join('');
+
+      /* animate active nodes */
+      if (level > 0) {
+        gsap.fromTo(nodesEl.querySelectorAll('.det-const-node--active'),
+          { scale: 0.7, opacity: 0 },
+          { scale: 1, opacity: 1, stagger: 0.06, duration: 0.3, ease: 'back.out(1.5)', delay: 0.4 }
+        );
+      }
+    }
+
+    /* bonus summary */
+    const bonusEl = document.getElementById('det-const-bonus');
+    if (bonusEl) {
+      if (level === 0) {
+        bonusEl.textContent = 'Obtenez des copies pour débloquer des constellations.';
+        bonusEl.style.color = '#667';
+      } else if (level >= 6) {
+        bonusEl.textContent = '✦ Constellation maximale atteinte !';
+        bonusEl.style.color = rar.color;
+      } else {
+        bonusEl.textContent = `Prochain : ${bonuses[level]?.label ?? '—'}`;
+        bonusEl.style.color = '#99aacc';
+      }
+    }
   }
 
   _closeModal() {
@@ -341,6 +406,15 @@ export class CollectionUI {
   }
 
   _bindFilters() {
+    document.querySelectorAll('.col-filter-sort').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.col-filter-sort').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this._activeSort = btn.dataset.sort;
+        this._buildGrid();
+        gsap.from('.col-card', { opacity: 0, scale: 0.9, stagger: 0.03, duration: 0.25, ease: 'power2.out' });
+      });
+    });
     document.querySelectorAll('.col-filter-rar').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.col-filter-rar').forEach(b => b.classList.remove('active'));

@@ -5,6 +5,38 @@
  * Les sprites seront ajoutés quand les assets seront téléchargés.
  */
 
+/**
+ * Bonus de constellation par rareté (C1→C6, débloqués par dupes).
+ * Chaque entrée = bonus de la constellation à CE niveau précis.
+ * Les effets sont cumulatifs (C3 = C1+C2+C3).
+ */
+export const CONSTELLATION_BONUSES = {
+  3: [
+    { label: 'ATK +5%',          effect: { atk_pct: 0.05 } },
+    { label: 'HP +8%',           effect: { hp_pct: 0.08  } },
+    { label: 'Skill 1 — CD -1',  effect: { cd0: -1       } },
+    { label: 'DEF +10%',         effect: { def_pct: 0.10 } },
+    { label: 'ATK +15%',         effect: { atk_pct: 0.15 } },
+    { label: 'Tous stats +20%',  effect: { all_pct: 0.20 } },
+  ],
+  4: [
+    { label: 'HP +8%',           effect: { hp_pct: 0.08  } },
+    { label: 'Skill 1 — CD -1',  effect: { cd0: -1       } },
+    { label: 'ATK +12%',         effect: { atk_pct: 0.12 } },
+    { label: 'HP +15%',          effect: { hp_pct: 0.15  } },
+    { label: 'Skill 2 — CD -1',  effect: { cd1: -1       } },
+    { label: 'Tous stats +25%',  effect: { all_pct: 0.25 } },
+  ],
+  5: [
+    { label: 'Tous stats +10%',  effect: { all_pct: 0.10 } },
+    { label: 'Skill 1 — CD -1',  effect: { cd0: -1       } },
+    { label: 'ATK +15%',         effect: { atk_pct: 0.15 } },
+    { label: 'HP +15%',          effect: { hp_pct: 0.15  } },
+    { label: 'Skill 2 — CD -1',  effect: { cd1: -1       } },
+    { label: 'Tous stats +30%',  effect: { all_pct: 0.30 } },
+  ],
+};
+
 export const RARITIES = {
   5: { label: 'LÉGENDAIRE', color: '#ffd700', glow: '#ffaa00', rate: 0.02 },
   4: { label: 'ÉPIQUE',     color: '#b44fff', glow: '#7b2fff', rate: 0.13 },

@@ -83,11 +83,20 @@ const combatUI = new CombatUI((winner, stage) => {
 const teamSelect = new TeamSelectUI(playerData, (team) => {
   _currentTeam = team;
   combatUI.start(
-    team.map(char => ({
-      ...char,
-      level: playerData.getLevel(char.id),
-      stats: playerData.getScaledStats(char),
-    })),
+    team.map(char => {
+      const { cd0, cd1 } = playerData.getCooldownReductions(char);
+      const skills = char.skills.map((sk, i) => {
+        const red = i === 0 ? cd0 : i === 1 ? cd1 : 0;
+        if (red === 0) return sk;
+        return { ...sk, cooldown: Math.max(1, sk.cooldown + red) };
+      });
+      return {
+        ...char,
+        skills,
+        level: playerData.getLevel(char.id),
+        stats: playerData.getScaledStats(char),
+      };
+    }),
     _pendingStage
   );
 });

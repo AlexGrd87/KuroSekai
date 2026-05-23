@@ -550,6 +550,11 @@
           <button class="col-filter-rar" data-filter="4">★★★★</button>
           <button class="col-filter-rar" data-filter="3">★★★</button>
         </div>
+        <div id="col-filters-sort">
+          <button class="col-filter-sort active" data-sort="rarity">Rareté</button>
+          <button class="col-filter-sort" data-sort="level">Niveau</button>
+          <button class="col-filter-sort" data-sort="name">Nom</button>
+        </div>
         <div id="col-filters-el">
           <button class="col-filter-el active" data-element="all"><span class="el-kanji">〇</span><span class="el-label">Tous</span></button>
           <button class="col-filter-el" data-element="Fire">   <span class="el-kanji">火</span><span class="el-label">Feu</span></button>
@@ -639,6 +644,17 @@
                 <span class="det-skill-name" id="det-skill2-name">—</span>
                 <p    class="det-skill-desc" id="det-skill2-desc">—</p>
               </div>
+            </div>
+
+            <div id="det-constellation">
+              <div class="det-const-header">
+                <span class="det-const-title">CONSTELLATION</span>
+                <span class="det-const-level" id="det-const-level">C0</span>
+              </div>
+              <div class="det-const-nodes" id="det-const-nodes">
+                <!-- 6 nodes injected by JS -->
+              </div>
+              <p class="det-const-bonus" id="det-const-bonus">Obtenez des copies pour débloquer des constellations.</p>
             </div>
 
             <div id="det-lore-block">

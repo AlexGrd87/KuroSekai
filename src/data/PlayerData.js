@@ -3,6 +3,8 @@
  * Gestion de la collection et de la progression du joueur via localStorage.
  */
 
+import { CONSTELLATION_BONUSES } from './characters.js';
+
 const STORAGE_KEY  = 'kuro_player_collection';
 const PROGRESS_KEY = 'kuro_player_progress';
 
@@ -130,16 +132,59 @@ export class PlayerData {
     };
   }
 
-  /** Stats du personnage scalées selon son niveau actuel */
+  /* ════════════════════════════════
+     CONSTELLATION
+  ════════════════════════════════ */
+
+  /** Niveau de constellation (0–6) basé sur le nombre de dupes */
+  getConstellationLevel(id) {
+    return Math.min(6, Math.max(0, (this.countOf(id) - 1)));
+  }
+
+  /** Applique les bonus de constellation sur des stats de base */
+  applyConstellationBonuses(char, baseStats) {
+    const level = this.getConstellationLevel(char.id);
+    if (level === 0) return { ...baseStats };
+    const bonuses = CONSTELLATION_BONUSES[char.rarity] || [];
+    let { hp, atk, def, spd } = baseStats;
+    for (let i = 0; i < level; i++) {
+      const b = bonuses[i]?.effect || {};
+      if (b.hp_pct)  hp  = Math.round(hp  * (1 + b.hp_pct));
+      if (b.atk_pct) atk = Math.round(atk * (1 + b.atk_pct));
+      if (b.def_pct) def = Math.round(def * (1 + b.def_pct));
+      if (b.all_pct) {
+        hp  = Math.round(hp  * (1 + b.all_pct));
+        atk = Math.round(atk * (1 + b.all_pct));
+        def = Math.round(def * (1 + b.all_pct));
+      }
+    }
+    return { hp, atk, def, spd };
+  }
+
+  /** Retourne les réductions de cooldown cumulées (cd0, cd1) */
+  getCooldownReductions(char) {
+    const level   = this.getConstellationLevel(char.id);
+    const bonuses = CONSTELLATION_BONUSES[char.rarity] || [];
+    let cd0 = 0, cd1 = 0;
+    for (let i = 0; i < level; i++) {
+      const b = bonuses[i]?.effect || {};
+      if (b.cd0) cd0 += b.cd0;
+      if (b.cd1) cd1 += b.cd1;
+    }
+    return { cd0, cd1 };
+  }
+
+  /** Stats du personnage scalées selon son niveau et constellation */
   getScaledStats(char) {
     const level = this.getLevel(char.id);
     const mult  = statMultiplier(level);
-    return {
+    const base  = {
       hp:  Math.round(char.stats.hp  * mult),
       atk: Math.round(char.stats.atk * mult),
       def: Math.round(char.stats.def * mult),
-      spd: char.stats.spd,              // SPD ne scale pas
+      spd: char.stats.spd,
     };
+    return this.applyConstellationBonuses(char, base);
   }
 
   /* ════════════════════════════════
