@@ -23,6 +23,7 @@ import { ShopUI }         from './ui/ShopUI.js';
 import { DungeonUI }      from './ui/DungeonUI.js';
 import { LeaderboardUI }  from './ui/LeaderboardUI.js';
 import { QuestsUI }       from './ui/QuestsUI.js';
+import { ProfileUI }      from './ui/ProfileUI.js';
 import { apiService }     from './data/ApiService.js';
 import { audio }          from './audio/AudioManager.js';
 
@@ -73,7 +74,8 @@ let _currentTeam  = [];
 function handleVictory(stage) {
   audio.play('victory');
   playerData.completeStage(stage.id, stage.rewards);
-  // Progression quêtes
+  // Progression quêtes + stats profil
+  playerData.incrementCombatsWon();
   playerData.incrementQuest('COMBAT_WIN',     1);
   playerData.incrementQuest('STAGE_COMPLETE', 1);
   questsUI?.refreshBadge();
@@ -158,6 +160,15 @@ document.getElementById('hub-lb-btn')
     leaderboardUI.show();
   });
 
+/* ── PROFIL ── */
+const profileUI = new ProfileUI(playerData, goHub);
+document.getElementById('hub-profile-btn')
+  ?.addEventListener('click', () => {
+    audio.play('ui_navigate');
+    hub.hide();
+    profileUI.show();
+  });
+
 /* ── MISSIONS & QUÊTES ── */
 const questsUI = new QuestsUI(playerData, goHub);
 document.getElementById('hub-missions-btn')
@@ -220,6 +231,7 @@ document.getElementById('col-back')
 document.addEventListener('kuro:character-obtained', (e) => {
   if (e.detail?.id) {
     playerData.addCharacter(e.detail.id);
+    playerData.incrementSummons(1);
     playerData.incrementQuest('SUMMON', 1);
     questsUI?.refreshBadge();
   }

@@ -55,6 +55,9 @@ export class PlayerData {
       this.pity4            = data.pity4             ?? 0;
       this.freeRolls        = data.freeRolls         ?? 0;
       this.xpBoostCombats   = data.xpBoostCombats    ?? 0;
+      this.combatsWon       = data.combatsWon        ?? 0;
+      this.totalSummons     = data.totalSummons      ?? 0;
+      this.firstPlayDate    = data.firstPlayDate     ?? Date.now();
     } catch {
       this.completedStages = new Set();
       this.currency        = 0;
@@ -224,6 +227,9 @@ export class PlayerData {
       pity4:          this.pity4,
       freeRolls:      this.freeRolls,
       xpBoostCombats: this.xpBoostCombats,
+      combatsWon:     this.combatsWon,
+      totalSummons:   this.totalSummons,
+      firstPlayDate:  this.firstPlayDate,
     };
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
     this._scheduleCloudSync();
@@ -253,9 +259,12 @@ export class PlayerData {
       });
       const p = data.progress || {};
       this.completedStages = new Set(p.completedStages || []);
-      this.currency        = p.currency || 0;
-      this.pity5           = p.pity5    ?? 0;
-      this.pity4           = p.pity4    ?? 0;
+      this.currency        = p.currency      || 0;
+      this.pity5           = p.pity5         ?? 0;
+      this.pity4           = p.pity4         ?? 0;
+      this.combatsWon      = p.combatsWon    ?? 0;
+      this.totalSummons    = p.totalSummons  ?? 0;
+      this.firstPlayDate   = p.firstPlayDate ?? Date.now();
       if (p.pullHistory) {
         this.pullHistory = p.pullHistory;
         localStorage.setItem(HISTORY_KEY, JSON.stringify(this.pullHistory));
@@ -458,6 +467,20 @@ export class PlayerData {
       return 2;
     }
     return 1;
+  }
+
+  /* ════════════════════════════════
+     STATS GLOBALES
+  ════════════════════════════════ */
+
+  incrementCombatsWon() {
+    this.combatsWon = (this.combatsWon ?? 0) + 1;
+    this._saveProgress();
+  }
+
+  incrementSummons(n = 1) {
+    this.totalSummons = (this.totalSummons ?? 0) + n;
+    this._saveProgress();
   }
 
   /* ════════════════════════════════
