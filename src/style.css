@@ -3836,22 +3836,64 @@ html, body {
 #hub-header-util {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
+
 .hub-util-btn {
   position: relative;
-  background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 12px 5px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
   border-radius: 8px;
-  color: rgba(200,210,255,.75);
-  width: 34px; height: 34px;
+  color: rgba(200,210,255,.65);
   cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: background .15s, border-color .15s;
   flex-shrink: 0;
+  transition: background .15s, border-color .15s, color .15s;
 }
-.hub-util-btn:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.25); color: #fff; }
-.hub-util-icon { font-size: 15px; line-height: 1; pointer-events: none; }
+
+.hub-util-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 15%; right: 15%;
+  height: 2px;
+  background: var(--uc, #8888ff);
+  border-radius: 1px;
+  opacity: 0;
+  transition: opacity .15s;
+}
+
+.hub-util-btn:hover {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.18);
+  color: #fff;
+}
+.hub-util-btn:hover::after { opacity: 1; }
+
+.hub-util-icon {
+  font-size: 18px;
+  line-height: 1;
+  pointer-events: none;
+  transition: filter .15s, transform .15s;
+}
+.hub-util-btn:hover .hub-util-icon {
+  filter: drop-shadow(0 0 5px var(--uc, #8888ff));
+  transform: scale(1.1);
+}
+
+.hub-util-label {
+  font-size: 7px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(200,210,255,.5);
+  font-weight: 700;
+  pointer-events: none;
+  transition: color .15s;
+}
+.hub-util-btn:hover .hub-util-label { color: var(--uc, #aab4ff); }
 
 /* ── Barre de navigation des modes ── */
 #hub-nav-bar {
@@ -3860,6 +3902,7 @@ html, body {
   z-index: 19;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 8px 16px;
   background: rgba(2,4,18,.82);
@@ -3903,7 +3946,7 @@ html, body {
 .hub-nav-btn:hover::after { opacity: 1; }
 
 .hnb-icon {
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1;
   transition: filter .15s, transform .15s;
 }
@@ -7162,22 +7205,7 @@ html, body {
    PROFIL JOUEUR — v2 (nom, avatars, cadres débloquables)
    ═══════════════════════════════════════════════════════════ */
 
-/* Bouton hub */
-.hub-profile-btn {
-  background: rgba(123,47,255,0.1);
-  border: 1px solid rgba(123,47,255,0.35);
-  color: var(--violet);
-  font-size: 1.05rem;
-  width: 36px; height: 36px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.2s, border-color 0.2s;
-}
-.hub-profile-btn:hover {
-  background: rgba(123,47,255,0.22);
-  border-color: var(--violet);
-}
+/* .hub-profile-btn → remplacé par .hub-util-btn#hub-profile-btn */
 
 /* Écran */
 #profile-screen {
@@ -7875,36 +7903,28 @@ html, body {
    MISSIONS & QUÊTES
    ═══════════════════════════════════════════════════════════ */
 
-/* Bouton hub */
-.hub-missions-btn {
-  position: relative;
-  background: rgba(0,212,255,0.08);
-  border: 1px solid rgba(0,212,255,0.3);
-  color: var(--cyan);
-  font-size: 1.1rem;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s, border-color 0.2s;
-}
-.hub-missions-btn:hover {
-  background: rgba(0,212,255,0.18);
-  border-color: var(--cyan);
+/* .hub-missions-btn → remplacé par .hub-util-btn#hub-missions-btn */
+
+/* Badge point rouge — connexion quotidienne */
+.hub-daily-badge {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #ff5533;
+  border: 1.5px solid var(--noir);
+  pointer-events: none;
 }
 .hub-missions-badge {
   position: absolute;
-  top: -5px;
-  right: -5px;
+  top: 2px;
+  right: 2px;
   background: #ff3a5c;
   color: #fff;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 700;
-  min-width: 16px;
-  height: 16px;
+  min-width: 15px;
+  height: 15px;
   border-radius: 8px;
   padding: 0 3px;
   display: flex;
@@ -8479,25 +8499,7 @@ html, body {
   border-color: rgba(255, 255, 255, 0.22);
 }
 
-/* Bouton hub pour ouvrir manuellement le daily */
-#hub-daily-btn {
-  position: relative;
-  background: none;
-  border: none;
-  font-size: 1.1rem;
-  cursor: pointer;
-  padding: 4px;
-  transition: transform 0.15s;
-}
-#hub-daily-btn:hover { transform: scale(1.15); }
-#hub-daily-btn .hub-daily-badge {
-  position: absolute;
-  top: -2px; right: -4px;
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: #ff5533;
-  border: 1px solid #07091a;
-}
+/* #hub-daily-btn → remplacé par .hub-util-btn#hub-daily-btn */
 
 /* Particule cosmétique (GSAP) */
 .dlb-particle {
