@@ -3874,8 +3874,9 @@ html, body {
 .hub-util-btn:hover::after { opacity: 1; }
 
 .hub-util-icon {
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1;
+  font-weight: 700;
   pointer-events: none;
   transition: filter .15s, transform .15s;
 }
@@ -3946,8 +3947,9 @@ html, body {
 .hub-nav-btn:hover::after { opacity: 1; }
 
 .hnb-icon {
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1;
+  font-weight: 700;
   transition: filter .15s, transform .15s;
 }
 .hub-nav-btn:hover .hnb-icon {
