@@ -231,22 +231,52 @@
             <span class="hub-currency-icon">◈</span>
             <span id="hub-nav-currency-val">0</span>
           </div>
-          <button id="hub-arena-btn" title="Arène PvP">⚔</button>
-          <button id="hub-tower-btn" title="Tour Infinie">塔</button>
-          <button id="hub-boss-btn" title="Boss Hebdomadaire">魔</button>
-          <button id="hub-forge-btn" title="Forge">鍛</button>
-          <button id="hub-inventory-btn" title="Inventaire Artefacts">蔵</button>
-          <button id="hub-lb-btn" title="Classement">🏆</button>
-          <button id="hub-daily-btn" title="Connexion quotidienne">
-            🗓
-            <span id="hub-daily-badge" class="hub-daily-badge" style="display:none"></span>
-          </button>
-          <button id="hub-missions-btn" class="hub-missions-btn" title="Missions">
-            📋
-            <span id="hub-missions-badge" class="hub-missions-badge" style="display:none">0</span>
-          </button>
-          <button id="hub-profile-btn" class="hub-profile-btn" title="Profil">👤</button>
+          <div id="hub-header-util">
+            <button id="hub-daily-btn" class="hub-util-btn" title="Connexion quotidienne">
+              <span class="hub-util-icon">🗓</span>
+              <span id="hub-daily-badge" class="hub-daily-badge" style="display:none"></span>
+            </button>
+            <button id="hub-missions-btn" class="hub-util-btn" title="Missions">
+              <span class="hub-util-icon">📋</span>
+              <span id="hub-missions-badge" class="hub-missions-badge" style="display:none">0</span>
+            </button>
+            <button id="hub-profile-btn" class="hub-util-btn" title="Profil">
+              <span class="hub-util-icon">👤</span>
+            </button>
+          </div>
         </header>
+
+        <!-- ── Barre de navigation des modes ── -->
+        <nav id="hub-nav-bar">
+          <button id="hub-dungeon-btn" class="hub-nav-btn" style="--nc:#cc44ff">
+            <span class="hnb-icon">洞</span>
+            <span class="hnb-label">DONJON</span>
+          </button>
+          <button id="hub-arena-btn" class="hub-nav-btn" style="--nc:#ff5555">
+            <span class="hnb-icon">⚔</span>
+            <span class="hnb-label">ARÈNE</span>
+          </button>
+          <button id="hub-tower-btn" class="hub-nav-btn" style="--nc:#44aaff">
+            <span class="hnb-icon">塔</span>
+            <span class="hnb-label">TOUR</span>
+          </button>
+          <button id="hub-boss-btn" class="hub-nav-btn" style="--nc:#ff8800">
+            <span class="hnb-icon">魔</span>
+            <span class="hnb-label">BOSS HEBDO</span>
+          </button>
+          <button id="hub-forge-btn" class="hub-nav-btn" style="--nc:#ffcc00">
+            <span class="hnb-icon">鍛</span>
+            <span class="hnb-label">FORGE</span>
+          </button>
+          <button id="hub-inventory-btn" class="hub-nav-btn" style="--nc:#00ddcc">
+            <span class="hnb-icon">蔵</span>
+            <span class="hnb-label">ARTEFACTS</span>
+          </button>
+          <button id="hub-lb-btn" class="hub-nav-btn" style="--nc:#ffd700">
+            <span class="hnb-icon">🏆</span>
+            <span class="hnb-label">CLASSEMENT</span>
+          </button>
+        </nav>
 
         <!-- Scène ville plein écran -->
         <div id="hub-city-scene">

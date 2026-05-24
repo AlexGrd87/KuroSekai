@@ -3832,6 +3832,96 @@ html, body {
 }
 .hub-currency-icon { font-size: 0.95rem; text-shadow: 0 0 12px rgba(240,192,64,0.8); }
 
+/* ── Boutons utilitaires header (daily / missions / profil) ── */
+#hub-header-util {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hub-util-btn {
+  position: relative;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px;
+  color: rgba(200,210,255,.75);
+  width: 34px; height: 34px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s, border-color .15s;
+  flex-shrink: 0;
+}
+.hub-util-btn:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.25); color: #fff; }
+.hub-util-icon { font-size: 15px; line-height: 1; pointer-events: none; }
+
+/* ── Barre de navigation des modes ── */
+#hub-nav-bar {
+  position: absolute;
+  top: 60px; left: 0; right: 0;
+  z-index: 19;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(2,4,18,.82);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(100,120,255,.14);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+#hub-nav-bar::-webkit-scrollbar { display: none; }
+
+.hub-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 7px 14px 5px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, box-shadow .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  position: relative;
+}
+.hub-nav-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 20%; right: 20%;
+  height: 2px;
+  background: var(--nc, #8888ff);
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.hub-nav-btn:hover {
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.18);
+  box-shadow: 0 2px 12px rgba(0,0,0,.35);
+}
+.hub-nav-btn:hover::after { opacity: 1; }
+
+.hnb-icon {
+  font-size: 20px;
+  line-height: 1;
+  transition: filter .15s, transform .15s;
+}
+.hub-nav-btn:hover .hnb-icon {
+  filter: drop-shadow(0 0 6px var(--nc, #8888ff));
+  transform: scale(1.12);
+}
+
+.hnb-label {
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(200,210,255,.45);
+  font-weight: 700;
+  transition: color .15s;
+}
+.hub-nav-btn:hover .hnb-label { color: var(--nc, #aab4ff); }
+
 /* ══ SCÈNE VILLE PLEIN ÉCRAN ══ */
 #hub-city-scene {
   position: absolute;
@@ -4452,23 +4542,23 @@ html, body {
 /* ══ Couleurs & positions ══ */
 .hub-zone-btn--combat {
   --zone-col: #00d4ff; --zone-glow: rgba(0,212,255,0.55);
-  right: 2%; top: 8%;
+  right: 2%; top: 18%;
 }
 .hub-zone-btn--summon {
   --zone-col: #c060ff; --zone-glow: rgba(192,96,255,0.55);
-  right: 2%; top: 25%;
+  right: 2%; top: 33%;
 }
 .hub-zone-btn--col {
   --zone-col: #00e896; --zone-glow: rgba(0,232,150,0.55);
-  right: 2%; top: 42%;
+  right: 2%; top: 48%;
 }
 .hub-zone-btn--shop {
   --zone-col: #ffbb33; --zone-glow: rgba(255,187,51,0.55);
-  right: 2%; top: 59%;
+  right: 2%; top: 63%;
 }
 .hub-zone-btn--cfg {
   --zone-col: #64b5f6; --zone-glow: rgba(100,181,246,0.5);
-  right: 2%; top: 76%;
+  right: 2%; top: 78%;
 }
 
 /* ══ SOL ══ */
@@ -5128,17 +5218,7 @@ html, body {
    ═══════════════════════════════════════════════════════════ */
 
 /* Bouton trophée dans le hub header */
-#hub-lb-btn {
-  background: none;
-  border: none;
-  font-size: 1.1rem;
-  cursor: pointer;
-  opacity: 0.75;
-  transition: opacity 0.2s, transform 0.15s;
-  padding: 0.2rem;
-  line-height: 1;
-}
-#hub-lb-btn:hover { opacity: 1; transform: scale(1.15); }
+/* #hub-lb-btn → now .hub-nav-btn */
 
 /* Écran principal */
 #lb-screen {
@@ -5325,11 +5405,11 @@ html, body {
     width: clamp(260px, 55%, 400px);
   }
 
-  .hub-zone-btn--combat { top: 8%;  right: 1%; }
-  .hub-zone-btn--summon { top: 25%; right: 1%; }
-  .hub-zone-btn--col    { top: 42%; right: 1%; }
-  .hub-zone-btn--shop   { top: 59%; right: 1%; }
-  .hub-zone-btn--cfg    { top: 76%; right: 1%; }
+  .hub-zone-btn--combat { top: 18%; right: 1%; }
+  .hub-zone-btn--summon { top: 33%; right: 1%; }
+  .hub-zone-btn--col    { top: 48%; right: 1%; }
+  .hub-zone-btn--shop   { top: 63%; right: 1%; }
+  .hub-zone-btn--cfg    { top: 78%; right: 1%; }
 }
 
 /* ── Mobile (≤ 600px) — layout vertical ── */
@@ -5406,6 +5486,11 @@ html, body {
   #hub-header { padding: 0.45rem 0.8rem; }
   #hub-player-name { font-size: 0.75rem; }
   #hub-nav-currency { font-size: 0.82rem; }
+  /* Nav bar compact sur mobile */
+  #hub-nav-bar { top: 52px; padding: 6px 10px; gap: 4px; }
+  .hub-nav-btn { padding: 5px 10px 4px; }
+  .hnb-icon { font-size: 17px; }
+  .hnb-label { font-size: 7px; }
 
   /* Lune repositionnée */
   #hub-moon { top: 5%; right: 8%; width: 50px; height: 50px; }
@@ -9562,22 +9647,7 @@ html, body {
   background: transparent;
 }
 
-/* Hub arena button */
-#hub-arena-btn {
-  background: rgba(255,80,80,0.12);
-  border: 1px solid rgba(255,80,80,0.3);
-  color: #ff8080;
-  border-radius: 8px;
-  padding: 5px 9px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all .2s;
-}
-#hub-arena-btn:hover {
-  background: rgba(255,80,80,0.22);
-  box-shadow: 0 0 10px rgba(255,80,80,0.3);
-  transform: scale(1.08);
-}
+/* #hub-arena-btn → stylings now handled by .hub-nav-btn + --nc variable */
 
 /* Responsive ajustements arène */
 @media (max-width: 700px) {
@@ -9831,30 +9901,7 @@ html, body {
    HUB — BOUTONS TOUR & BOSS
 ════════════════════════════════════════════════════════════ */
 
-#hub-tower-btn, #hub-boss-btn {
-  width: 36px; height: 36px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(255,255,255,0.06);
-  color: #fff;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Noto Serif JP', serif;
-}
-
-#hub-tower-btn:hover {
-  background: rgba(68,170,255,0.18);
-  border-color: rgba(68,170,255,0.5);
-  box-shadow: 0 0 12px rgba(68,170,255,0.3);
-}
-
-#hub-boss-btn:hover {
-  background: rgba(200,0,255,0.18);
-  border-color: rgba(200,0,255,0.5);
-  box-shadow: 0 0 12px rgba(200,0,255,0.3);
-}
+/* #hub-tower-btn, #hub-boss-btn → now .hub-nav-btn */
 
 /* ════════════════════════════════════════════════════════════
    TOUR INFINIE
@@ -11003,16 +11050,7 @@ html, body {
 .ecp-cost  { color: rgba(255,255,255,0.7); }
 
 /* ── Bouton hub Forge ── */
-#hub-forge-btn {
-  background: rgba(255,140,0,0.08);
-  border-color: rgba(255,140,0,0.3);
-}
-#hub-forge-btn:hover {
-  background: rgba(255,140,0,0.2);
-  color: #ff8800;
-  border-color: #ff8800;
-  text-shadow: 0 0 8px rgba(255,140,0,0.6);
-}
+/* #hub-forge-btn → now .hub-nav-btn */
 
 /* Responsive */
 @media (max-width: 780px) {

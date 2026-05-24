@@ -229,7 +229,7 @@ export class ArtifactInventoryUI {
       ? (CHARACTERS.find(c => c.id === ownerCharId)?.name ?? ownerCharId)
       : null;
 
-    const ownedChars = CHARACTERS.filter(c => this.playerData.hasCharacter(c.id));
+    const ownedChars = CHARACTERS.filter(c => this.playerData.has(c.id));
 
     // Artefact actuellement en place sur ce slot pour le perso comparé
     let compareArt = null;
