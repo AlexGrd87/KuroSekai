@@ -237,12 +237,15 @@ export class CollectionUI {
     /* -- Équipement (artefacts) -- */
     this._buildEquipmentUI(char, el);
 
+    /* -- Talents -- */
+    this._buildTalentsUI(char, el);
+
     /* -- Boutons Améliorer -- */
     this._currentModalChar = char;
     this._bindAmeliorerButtons(char, el);
 
     /* -- Stagger des blocs de droite -- */
-    const infoSections = ['#det-header', '#det-ameliorer', '#det-ascension', '#det-stats', '#det-skills', '#det-constellation', '#det-equipment', '#det-lore-block'];
+    const infoSections = ['#det-header', '#det-ameliorer', '#det-ascension', '#det-stats', '#det-skills', '#det-constellation', '#det-equipment', '#det-talents', '#det-lore-block'];
     gsap.fromTo(infoSections.map(s => document.querySelector(s)).filter(Boolean),
       { opacity: 0, x: 18 },
       { opacity: 1, x: 0, stagger: 0.07, duration: 0.35, ease: 'power2.out', delay: 0.15 }
@@ -591,6 +594,44 @@ export class CollectionUI {
     // Bouton inventaire global
     document.getElementById('det-eq-open-inv')
       ?.addEventListener('click', () => this._openInventory(char, el, null));
+  }
+
+  /* ════════════════════════════════
+     SECTION TALENTS
+  ════════════════════════════════ */
+
+  _buildTalentsUI(char, _el) {
+    const wrap = document.getElementById('det-talents');
+    if (!wrap) return;
+
+    const unlocked = this.playerData.getUnlockedTalents(char.id);
+    const talentFx = this.playerData.getTalentEffects(char);
+    const summary  = Object.keys(talentFx).length > 0
+      ? Object.entries(talentFx).map(([k, v]) => {
+          const labels = {
+            atk_pct: 'ATK', hp_pct: 'PV', def_pct: 'DEF', spd_pct: 'VIT',
+            crit_rate: 'Crit', crit_dmg: 'CritDMG', all_pct: 'Tous', cd0: 'Skill1CD', cd1: 'Skill2CD',
+          };
+          const isPct = k.endsWith('_pct') || k === 'crit_rate' || k === 'crit_dmg';
+          return `${labels[k] ?? k} ${v > 0 && isPct ? '+' : ''}${isPct ? Math.round(v * 100) + '%' : v}`;
+        }).join(' · ')
+      : 'Aucun talent actif';
+
+    wrap.innerHTML = `
+      <div class="det-talents-header">
+        <span class="det-talents-title">✦ TALENTS</span>
+        <span class="det-talents-unlocked">${unlocked.size}/6 débloqués</span>
+      </div>
+      <div class="det-talents-summary">${summary}</div>
+      <button id="det-talents-open-btn" class="det-talents-btn">
+        <span>GÉRER LES TALENTS</span>
+        <span class="dtb-arrow">→</span>
+      </button>
+    `;
+
+    document.getElementById('det-talents-open-btn')?.addEventListener('click', () => {
+      document.dispatchEvent(new CustomEvent('kuro:open-talents', { detail: { charId: char.id } }));
+    });
   }
 
   _openInventory(char, el, filterSlot = null) {

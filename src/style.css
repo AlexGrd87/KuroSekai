@@ -11022,3 +11022,346 @@ html, body {
   #forge-mats-balance { display: none; }
 }
 
+/* ══════════════════════════════════════════════════════
+   TALENTS & PASSIFS — ARBRE FULL-SCREEN
+══════════════════════════════════════════════════════ */
+
+#talent-screen {
+  position: fixed;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  background: #060810;
+  z-index: 130;
+  overflow: hidden;
+}
+
+#talent-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 0%, color-mix(in srgb, var(--tc, #7b2fff) 18%, transparent) 0%, transparent 65%),
+    radial-gradient(ellipse 30% 50% at 85% 60%, rgba(123,47,255,0.10) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+/* ── Header ── */
+#talent-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 20px;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+#talent-title-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.talent-kanji-deco {
+  font-size: 36px;
+  line-height: 1;
+  text-shadow: 0 0 20px currentColor;
+  font-family: 'Georgia', serif;
+}
+
+#talent-char-name {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-shadow: 0 0 10px currentColor;
+}
+
+#talent-char-title {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.08em;
+  margin-top: 2px;
+}
+
+#talent-currency-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 5px 14px;
+  margin-left: auto;
+}
+.talent-cur-icon { font-size: 14px; color: #ffd700; }
+#talent-cur-val  { font-size: 14px; font-weight: 700; color: #ffd700; min-width: 50px; text-align: right; }
+
+/* ── Barre effets actifs ── */
+#talent-effects-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 20px;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
+  font-size: 12px;
+  min-height: 36px;
+}
+
+.teb-label {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  flex-shrink: 0;
+}
+
+#talent-effects-summary {
+  color: rgba(255,255,255,0.75);
+  font-size: 12px;
+}
+
+/* ── Arbre ── */
+#talent-tree-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+#talent-tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  max-width: 540px;
+}
+
+/* Rangée de nœuds */
+.talent-row {
+  display: flex;
+  gap: 28px;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Connecteurs entre rangées */
+.talent-connectors {
+  display: flex;
+  gap: 28px;
+  justify-content: center;
+  width: 100%;
+  height: 32px;
+}
+
+.talent-conn {
+  width: 2px;
+  height: 100%;
+  background: rgba(255,255,255,0.12);
+  border-radius: 1px;
+  transition: background 0.3s;
+}
+.talent-conn--left,
+.talent-conn--right { flex: 0 0 2px; }
+
+/* Nœud débloqué et parent → connecteur allumé */
+.talent-conn--parent { background: rgba(255,255,255,0.35); }
+.talent-conn--both   { background: var(--tc, #7b2fff); box-shadow: 0 0 6px var(--tg, #5500cc); }
+
+/* ── Nœud de talent ── */
+.talent-node {
+  flex: 0 0 200px;
+  max-width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 14px 12px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.18s, background 0.18s, transform 0.12s;
+  text-align: center;
+}
+
+.talent-node:hover { transform: translateY(-2px); }
+
+.tn-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+/* États */
+.talent-node--locked {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.talent-node--locked:hover { transform: none; }
+
+.talent-node--available {
+  border-color: rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.05);
+}
+.talent-node--available:hover {
+  border-color: var(--nc, #7b2fff);
+  background: rgba(255,255,255,0.08);
+}
+.talent-node--available .tn-glow {
+  background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--nc, #7b2fff) 15%, transparent), transparent 70%);
+  opacity: 1;
+}
+
+.talent-node--poor {
+  border-color: rgba(255,255,255,0.12);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.talent-node--poor:hover { transform: none; }
+
+.talent-node--unlocked {
+  border-color: var(--nc, #7b2fff);
+  background: rgba(255,255,255,0.07);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--nc, #7b2fff) 30%, transparent);
+}
+.talent-node--unlocked .tn-glow {
+  background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--nc, #7b2fff) 25%, transparent), transparent 70%);
+  opacity: 1;
+}
+
+.tn-icon  { font-size: 28px; line-height: 1; }
+.tn-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.06em;
+}
+.tn-effect {
+  font-size: 10px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.4;
+}
+.tn-cost {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #ffd700;
+  font-weight: 600;
+}
+.tn-cost--poor { color: rgba(255,100,100,0.8); }
+.tn-unlocked-tag {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #44ff88;
+  font-weight: 700;
+  background: rgba(0,60,20,0.5);
+  border: 1px solid rgba(68,255,136,0.3);
+  border-radius: 4px;
+  padding: 1px 8px;
+}
+
+/* ── Légende ── */
+#talent-legend {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 10px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.tl-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+}
+
+.tl-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.tl-dot--locked    { background: rgba(255,255,255,0.05); }
+.tl-dot--available { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); }
+.tl-dot--unlocked  { background: var(--tc, #7b2fff); border-color: var(--tc, #7b2fff); box-shadow: 0 0 6px var(--tg, #5500cc); }
+
+/* ══ SECTION TALENTS dans la modal Collection ══ */
+
+#det-talents {
+  padding: 10px 0 4px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+.det-talents-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.det-talents-title {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+}
+
+.det-talents-unlocked {
+  font-size: 10px;
+  color: var(--det-rar-color, #7b2fff);
+}
+
+.det-talents-summary {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.5;
+  margin-bottom: 8px;
+  min-height: 16px;
+}
+
+.det-talents-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: rgba(255,255,255,0.7);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  font-family: 'Rajdhani', sans-serif;
+}
+.det-talents-btn:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: var(--det-rar-color, rgba(255,255,255,0.25));
+  color: #fff;
+}
+.dtb-arrow { font-size: 14px; }
+
+/* Responsive */
+@media (max-width: 700px) {
+  .talent-node { flex: 0 0 140px; padding: 10px 8px; }
+  .tn-icon     { font-size: 22px; }
+  .talent-row  { gap: 14px; }
+  .talent-connectors { gap: 14px; }
+}
+

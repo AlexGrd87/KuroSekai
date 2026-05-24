@@ -11,6 +11,7 @@ import { DAILY_REWARDS, getDayInCycle }                  from './dailyRewards.js
 import { ACHIEVEMENTS }                                  from './achievements.js';
 import { calcArtifactStats, generateArtifact,
          ARTIFACT_SLOTS, DISMANTLE_REWARDS }             from './artifacts.js';
+import { getTalentTree }                                 from './talents.js';
 import { ASCENSION_RANKS, ASCENSION_COSTS,
          getNextAscensionCost }                          from './ascension.js';
 
@@ -104,6 +105,8 @@ export class PlayerData {
       this.weeklyBossDamage       = data.weeklyBossDamage       ?? 0;
       this.weeklyBossAttempts     = data.weeklyBossAttempts     ?? 3;
       this.weeklyBossRewardClaimed = data.weeklyBossRewardClaimed ?? false;
+      // Talents & passifs
+      this.unlockedTalents        = data.unlockedTalents        ?? {};
     } catch {
       this.completedStages  = new Set();
       this.currency         = 0;
@@ -138,6 +141,7 @@ export class PlayerData {
       this.weeklyBossDamage    = 0;
       this.weeklyBossAttempts  = 3;
       this.weeklyBossRewardClaimed = false;
+      this.unlockedTalents     = {};
     }
     try {
       const raw = localStorage.getItem(HISTORY_KEY);
@@ -334,6 +338,8 @@ export class PlayerData {
       weeklyBossDamage:        this.weeklyBossDamage        ?? 0,
       weeklyBossAttempts:      this.weeklyBossAttempts      ?? 3,
       weeklyBossRewardClaimed: this.weeklyBossRewardClaimed ?? false,
+      // Talents & passifs
+      unlockedTalents:         this.unlockedTalents         ?? {},
     };
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
     this._scheduleCloudSync();
@@ -492,7 +498,7 @@ export class PlayerData {
     return { hp, atk, def, spd };
   }
 
-  /** Retourne les réductions de cooldown cumulées (cd0, cd1) */
+  /** Retourne les réductions de cooldown cumulées (cd0, cd1) — constellation + talents */
   getCooldownReductions(char) {
     const level   = this.getConstellationLevel(char.id);
     const bonuses = CONSTELLATION_BONUSES[char.rarity] || [];
@@ -502,7 +508,51 @@ export class PlayerData {
       if (b.cd0) cd0 += b.cd0;
       if (b.cd1) cd1 += b.cd1;
     }
+    // Talents
+    const talentFx = this.getTalentEffects(char);
+    if (talentFx.cd0) cd0 += talentFx.cd0;
+    if (talentFx.cd1) cd1 += talentFx.cd1;
     return { cd0, cd1 };
+  }
+
+  /* ════════════════════════════════
+     TALENTS & PASSIFS
+  ════════════════════════════════ */
+
+  /** Ensemble des nodeIds débloqués pour ce perso. */
+  getUnlockedTalents(charId) {
+    return new Set(this.unlockedTalents[charId] ?? []);
+  }
+
+  /**
+   * Tente de débloquer un nœud de talent (dépense ◈).
+   * @returns {boolean} succès
+   */
+  unlockTalentNode(charId, nodeId, cost) {
+    if (!this.spendCurrency(cost)) return false;
+    if (!this.unlockedTalents[charId]) this.unlockedTalents[charId] = [];
+    if (!this.unlockedTalents[charId].includes(nodeId)) {
+      this.unlockedTalents[charId].push(nodeId);
+    }
+    this._saveProgress();
+    return true;
+  }
+
+  /**
+   * Retourne l'objet d'effets fusionnés de tous les talents débloqués.
+   * @param {Object} char - objet personnage (doit avoir .id)
+   */
+  getTalentEffects(char) {
+    const tree     = getTalentTree(char);
+    const unlocked = this.getUnlockedTalents(char.id);
+    const merged   = {};
+    for (const node of tree.nodes) {
+      if (!unlocked.has(node.id)) continue;
+      for (const [k, v] of Object.entries(node.effect)) {
+        merged[k] = (merged[k] ?? 0) + v;
+      }
+    }
+    return merged;
   }
 
   /** Stats du personnage scalées selon son niveau, constellation, ascension et artefacts. */
@@ -518,6 +568,16 @@ export class PlayerData {
       spd: char.stats.spd,
     };
     let stats = this.applyConstellationBonuses(char, base);
+
+    // Talents
+    const talentFx = this.getTalentEffects(char);
+    const tp = talentFx.all_pct ?? 0;
+    stats = {
+      hp:  Math.round(stats.hp  * (1 + (talentFx.hp_pct  ?? 0) + tp)),
+      atk: Math.round(stats.atk * (1 + (talentFx.atk_pct ?? 0) + tp)),
+      def: Math.round(stats.def * (1 + (talentFx.def_pct ?? 0) + tp)),
+      spd: Math.round(stats.spd * (1 + (talentFx.spd_pct ?? 0) + tp)),
+    };
 
     // Artefacts
     const artBonus = this.getArtifactBonusStats(char.id);

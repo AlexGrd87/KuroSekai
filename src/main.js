@@ -34,6 +34,7 @@ import { ArenaUI }        from './ui/ArenaUI.js';
 import { TowerUI }        from './ui/TowerUI.js';
 import { WeeklyBossUI }   from './ui/WeeklyBossUI.js';
 import { ForgeUI }        from './ui/ForgeUI.js';
+import { TalentUI }       from './ui/TalentUI.js';
 
 /* ══════════════════════════════════════════
    DONNÉES JOUEUR
@@ -278,6 +279,21 @@ document.getElementById('hub-tower-btn')
     hub.hide?.();
     towerUI.show();
   });
+
+/* ── TALENTS & PASSIFS ── */
+const talentUI = new TalentUI(playerData);
+
+document.addEventListener('kuro:open-talents', (e) => {
+  const charId = e.detail?.charId;
+  if (!charId) return;
+  audio.play('ui_navigate');
+  talentUI.show(charId, () => {
+    // Retour : rouvre la collection si elle était visible
+    if (document.getElementById('collection-screen')?.style.display !== 'none') {
+      collection.show?.();
+    }
+  });
+});
 
 /* ── FORGE & ARTEFACTS ── */
 const forgeUI = new ForgeUI(playerData, goHub);
