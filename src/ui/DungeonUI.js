@@ -84,7 +84,7 @@ export class DungeonUI {
   ════════════════════════════════ */
 
   _startDungeon() {
-    audio.play('ui_navigate');
+    audio.play?.('ui_navigate');
     this._roomIndex   = 0;
     this._buffsApplied = [];
 
@@ -146,7 +146,7 @@ export class DungeonUI {
     const isLast = this._roomIndex >= DUNGEON_ROOMS.length - 1;
     if (isLast) {
       // Victoire finale — drop garanti (dungeon_win)
-      audio.play('victory');
+      audio.play?.('victory');
       audio.stopBgm();
       setTimeout(() => audio.playBgm('hub'), 800);
       this.playerData.currency = (this.playerData.currency ?? 0) + VICTORY_CURRENCY;

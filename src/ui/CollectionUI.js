@@ -13,8 +13,7 @@ import { gsap }                                    from 'gsap';
 import { CHARACTERS, RARITIES, CONSTELLATION_BONUSES } from '../data/characters.js';
 import { buildPortraitSVG }                        from './portrait.js';
 import { ARTIFACT_SLOTS, SLOT_META, ARTIFACT_SETS,
-         formatStatValue, getActiveSets,
-         generateArtifact }                        from '../data/artifacts.js';
+         formatStatValue, getActiveSets }          from '../data/artifacts.js';
 import { ASCENSION_RANKS, MATERIAL_META,
          getNextAscensionCost }                    from '../data/ascension.js';
 import { audio }                                   from '../audio/AudioManager.js';

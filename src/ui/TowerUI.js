@@ -226,13 +226,15 @@ export class TowerUI {
 
     if (winner === 'player') {
       const rewards = getTowerRewards(floor);
-      // Applique les récompenses
-      this.playerData.currency += rewards.currency;
-      if (rewards.freeRolls)      this.playerData.freeRolls        = (this.playerData.freeRolls ?? 0) + rewards.freeRolls;
-      if (rewards.shard_basic)    this.playerData.ascensionMaterials.shard_basic   += rewards.shard_basic;
-      if (rewards.shard_elite)    this.playerData.ascensionMaterials.shard_elite   += rewards.shard_elite;
-      if (rewards.crystal_void)   this.playerData.ascensionMaterials.crystal_void  += rewards.crystal_void;
-      if (rewards.stone_ascension) this.playerData.ascensionMaterials.stone_ascension += rewards.stone_ascension;
+      // Applique les récompenses via les méthodes dédiées (sauvegarde + cohérence)
+      this.playerData.currency = (this.playerData.currency ?? 0) + rewards.currency;
+      if (rewards.freeRolls) this.playerData.addFreeRolls(rewards.freeRolls);
+      const matRewards = {};
+      if (rewards.shard_basic)     matRewards.shard_basic     = rewards.shard_basic;
+      if (rewards.shard_elite)     matRewards.shard_elite     = rewards.shard_elite;
+      if (rewards.crystal_void)    matRewards.crystal_void    = rewards.crystal_void;
+      if (rewards.stone_ascension) matRewards.stone_ascension = rewards.stone_ascension;
+      if (Object.keys(matRewards).length > 0) this.playerData.addAscensionMaterials(matRewards);
 
       // Progression de l'étage
       this.playerData.towerCurrentFloor = floor + 1;

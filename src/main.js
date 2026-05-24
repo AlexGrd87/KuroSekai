@@ -251,7 +251,15 @@ document.getElementById('ts-back')?.addEventListener('click', goHub);
 
 /* ── DONJON ABYSSAL ── */
 const dungeonUI = new DungeonUI(playerData, combatUI, teamSelect, goHub);
+// Bouton donjon dans la nav bar principale
 document.getElementById('hub-dungeon-btn')
+  ?.addEventListener('click', () => {
+    audio.play('ui_navigate');
+    hub.hide?.();
+    dungeonUI.show();
+  });
+// Bouton donjon dans le header de la carte des stages
+document.getElementById('hub-dungeon-map-btn')
   ?.addEventListener('click', () => {
     audio.play('ui_navigate');
     dungeonUI.show();
@@ -354,7 +362,7 @@ const profileUI = new ProfileUI(playerData, goHub);
 document.getElementById('hub-profile-btn')
   ?.addEventListener('click', () => {
     audio.play('ui_navigate');
-    hub.hide();
+    hub?.hide();
     profileUI.show();
   });
 
@@ -374,7 +382,7 @@ const questsUI = new QuestsUI(playerData, goHub);
 document.getElementById('hub-missions-btn')
   ?.addEventListener('click', () => {
     audio.play('ui_navigate');
-    hub.hide();
+    hub?.hide();
     questsUI.show();
   });
 

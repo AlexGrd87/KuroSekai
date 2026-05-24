@@ -201,7 +201,7 @@ export class TalentUI {
     this.screen.querySelectorAll('.talent-node').forEach(el => {
       el.addEventListener('click', () => {
         const nodeId = parseInt(el.dataset.nodeId, 10);
-        const node   = tree.nodes[nodeId];
+        const node   = tree.nodes.find(n => n.id === nodeId);
         if (!node) return;
 
         const unlocked = this.playerData.getUnlockedTalents(char.id);

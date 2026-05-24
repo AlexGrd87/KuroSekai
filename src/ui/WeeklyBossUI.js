@@ -309,11 +309,13 @@ export class WeeklyBossUI {
       if (!tier) return;
 
       const r = tier.rewards;
-      if (r.currency)   this.playerData.currency += r.currency;
-      if (r.freeRolls)  this.playerData.freeRolls  = (this.playerData.freeRolls ?? 0) + r.freeRolls;
-      if (r.shard_basic)    this.playerData.ascensionMaterials.shard_basic   += r.shard_basic;
-      if (r.shard_elite)    this.playerData.ascensionMaterials.shard_elite   += r.shard_elite;
-      if (r.crystal_void)   this.playerData.ascensionMaterials.crystal_void  += r.crystal_void;
+      if (r.currency)  this.playerData.currency = (this.playerData.currency ?? 0) + r.currency;
+      if (r.freeRolls) this.playerData.addFreeRolls(r.freeRolls);
+      const matR = {};
+      if (r.shard_basic)  matR.shard_basic  = r.shard_basic;
+      if (r.shard_elite)  matR.shard_elite  = r.shard_elite;
+      if (r.crystal_void) matR.crystal_void = r.crystal_void;
+      if (Object.keys(matR).length > 0) this.playerData.addAscensionMaterials(matR);
 
       this.playerData.weeklyBossRewardClaimed = true;
       this.playerData._saveProgress();
