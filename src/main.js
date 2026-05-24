@@ -31,6 +31,8 @@ import { toast }          from './ui/ToastUI.js';
 import { transition }     from './ui/TransitionUI.js';
 import { tutorialUI }     from './ui/TutorialUI.js';
 import { ArenaUI }        from './ui/ArenaUI.js';
+import { TowerUI }        from './ui/TowerUI.js';
+import { WeeklyBossUI }   from './ui/WeeklyBossUI.js';
 
 /* ══════════════════════════════════════════
    DONNÉES JOUEUR
@@ -115,6 +117,8 @@ const shopUI     = new ShopUI(playerData, goHub);
 let _pendingStage  = null;
 let _currentTeam   = [];
 let _arenaResultCb = null; // si non-null, le prochain résultat de combat va à l'arène
+let _towerResultCb = null; // si non-null, le prochain résultat de combat va à la tour
+let _bossResultCb  = null; // si non-null, le prochain résultat de combat va au boss hebdo
 
 function handleVictory(stage, teamHpPct = 0) {
   audio.play('victory');
@@ -178,6 +182,26 @@ const combatUI = new CombatUI((winner, stage, teamHpPct = 0) => {
     setTimeout(() => { audio.playBgm('hub'); cb(winner); }, 800);
     return;
   }
+  // Combat de tour : dévie vers la tour
+  if (_towerResultCb) {
+    const cb   = _towerResultCb;
+    _towerResultCb = null;
+    if (winner === 'enemy') audio.play('defeat');
+    else audio.play('victory');
+    audio.stopBgm();
+    setTimeout(() => { audio.playBgm('hub'); cb(winner, teamHpPct); }, 800);
+    return;
+  }
+  // Combat boss hebdo : dévie vers boss
+  if (_bossResultCb) {
+    const cb  = _bossResultCb;
+    _bossResultCb = null;
+    if (winner === 'enemy') audio.play('defeat');
+    else audio.play('victory');
+    audio.stopBgm();
+    setTimeout(() => { audio.playBgm('hub'); cb(winner, teamHpPct); }, 800);
+    return;
+  }
   if (winner === 'player' && stage) handleVictory(stage, teamHpPct);
   else {
     if (winner === 'enemy') audio.play('defeat');
@@ -235,6 +259,40 @@ document.getElementById('hub-arena-btn')
     audio.play('ui_navigate');
     hub.hide?.();
     arenaUI.show();
+  });
+
+/* ── TOUR INFINIE ── */
+const towerUI = new TowerUI(playerData, goHub);
+towerUI.setCombatLauncher((stage, onResult) => {
+  _pendingStage  = stage;
+  _towerResultCb = onResult;
+  audio.stopBgm(500);
+  setTimeout(() => audio.playBgm('combat'), 550);
+  teamSelect.show();
+});
+
+document.getElementById('hub-tower-btn')
+  ?.addEventListener('click', () => {
+    audio.play('ui_navigate');
+    hub.hide?.();
+    towerUI.show();
+  });
+
+/* ── BOSS HEBDOMADAIRE ── */
+const weeklyBossUI = new WeeklyBossUI(playerData, goHub);
+weeklyBossUI.setCombatLauncher((stage, onResult) => {
+  _pendingStage = stage;
+  _bossResultCb = onResult;
+  audio.stopBgm(500);
+  setTimeout(() => audio.playBgm('combat'), 550);
+  teamSelect.show();
+});
+
+document.getElementById('hub-boss-btn')
+  ?.addEventListener('click', () => {
+    audio.play('ui_navigate');
+    hub.hide?.();
+    weeklyBossUI.show();
   });
 
 /* ── CLASSEMENT ── */

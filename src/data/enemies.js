@@ -329,6 +329,25 @@ export const ENEMIES = [
     symbol: '無',
   },
 
+  /* ── Boss Hebdomadaire ── */
+  {
+    id: 'nexus_destroyer',
+    name: 'NEXUS — L\'ÉRADICATEUR',
+    class: 'Titan Absolu',
+    element: 'Void',
+    color: '#8800ff',
+    stats: { hp: 48000, atk: 2600, def: 2000, spd: 140 },
+    skills: [
+      { name: 'Éradication',    desc: 'Inflige 260% ATK à tous. Hémorragie.',            multiplier: 2.6, target: 'all',     debuff: 'bleed',     cooldown: 0 },
+      { name: 'Vide Total',     desc: 'Inflige 500% ATK au plus faible. Paralyse.',       multiplier: 5.0, target: 'weakest', debuff: 'paralyze',   cooldown: 3 },
+      { name: 'Singularité',    desc: 'Inflige 300% ATK × 2 aléatoires. DEF ennemie -.', multiplier: 3.0, target: 'random',  hits: 2, debuff: 'def_down', cooldown: 4 },
+      { name: 'Effacement',     desc: 'Soigne 15% de ses PV max. Bouclier 20% PV.',      multiplier: 0,   target: 'self',    buff: 'shield',       cooldown: 5 },
+    ],
+    ai: 'boss',
+    symbol: '皇',
+    isBoss: true,
+  },
+
   /* ── Tier 4 / Boss ── */
   {
     id: 'mech_overlord',

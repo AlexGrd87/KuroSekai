@@ -90,6 +90,16 @@ export class PlayerData {
       this.arenaLosses        = data.arenaLosses         ?? 0;
       // Bannières gacha — suivi du 50/50 par bannière
       this.bannerLostLast     = data.bannerLostLast      ?? {};
+      // Tour Infinie
+      this.towerCurrentFloor  = data.towerCurrentFloor   ?? 1;
+      this.towerBestFloor     = data.towerBestFloor       ?? 0;
+      this.towerWeeklyFloor   = data.towerWeeklyFloor     ?? 0;
+      this.towerLastReset     = data.towerLastReset       ?? 0;
+      // Boss Hebdomadaire
+      this.weeklyBossLastReset    = data.weeklyBossLastReset    ?? 0;
+      this.weeklyBossDamage       = data.weeklyBossDamage       ?? 0;
+      this.weeklyBossAttempts     = data.weeklyBossAttempts     ?? 3;
+      this.weeklyBossRewardClaimed = data.weeklyBossRewardClaimed ?? false;
     } catch {
       this.completedStages  = new Set();
       this.currency         = 0;
@@ -113,6 +123,14 @@ export class PlayerData {
       this.arenaWins          = 0;
       this.arenaLosses        = 0;
       this.bannerLostLast     = {};
+      this.towerCurrentFloor  = 1;
+      this.towerBestFloor     = 0;
+      this.towerWeeklyFloor   = 0;
+      this.towerLastReset     = 0;
+      this.weeklyBossLastReset = 0;
+      this.weeklyBossDamage    = 0;
+      this.weeklyBossAttempts  = 3;
+      this.weeklyBossRewardClaimed = false;
     }
     try {
       const raw = localStorage.getItem(HISTORY_KEY);
@@ -295,6 +313,16 @@ export class PlayerData {
       arenaWins:          this.arenaWins,
       arenaLosses:        this.arenaLosses,
       bannerLostLast:     this.bannerLostLast    ?? {},
+      // Tour Infinie
+      towerCurrentFloor:  this.towerCurrentFloor ?? 1,
+      towerBestFloor:     this.towerBestFloor    ?? 0,
+      towerWeeklyFloor:   this.towerWeeklyFloor  ?? 0,
+      towerLastReset:     this.towerLastReset    ?? 0,
+      // Boss Hebdomadaire
+      weeklyBossLastReset:     this.weeklyBossLastReset     ?? 0,
+      weeklyBossDamage:        this.weeklyBossDamage        ?? 0,
+      weeklyBossAttempts:      this.weeklyBossAttempts      ?? 3,
+      weeklyBossRewardClaimed: this.weeklyBossRewardClaimed ?? false,
     };
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
     this._scheduleCloudSync();

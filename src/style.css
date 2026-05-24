@@ -9827,3 +9827,538 @@ html, body {
   .sbs-badges { justify-content: flex-start; }
 }
 
+/* ════════════════════════════════════════════════════════════
+   HUB — BOUTONS TOUR & BOSS
+════════════════════════════════════════════════════════════ */
+
+#hub-tower-btn, #hub-boss-btn {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Noto Serif JP', serif;
+}
+
+#hub-tower-btn:hover {
+  background: rgba(68,170,255,0.18);
+  border-color: rgba(68,170,255,0.5);
+  box-shadow: 0 0 12px rgba(68,170,255,0.3);
+}
+
+#hub-boss-btn:hover {
+  background: rgba(200,0,255,0.18);
+  border-color: rgba(200,0,255,0.5);
+  box-shadow: 0 0 12px rgba(200,0,255,0.3);
+}
+
+/* ════════════════════════════════════════════════════════════
+   TOUR INFINIE
+════════════════════════════════════════════════════════════ */
+
+#tower-screen {
+  position: fixed; inset: 0; z-index: 120;
+  display: flex; flex-direction: column;
+  background: radial-gradient(ellipse 80% 70% at 50% 20%, rgba(0,80,180,0.15) 0%, transparent 60%),
+              linear-gradient(180deg, #05050f 0%, #020208 100%);
+  overflow: hidden;
+}
+
+#tower-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 60% 50% at 50% 100%, color-mix(in srgb, var(--tier-color, #44aaff) 12%, transparent) 0%, transparent 70%);
+}
+
+#tower-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0; position: relative; z-index: 1;
+}
+
+#tower-title-block {
+  flex: 1;
+  display: flex; align-items: center; gap: 10px;
+}
+
+.tower-kanji-deco {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 22px;
+  color: #44aaff;
+  text-shadow: 0 0 16px #44aaff, 0 0 32px rgba(68,170,255,0.4);
+}
+
+#tower-title-block h2 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.2em;
+  color: #fff;
+  margin: 0;
+}
+
+#tower-best-badge {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 1px;
+}
+
+.twb-label {
+  font-size: 8px; letter-spacing: 0.15em;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+}
+
+.twb-val {
+  font-size: 18px; font-family: 'Rajdhani', sans-serif; font-weight: 700;
+  color: #ffcc00;
+  text-shadow: 0 0 10px rgba(255,200,0,0.5);
+}
+
+/* Body */
+#tower-body {
+  flex: 1; display: grid; grid-template-columns: 340px 1fr;
+  gap: 0; overflow: hidden; position: relative; z-index: 1;
+}
+
+/* Colonne gauche */
+#tower-left {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 18px 20px;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  overflow-y: auto;
+}
+
+/* Floor display */
+#tower-floor-display {
+  text-align: center;
+  padding: 18px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(0,0,0,0.5), rgba(0,0,0,0.3));
+  border: 1px solid color-mix(in srgb, var(--tc, #44aaff) 40%, transparent);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--tc, #44aaff) 15%, transparent),
+              inset 0 0 20px color-mix(in srgb, var(--tc, #44aaff) 8%, transparent);
+}
+
+.tfd-tier-kanji {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 16px;
+  color: var(--tc, #44aaff);
+  opacity: 0.7;
+  letter-spacing: 0.1em;
+}
+
+.tfd-floor-num {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--tc, #44aaff);
+  text-shadow: 0 0 30px var(--tg, #0077cc), 0 0 60px var(--tg, #0077cc);
+}
+
+.tfd-tier-name {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.6);
+  text-transform: uppercase;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.tfd-boss-tag {
+  margin-top: 6px;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: #ff8800;
+  text-shadow: 0 0 10px rgba(255,136,0,0.6);
+  animation: tower-boss-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes tower-boss-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+/* Milestone progress */
+#tower-milestone-progress {
+  display: flex; flex-direction: column; gap: 5px;
+}
+
+.tmp-label { font-size: 9px; letter-spacing: 0.12em; color: rgba(255,255,255,0.45); text-transform: uppercase; }
+.tmp-track { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+.tmp-fill  { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+.tmp-sub   { font-size: 9px; color: rgba(255,255,255,0.35); text-align: right; }
+
+/* Rewards preview */
+#tower-rewards-preview {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.trp-label {
+  font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: rgba(255,255,255,0.4); margin-bottom: 7px;
+}
+
+.trp-list { display: flex; flex-direction: column; gap: 4px; }
+
+.trp-item {
+  font-size: 12px; font-family: 'Rajdhani', sans-serif;
+  color: rgba(255,255,255,0.75); display: flex; align-items: center; gap: 6px;
+}
+
+.trp-icon { font-size: 13px; }
+.trp-milestone { color: #ffcc00; font-weight: 600; }
+
+/* Fight button */
+#tower-fight-btn {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--tc, #44aaff) 25%, #000), rgba(0,0,0,0.6));
+  border: 1px solid var(--tc, #44aaff);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--tc, #44aaff) 25%, transparent);
+  color: #fff; cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.1s;
+  font-family: 'Rajdhani', sans-serif;
+  margin-top: auto;
+}
+
+#tower-fight-btn:hover {
+  box-shadow: 0 0 32px color-mix(in srgb, var(--tc, #44aaff) 45%, transparent);
+  transform: translateY(-1px);
+}
+
+.tfb-kanji { font-family: 'Noto Serif JP', serif; font-size: 22px; color: var(--tc, #44aaff); }
+.tfb-label { font-size: 14px; font-weight: 700; letter-spacing: 0.12em; line-height: 1.3; text-transform: uppercase; }
+.tfb-label small { font-size: 10px; font-weight: 400; opacity: 0.7; display: block; }
+
+/* Colonne droite */
+#tower-right {
+  display: flex; flex-direction: column; gap: 16px;
+  padding: 18px 20px; overflow-y: auto;
+}
+
+/* Enemies preview */
+#tower-enemies-preview {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.tep-label {
+  font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: rgba(255,255,255,0.4); margin-bottom: 10px;
+}
+
+.tep-waves { display: flex; flex-direction: column; gap: 8px; }
+
+.tep-wave-label {
+  font-size: 9px; letter-spacing: 0.1em; color: rgba(255,255,255,0.35);
+  text-transform: uppercase; margin-bottom: 5px;
+}
+
+.tep-wave-enemies { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.tep-enemy-chip {
+  padding: 3px 10px; border-radius: 4px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  font-size: 11px; font-family: 'Rajdhani', sans-serif;
+  color: rgba(255,255,255,0.7);
+}
+
+/* Tower leaderboard */
+#tower-leaderboard {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.tlb-label {
+  font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: rgba(255,255,255,0.4); margin-bottom: 8px;
+}
+
+.tlb-list { display: flex; flex-direction: column; gap: 4px; }
+
+.tlb-entry {
+  display: flex; align-items: center; gap: 10px;
+  padding: 5px 8px; border-radius: 5px;
+  background: rgba(255,255,255,0.03);
+}
+
+.tlb-entry--player {
+  background: rgba(68,170,255,0.1);
+  border: 1px solid rgba(68,170,255,0.25);
+}
+
+.tlb-rank  { font-size: 10px; color: rgba(255,255,255,0.35); width: 22px; }
+.tlb-name  { flex: 1; font-size: 12px; font-family: 'Rajdhani', sans-serif; color: rgba(255,255,255,0.75); }
+.tlb-floor { font-size: 11px; font-family: 'Rajdhani', sans-serif; font-weight: 600; }
+
+/* Responsive */
+@media (max-width: 700px) {
+  #tower-body { grid-template-columns: 1fr; overflow-y: auto; }
+  #tower-left { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
+}
+
+/* ════════════════════════════════════════════════════════════
+   BOSS HEBDOMADAIRE
+════════════════════════════════════════════════════════════ */
+
+#boss-screen {
+  position: fixed; inset: 0; z-index: 120;
+  display: flex; flex-direction: column;
+  background: radial-gradient(ellipse 80% 70% at 50% 30%, rgba(80,0,140,0.2) 0%, transparent 65%),
+              linear-gradient(180deg, #050008 0%, #020005 100%);
+  overflow: hidden;
+}
+
+#boss-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 50% 60% at 50% 0%, color-mix(in srgb, var(--boss-color, #8800ff) 18%, transparent) 0%, transparent 60%);
+}
+
+#boss-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0; position: relative; z-index: 1;
+}
+
+#boss-title-block {
+  flex: 1; display: flex; align-items: center; gap: 10px;
+}
+
+.boss-title-kanji {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 22px;
+  color: #cc00ff;
+  text-shadow: 0 0 20px rgba(200,0,255,0.6);
+}
+
+#boss-title-block h2 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 18px; letter-spacing: 0.2em;
+  color: #fff; margin: 0;
+}
+
+#boss-reset-timer {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 1px;
+}
+
+.brt-label { font-size: 8px; letter-spacing: 0.15em; color: rgba(255,255,255,0.4); text-transform: uppercase; }
+.brt-val   { font-size: 14px; font-family: 'Rajdhani', sans-serif; color: rgba(255,255,255,0.7); }
+
+/* Body */
+#boss-body {
+  flex: 1; display: grid; grid-template-columns: 320px 1fr;
+  gap: 0; overflow: hidden; position: relative; z-index: 1;
+}
+
+/* Panneau gauche */
+#boss-left-panel {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 20px 20px;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  overflow-y: auto;
+}
+
+/* Boss art */
+#boss-art {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  height: 120px;
+}
+
+.boss-art-kanji {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 72px;
+  line-height: 1;
+  position: relative; z-index: 1;
+  text-shadow: 0 0 30px #8800ff, 0 0 60px rgba(136,0,255,0.4);
+}
+
+.boss-art-glow {
+  position: absolute; inset: -20px;
+  border-radius: 50%;
+  animation: boss-glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes boss-glow-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.08); }
+}
+
+/* Boss name */
+#boss-name-block { text-align: center; }
+.boss-name        { font-size: 22px; font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 0.15em; }
+.boss-title-text  { font-size: 10px; color: rgba(255,255,255,0.45); font-style: italic; letter-spacing: 0.07em; }
+
+/* HP bar */
+#boss-hp-bar-block {
+  display: flex; flex-direction: column; gap: 5px;
+}
+
+.bhb-header { display: flex; justify-content: space-between; align-items: baseline; }
+.bhb-label  { font-size: 9px; letter-spacing: 0.13em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
+.bhb-pct    { font-size: 16px; font-family: 'Rajdhani', sans-serif; font-weight: 700; }
+
+.bhb-track {
+  height: 10px; background: rgba(255,255,255,0.07);
+  border-radius: 5px; overflow: hidden; position: relative;
+}
+
+.bhb-fill {
+  height: 100%; border-radius: 5px;
+  box-shadow: 0 0 10px rgba(136,0,255,0.6);
+  transition: width 0.8s ease;
+}
+
+.bhb-marker {
+  position: absolute; top: -2px; bottom: -2px; width: 2px;
+  border-left: 1px dashed rgba(255,255,255,0.25);
+  transform: translateX(-50%);
+}
+
+.bhb-numbers {
+  display: flex; justify-content: space-between;
+  font-size: 9px; color: rgba(255,255,255,0.3);
+  font-family: 'Rajdhani', sans-serif;
+}
+
+/* Attempts */
+#boss-attempts {
+  display: flex; align-items: center; gap: 10px;
+}
+
+.ba-label { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
+.ba-pips  { display: flex; gap: 5px; flex: 1; }
+.ba-pip   { flex: 1; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.1); }
+.ba-pip--active { background: #8800ff; box-shadow: 0 0 8px rgba(136,0,255,0.6); }
+.ba-val   { font-size: 13px; font-family: 'Rajdhani', sans-serif; color: rgba(255,255,255,0.6); }
+
+/* Action buttons */
+#boss-actions {
+  display: flex; gap: 10px;
+}
+
+#boss-fight-btn, #boss-claim-btn {
+  flex: 1; padding: 12px 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(136,0,255,0.5);
+  background: rgba(136,0,255,0.15);
+  color: #fff; cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+#boss-fight-btn:not(.boss-btn--disabled):hover {
+  background: rgba(136,0,255,0.3);
+  box-shadow: 0 0 20px rgba(136,0,255,0.35);
+}
+
+.boss-claim--active {
+  border-color: rgba(255,200,0,0.6) !important;
+  background: rgba(255,160,0,0.15) !important;
+  animation: boss-claim-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes boss-claim-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255,160,0,0.3); }
+  50%       { box-shadow: 0 0 24px rgba(255,160,0,0.6); }
+}
+
+.boss-btn--disabled {
+  opacity: 0.35; cursor: not-allowed;
+  border-color: rgba(255,255,255,0.1) !important;
+  background: rgba(255,255,255,0.04) !important;
+}
+
+.bfb-icon, .bcb-icon { font-size: 18px; }
+.bfb-label, .bcb-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* Panneau droit */
+#boss-right-panel {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 18px 20px; overflow-y: auto;
+}
+
+.brp-section-label {
+  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255,255,255,0.35); margin-bottom: 4px;
+}
+
+/* Reward tiers */
+.boss-tier-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.2s, border-color 0.2s;
+  position: relative;
+}
+
+.boss-tier-row--reached {
+  background: color-mix(in srgb, var(--btc, #cc00ff) 10%, transparent);
+  border-color: color-mix(in srgb, var(--btc, #cc00ff) 35%, transparent);
+}
+
+.boss-tier-row--current {
+  border-color: var(--btc, #cc00ff);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--btc, #cc00ff) 25%, transparent);
+}
+
+.btr-left   { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.btr-kanji  { font-family: 'Noto Serif JP', serif; font-size: 18px; text-shadow: 0 0 10px currentColor; flex-shrink: 0; }
+.btr-info   { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.btr-name   { font-size: 11px; font-family: 'Rajdhani', sans-serif; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+.btr-threshold { font-size: 9px; color: rgba(255,255,255,0.35); }
+.btr-reward { font-size: 9px; color: rgba(255,255,255,0.55); text-align: right; max-width: 140px; line-height: 1.4; }
+.btr-check  { color: #44ff88; font-size: 14px; flex-shrink: 0; }
+
+/* Next tier + lore */
+#boss-next-tier {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-top: 4px;
+}
+
+.bnt-label { font-size: 9px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; }
+.bnt-name  { font-size: 11px; font-family: 'Rajdhani', sans-serif; font-weight: 600; letter-spacing: 0.08em; }
+.bnt-delta { font-size: 10px; color: rgba(255,255,255,0.4); margin-left: auto; }
+
+#boss-maxed {
+  text-align: center; padding: 10px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px; letter-spacing: 0.1em;
+}
+
+#boss-lore {
+  margin-top: auto;
+  padding: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+}
+
+.bl-title { font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 6px; }
+.bl-text  { font-size: 11px; line-height: 1.55; color: rgba(255,255,255,0.5); font-style: italic; }
+
+/* Responsive */
+@media (max-width: 700px) {
+  #boss-body { grid-template-columns: 1fr; overflow-y: auto; }
+  #boss-left-panel { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
+}
+
