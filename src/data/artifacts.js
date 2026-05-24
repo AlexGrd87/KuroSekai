@@ -257,6 +257,7 @@ const DROP_TABLES = {
   boss_tier3:     { chance: 1.00, weights: [ 0,  0, 70, 30,  0], count: 1  },
   boss_tier4:     { chance: 1.00, weights: [ 0,  0, 30, 60, 10], count: 2  },
   boss_tier5:     { chance: 1.00, weights: [ 0,  0, 10, 50, 40], count: 2  },
+  expedition:     { chance: 1.00, weights: [ 0, 40, 45, 15,  0], count: 1  },
 };
 
 /**

@@ -36,6 +36,7 @@ import { WeeklyBossUI }   from './ui/WeeklyBossUI.js';
 import { ForgeUI }             from './ui/ForgeUI.js';
 import { TalentUI }            from './ui/TalentUI.js';
 import { ArtifactInventoryUI } from './ui/ArtifactInventoryUI.js';
+import { ExpeditionUI }         from './ui/ExpeditionUI.js';
 import { rollArtifactDrops, formatArtifactDrops } from './data/artifacts.js';
 
 /* ══════════════════════════════════════════
@@ -92,6 +93,14 @@ function _smartStartupNotifs() {
   if (claimable > 0) {
     toast.show(`${claimable} quête${claimable > 1 ? 's' : ''} terminée${claimable > 1 ? 's' : ''}`, 'success',
       { sub: 'Réclame tes récompenses dans Missions', duration: 4500 });
+  }
+
+  // Expéditions prêtes ?
+  if (playerData.hasReadyExpeditions()) {
+    toast.show('✓ Expédition(s) prête(s) !', 'success',
+      { sub: 'Tes missions sont terminées — réclame tes récompenses.', duration: 4500 });
+    const badge = document.getElementById('hub-expedition-badge');
+    if (badge) badge.style.display = 'block';
   }
 }
 
@@ -330,6 +339,16 @@ document.getElementById('hub-inventory-btn')
     audio.play('ui_navigate');
     hub.hide?.();
     artifactInv.show();
+  });
+
+/* ── EXPÉDITIONS PASSIVES ── */
+const expeditionUI = new ExpeditionUI(playerData, goHub);
+
+document.getElementById('hub-expedition-btn')
+  ?.addEventListener('click', () => {
+    audio.play?.('ui_navigate');
+    hub?.hide();
+    expeditionUI.show();
   });
 
 /* ── BOSS HEBDOMADAIRE ── */

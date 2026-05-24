@@ -14,6 +14,7 @@ import { calcArtifactStats, generateArtifact,
 import { getTalentTree }                                 from './talents.js';
 import { ASCENSION_RANKS, ASCENSION_COSTS,
          getNextAscensionCost }                          from './ascension.js';
+import { EXPEDITION_TYPES }                              from './expeditions.js';
 
 const STORAGE_KEY   = 'kuro_player_collection';
 const PROGRESS_KEY  = 'kuro_player_progress';
@@ -107,6 +108,8 @@ export class PlayerData {
       this.weeklyBossRewardClaimed = data.weeklyBossRewardClaimed ?? false;
       // Talents & passifs
       this.unlockedTalents        = data.unlockedTalents        ?? {};
+      // Expéditions passives
+      this.expeditionSlots        = data.expeditionSlots        ?? [null, null, null];
     } catch {
       this.completedStages  = new Set();
       this.currency         = 0;
@@ -142,6 +145,7 @@ export class PlayerData {
       this.weeklyBossAttempts  = 3;
       this.weeklyBossRewardClaimed = false;
       this.unlockedTalents     = {};
+      this.expeditionSlots     = [null, null, null];
     }
     try {
       const raw = localStorage.getItem(HISTORY_KEY);
@@ -340,6 +344,8 @@ export class PlayerData {
       weeklyBossRewardClaimed: this.weeklyBossRewardClaimed ?? false,
       // Talents & passifs
       unlockedTalents:         this.unlockedTalents         ?? {},
+      // Expéditions passives
+      expeditionSlots:         this.expeditionSlots         ?? [null, null, null],
     };
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
     this._scheduleCloudSync();
@@ -1204,5 +1210,72 @@ export class PlayerData {
     art.enhancements[subIdx] = current + 1;
     this._saveProgress();
     return true;
+  }
+
+  /* ════════════════════════════════
+     EXPÉDITIONS PASSIVES
+  ════════════════════════════════ */
+
+  /**
+   * Lance une expédition dans un slot vide.
+   * @param {number} slotIdx  0–2
+   * @param {string} charId   personnage envoyé
+   * @param {string} typeId   identifiant du type d'expédition
+   * @returns {boolean} succès
+   */
+  startExpedition(slotIdx, charId, typeId) {
+    if (slotIdx < 0 || slotIdx >= 3) return false;
+    if (!this.expeditionSlots) this.expeditionSlots = [null, null, null];
+    if (this.expeditionSlots[slotIdx] !== null) return false;
+    const type = EXPEDITION_TYPES.find(t => t.id === typeId);
+    if (!type) return false;
+    const now = Date.now();
+    this.expeditionSlots[slotIdx] = {
+      charId,
+      typeId,
+      startTime: now,
+      endTime:   now + type.durationMs,
+    };
+    this._saveProgress();
+    return true;
+  }
+
+  /**
+   * Réclame les récompenses d'une expédition terminée et libère le slot.
+   * Retourne `{ rewards, type }` ou `null` si non réclamable.
+   */
+  claimExpedition(slotIdx) {
+    const slot = this.expeditionSlots?.[slotIdx];
+    if (!slot || Date.now() < slot.endTime) return null;
+    const type = EXPEDITION_TYPES.find(t => t.id === slot.typeId);
+    if (!type) return null;
+
+    // Applique les récompenses
+    const r = type.rewards;
+    if (r.currency) this.currency = (this.currency ?? 0) + r.currency;
+    const mats = {};
+    if (r.shard_basic)   mats.shard_basic   = r.shard_basic;
+    if (r.shard_elite)   mats.shard_elite   = r.shard_elite;
+    if (r.crystal_void)  mats.crystal_void  = r.crystal_void;
+    if (r.stone_ascension) mats.stone_ascension = r.stone_ascension;
+    if (Object.keys(mats).length > 0) this.addAscensionMaterials(mats);
+
+    this.expeditionSlots[slotIdx] = null;
+    this._saveProgress();
+    return { rewards: r, type };
+  }
+
+  /** Annule une expédition en cours (sans récompense). */
+  cancelExpedition(slotIdx) {
+    if (!this.expeditionSlots?.[slotIdx]) return false;
+    this.expeditionSlots[slotIdx] = null;
+    this._saveProgress();
+    return true;
+  }
+
+  /** Vrai si au moins une expédition est terminée et réclamable. */
+  hasReadyExpeditions() {
+    const now = Date.now();
+    return (this.expeditionSlots ?? []).some(s => s !== null && now >= s.endTime);
   }
 }

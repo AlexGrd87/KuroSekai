@@ -276,6 +276,11 @@
             <span class="hnb-icon">🏆</span>
             <span class="hnb-label">CLASSEMENT</span>
           </button>
+          <button id="hub-expedition-btn" class="hub-nav-btn" style="--nc:#22dd88">
+            <span class="hnb-icon">遠</span>
+            <span class="hnb-label">EXPÉDITIONS</span>
+            <span id="hub-expedition-badge" class="hub-nav-badge" style="display:none"></span>
+          </button>
         </nav>
 
         <!-- Scène ville plein écran -->
@@ -1298,6 +1303,13 @@
     ══════════════════════════════════════════ -->
     <div id="artifact-inventory-screen" style="display:none">
       <!-- Contenu injecté dynamiquement par ArtifactInventoryUI -->
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         EXPÉDITIONS PASSIVES
+    ══════════════════════════════════════════ -->
+    <div id="expedition-screen" style="display:none">
+      <!-- Contenu injecté dynamiquement par ExpeditionUI -->
     </div>
 
     <script type="module" src="/src/main.js"></script>
