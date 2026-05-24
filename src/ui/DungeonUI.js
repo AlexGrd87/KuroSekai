@@ -14,6 +14,8 @@ import { gsap }                                    from 'gsap';
 import { DUNGEON_ROOMS, DUNGEON_BUFFS, buildDungeonStage } from '../data/dungeon.js';
 import { saveDungeonBest }                         from './LeaderboardUI.js';
 import { audio }                                   from '../audio/AudioManager.js';
+import { rollArtifactDrops, formatArtifactDrops }  from '../data/artifacts.js';
+import { toast }                                   from './ToastUI.js';
 
 const VICTORY_CURRENCY = 2000;
 
@@ -143,14 +145,32 @@ export class DungeonUI {
 
     const isLast = this._roomIndex >= DUNGEON_ROOMS.length - 1;
     if (isLast) {
-      // Victoire finale
+      // Victoire finale — drop garanti (dungeon_win)
       audio.play('victory');
       audio.stopBgm();
       setTimeout(() => audio.playBgm('hub'), 800);
       this.playerData.currency = (this.playerData.currency ?? 0) + VICTORY_CURRENCY;
+
+      const artDrops = rollArtifactDrops('dungeon_win');
+      artDrops.forEach(art => this.playerData.addArtifactToInventory(art));
       this.playerData._saveProgress?.();
+
+      if (artDrops.length > 0) {
+        toast.show('✦ Artefact obtenu !', 'reward', {
+          sub: formatArtifactDrops(artDrops), duration: 4000,
+        });
+      }
       setTimeout(() => this._showEnd(true), 350);
     } else {
+      // Drop de salle (dungeon_room, 40% de chance)
+      const roomDrops = rollArtifactDrops('dungeon_room');
+      roomDrops.forEach(art => this.playerData.addArtifactToInventory(art));
+      this.playerData._saveProgress?.();
+      if (roomDrops.length > 0) {
+        toast.show('✦ Artefact trouvé !', 'success', {
+          sub: formatArtifactDrops(roomDrops), duration: 3500,
+        });
+      }
       // Passer à la salle suivante
       this._roomIndex++;
       setTimeout(() => this._showBuffSelect(), 300);

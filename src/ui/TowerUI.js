@@ -12,6 +12,7 @@ import {
   formatTowerRewards, TOWER_MILESTONES, getTowerLeaderboard, TOWER_TIERS,
 } from '../data/tower.js';
 import { weekStart } from '../data/weeklyBoss.js'; // réutilise weekStart
+import { rollArtifactDrops, formatArtifactDrops } from '../data/artifacts.js';
 
 export class TowerUI {
   constructor(playerData, onBack) {
@@ -240,13 +241,18 @@ export class TowerUI {
       }
       this.playerData._saveProgress();
 
+      // Drop d'artefact
+      const artDrops = rollArtifactDrops('tower', { floor });
+      artDrops.forEach(art => this.playerData.addArtifactToInventory(art));
+
       const rewardStr = formatTowerRewards(floor);
       const isMilestone = floor % 10 === 0;
       const type = isMilestone ? 'reward' : 'success';
+      const artStr = artDrops.length > 0 ? `  ·  ✦ ${formatArtifactDrops(artDrops)}` : '';
       toast.show(
         `${isMilestone ? '🏆 Jalon !' : '✓'} Étage ${floor} — ${tier.name}`,
         type,
-        { sub: rewardStr, duration: isMilestone ? 5000 : 3500 }
+        { sub: rewardStr + artStr, duration: isMilestone ? 5000 : 3500 }
       );
     } else {
       toast.show(

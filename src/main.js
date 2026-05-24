@@ -35,6 +35,7 @@ import { TowerUI }        from './ui/TowerUI.js';
 import { WeeklyBossUI }   from './ui/WeeklyBossUI.js';
 import { ForgeUI }        from './ui/ForgeUI.js';
 import { TalentUI }       from './ui/TalentUI.js';
+import { rollArtifactDrops, formatArtifactDrops } from './data/artifacts.js';
 
 /* ══════════════════════════════════════════
    DONNÉES JOUEUR
@@ -170,8 +171,17 @@ function handleVictory(stage, teamHpPct = 0) {
     }
   };
 
+  // Artefacts droppés en campagne
+  const artDrops = rollArtifactDrops('campaign');
+  artDrops.forEach(art => playerData.addArtifactToInventory(art));
+  if (artDrops.length > 0) {
+    toast.show('✦ Artefact obtenu !', 'reward', {
+      sub: formatArtifactDrops(artDrops), duration: 4000,
+    });
+  }
+
   // Afficher la popup de récompenses avant level-up / débrief
-  rewardPopup.show(stage, expGained, afterRewards);
+  rewardPopup.show(stage, expGained, afterRewards, artDrops);
 }
 
 const combatUI = new CombatUI((winner, stage, teamHpPct = 0) => {

@@ -10,6 +10,15 @@ import {
   WEEKLY_BOSS, WEEKLY_BOSS_STAGE, BOSS_MAX_HP, BOSS_REWARD_TIERS,
   calcBossDamage, getBossRewardTier, getBossState, weekStart,
 } from '../data/weeklyBoss.js';
+import { rollArtifactDrops, formatArtifactDrops } from '../data/artifacts.js';
+
+const _BOSS_TIER_SOURCE = {
+  participant:  'boss_tier2',
+  challenger:   'boss_tier2',
+  conqueror:    'boss_tier3',
+  destroyer:    'boss_tier4',
+  exterminator: 'boss_tier5',
+};
 
 export class WeeklyBossUI {
   constructor(playerData, onBack) {
@@ -309,11 +318,17 @@ export class WeeklyBossUI {
       this.playerData.weeklyBossRewardClaimed = true;
       this.playerData._saveProgress();
 
+      // Drop d'artefact selon le palier
+      const dropSrc  = _BOSS_TIER_SOURCE[tier.id] ?? 'boss_tier2';
+      const artDrops = rollArtifactDrops(dropSrc);
+      artDrops.forEach(art => this.playerData.addArtifactToInventory(art));
+
       audio.play?.('level_up');
+      const artStr = artDrops.length > 0 ? `  ·  ✦ ${formatArtifactDrops(artDrops)}` : '';
       toast.show(
         `🎁 ${tier.label} — Récompense réclamée !`,
         'reward',
-        { sub: tier.desc, duration: 5000 }
+        { sub: tier.desc + artStr, duration: 5000 }
       );
       this._render();
     });

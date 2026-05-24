@@ -238,6 +238,86 @@ export function formatStatValue(stat, value) {
   return `+${Math.round(value)}`;
 }
 
+/* ════════════════════════════════
+   SYSTÈME DE DROP D'ARTEFACTS
+════════════════════════════════ */
+
+/**
+ * Table de pondération de rareté par source.
+ * Indices 0-4 = ★1 à ★5, somme = 100.
+ */
+const DROP_TABLES = {
+  campaign:       { chance: 0.30, weights: [55, 35, 10,  0,  0], count: 1  },
+  dungeon_room:   { chance: 0.40, weights: [45, 35, 20,  0,  0], count: 1  },
+  dungeon_win:    { chance: 1.00, weights: [ 0, 25, 55, 20,  0], count: [1, 2] },
+  tower_normal:   { chance: 0.25, weights: [ 0, 60, 40,  0,  0], count: 1  },
+  tower_milestone:{ chance: 1.00, weights: [ 0,  5, 65, 30,  0], count: 1  },
+  tower_high:     { chance: 1.00, weights: [ 0,  0, 30, 55, 15], count: 1  },
+  boss_tier2:     { chance: 1.00, weights: [ 0, 60, 40,  0,  0], count: 1  },
+  boss_tier3:     { chance: 1.00, weights: [ 0,  0, 70, 30,  0], count: 1  },
+  boss_tier4:     { chance: 1.00, weights: [ 0,  0, 30, 60, 10], count: 2  },
+  boss_tier5:     { chance: 1.00, weights: [ 0,  0, 10, 50, 40], count: 2  },
+};
+
+/**
+ * Tire une rareté depuis une table de poids (indices 0–4 = ★1–★5).
+ */
+function _rollRarity(weights) {
+  const roll = Math.random() * 100;
+  let acc = 0;
+  for (let i = 0; i < weights.length; i++) {
+    acc += weights[i];
+    if (roll < acc) return i + 1;
+  }
+  return 3; // fallback
+}
+
+/**
+ * Génère un ou plusieurs artefacts de drop selon la source.
+ * @param {string} source - clé dans DROP_TABLES
+ * @param {object} [opts] - { floor: number } pour la tour
+ * @returns {Array} tableau d'artefacts (peut être vide)
+ */
+export function rollArtifactDrops(source, opts = {}) {
+  // Sélection auto de la source tour selon l'étage
+  if (source === 'tower') {
+    const floor = opts.floor ?? 1;
+    if (floor % 10 === 0)           source = floor >= 30 ? 'tower_high' : 'tower_milestone';
+    else if (floor % 5 === 0)       source = 'tower_milestone';
+    else                            source = 'tower_normal';
+  }
+
+  const table = DROP_TABLES[source];
+  if (!table) return [];
+
+  // Test de chance
+  if (Math.random() >= table.chance) return [];
+
+  // Nombre d'artefacts
+  const count = Array.isArray(table.count)
+    ? table.count[Math.floor(Math.random() * table.count.length)]
+    : table.count;
+
+  const drops = [];
+  for (let i = 0; i < count; i++) {
+    const rarity = _rollRarity(table.weights);
+    const slot   = randChoice(ARTIFACT_SLOTS);
+    drops.push(generateArtifact(slot, null, rarity));
+  }
+  return drops;
+}
+
+/**
+ * Résumé textuel d'un tableau d'artefacts droppés.
+ */
+export function formatArtifactDrops(drops) {
+  if (!drops || drops.length === 0) return '';
+  return drops.map(art => {
+    const set = ARTIFACT_SETS[art.setId];
+    return `${set?.icon ?? '?'} ${set?.name ?? art.setId} ${'★'.repeat(art.rarity)}`;
+  }).join('  ·  ');
+}
+
 /** Retourne les bonus de set actifs pour un tableau d'artefacts. */
 export function getActiveSets(arts = []) {
   const counts = {};
