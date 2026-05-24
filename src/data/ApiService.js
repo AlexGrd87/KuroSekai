@@ -4,7 +4,9 @@
  * Gère : token JWT, login, register, chargement et sauvegarde cloud.
  */
 
-const API_BASE   = '/api';
+// En dev : proxy Vite sur /api (vite.config.js)
+// En prod : variable VITE_API_URL définie dans GitHub Actions / Render
+const API_BASE = import.meta.env.VITE_API_URL ?? '/api';
 const TOKEN_KEY  = 'kuro_jwt';
 const USER_KEY   = 'kuro_username';
 
