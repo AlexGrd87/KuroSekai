@@ -8,6 +8,7 @@ import { apiService }                                    from './ApiService.js';
 import { DAILY_QUESTS, WEEKLY_QUESTS,
          todayMidnight, weekStart }                      from './quests.js';
 import { DAILY_REWARDS, getDayInCycle }                  from './dailyRewards.js';
+import { ACHIEVEMENTS }                                  from './achievements.js';
 
 const STORAGE_KEY   = 'kuro_player_collection';
 const PROGRESS_KEY  = 'kuro_player_progress';
@@ -66,16 +67,22 @@ export class PlayerData {
       this.stageStars       = data.stageStars        ?? {};
       this.energy           = data.energy            ?? ENERGY_MAX;
       this.lastEnergyTime   = data.lastEnergyTime    ?? Date.now();
+      this.achievements     = data.achievements      ?? [];
+      this.totalEnergySpent = data.totalEnergySpent  ?? 0;
+      this.dungeonClears    = data.dungeonClears      ?? 0;
     } catch {
-      this.completedStages = new Set();
-      this.currency        = 0;
-      this.pity5           = 0;
-      this.pity4           = 0;
-      this.freeRolls       = 0;
-      this.xpBoostCombats  = 0;
-      this.stageStars      = {};
-      this.energy          = ENERGY_MAX;
-      this.lastEnergyTime  = Date.now();
+      this.completedStages  = new Set();
+      this.currency         = 0;
+      this.pity5            = 0;
+      this.pity4            = 0;
+      this.freeRolls        = 0;
+      this.xpBoostCombats   = 0;
+      this.stageStars       = {};
+      this.energy           = ENERGY_MAX;
+      this.lastEnergyTime   = Date.now();
+      this.achievements     = [];
+      this.totalEnergySpent = 0;
+      this.dungeonClears    = 0;
     }
     try {
       const raw = localStorage.getItem(HISTORY_KEY);
@@ -242,9 +249,12 @@ export class PlayerData {
       combatsWon:     this.combatsWon,
       totalSummons:   this.totalSummons,
       firstPlayDate:  this.firstPlayDate,
-      stageStars:     this.stageStars,
-      energy:         this.energy,
-      lastEnergyTime: this.lastEnergyTime,
+      stageStars:       this.stageStars,
+      energy:           this.energy,
+      lastEnergyTime:   this.lastEnergyTime,
+      achievements:     this.achievements,
+      totalEnergySpent: this.totalEnergySpent,
+      dungeonClears:    this.dungeonClears,
     };
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
     this._scheduleCloudSync();
@@ -501,6 +511,81 @@ export class PlayerData {
     this._saveProgress();
   }
 
+  incrementDungeonClears() {
+    this.dungeonClears = (this.dungeonClears ?? 0) + 1;
+    this._saveProgress();
+  }
+
+  /* ════════════════════════════════
+     ACHIEVEMENTS (HAUTS FAITS)
+  ════════════════════════════════ */
+
+  /**
+   * Construit le contexte d'évaluation des conditions d'achievements.
+   * @param {number} totalChars  — nombre total de persos dans le jeu
+   */
+  _achCtx(totalChars = 0) {
+    return {
+      combatsWon:       this.combatsWon       ?? 0,
+      totalSummons:     this.totalSummons      ?? 0,
+      uniqueCount:      this.uniqueCount(),
+      completedStages:  this.completedStages,
+      stageStars:       this.stageStars        ?? {},
+      currency:         this.currency,
+      totalEnergySpent: this.totalEnergySpent  ?? 0,
+      dailyStreak:      this._daily?.streak    ?? 0,
+      dungeonClears:    this.dungeonClears      ?? 0,
+      totalChars,
+    };
+  }
+
+  /**
+   * Vérifie tous les achievements et retourne les nouveaux déblocages.
+   * @param {number} totalChars — taille totale du roster
+   * @returns {Array} achievements nouvellement débloqués
+   */
+  checkAchievements(totalChars = 0) {
+    const unlocked = new Set(this.achievements ?? []);
+    const newOnes  = [];
+    const ctx      = this._achCtx(totalChars);
+
+    for (const ach of ACHIEVEMENTS) {
+      if (unlocked.has(ach.id)) continue;
+      try {
+        if (ach.condition(ctx)) {
+          newOnes.push(ach);
+          this._unlockAchievement(ach);
+        }
+      } catch { /* condition peut throw si données manquantes */ }
+    }
+
+    return newOnes;
+  }
+
+  /** Débloque un achievement et applique ses récompenses (usage interne). */
+  _unlockAchievement(ach) {
+    if (!this.achievements) this.achievements = [];
+    if (this.achievements.includes(ach.id)) return;
+    this.achievements.push(ach.id);
+    if (ach.reward?.currency)  this.currency   += ach.reward.currency;
+    if (ach.reward?.freeRolls) this.addFreeRolls(ach.reward.freeRolls);
+    this._saveProgress();
+  }
+
+  /** Retourne la liste des achievements avec leur état (débloqué / verrouillé). */
+  getAchievementsState() {
+    const unlocked = new Set(this.achievements ?? []);
+    return ACHIEVEMENTS.map(ach => ({
+      ...ach,
+      unlocked: unlocked.has(ach.id),
+    }));
+  }
+
+  /** Nombre d'achievements débloqués. */
+  unlockedAchievementsCount() {
+    return (this.achievements ?? []).length;
+  }
+
   /* ════════════════════════════════
      ÉTOILES PAR STAGE
   ════════════════════════════════ */
@@ -570,6 +655,7 @@ export class PlayerData {
       this.lastEnergyTime = Date.now();
     }
     this.energy = (this.energy ?? 0) - cost;
+    this.totalEnergySpent = (this.totalEnergySpent ?? 0) + cost;
     this._saveProgress();
     return true;
   }

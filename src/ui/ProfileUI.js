@@ -16,6 +16,7 @@ import {
   AVATAR_OPTIONS, FRAME_OPTIONS,
   getAvatar, getFrame,
 } from '../data/profileData.js';
+import { ACH_CATS } from '../data/achievements.js';
 
 /* ─── Système de titres ─── */
 const TITLES = [
@@ -84,6 +85,7 @@ export class ProfileUI {
   _render() {
     this._renderHero();
     this._renderStats();
+    this._renderAchievements('all');
     this._renderPullHistory();
   }
 
@@ -181,6 +183,71 @@ export class ProfileUI {
       }
     }
     return n;
+  }
+
+  /* ─── Achievements ─── */
+  _renderAchievements(activeCat = 'all') {
+    const wrap = document.getElementById('profile-ach-list');
+    const countEl = document.getElementById('profile-ach-count');
+    if (!wrap) return;
+
+    const all     = this.playerData.getAchievementsState();
+    const total   = all.length;
+    const done    = all.filter(a => a.unlocked).length;
+    if (countEl) countEl.textContent = `${done} / ${total}`;
+
+    // Barre de progression globale
+    const bar = document.getElementById('prf-ach-progress-bar');
+    if (bar) {
+      const pct = total > 0 ? (done / total) * 100 : 0;
+      gsap.to(bar, { width: `${pct}%`, duration: 0.6, ease: 'power2.out' });
+    }
+
+    // Tabs
+    document.querySelectorAll('.prf-ach-tab').forEach(btn => {
+      btn.classList.toggle('prf-ach-tab--active', btn.dataset.cat === activeCat);
+      btn.onclick = () => {
+        audio.play('ui_navigate');
+        this._renderAchievements(btn.dataset.cat);
+      };
+    });
+
+    const list = activeCat === 'all' ? all : all.filter(a => a.cat === activeCat);
+
+    // Tri : débloqués d'abord, puis par catégorie
+    const sorted = [
+      ...list.filter(a => a.unlocked),
+      ...list.filter(a => !a.unlocked && !a.hidden),
+      ...list.filter(a => !a.unlocked && a.hidden),
+    ];
+
+    wrap.innerHTML = '';
+    sorted.forEach((ach, i) => {
+      const row = document.createElement('div');
+      row.className = `prf-ach-row${ach.unlocked ? ' prf-ach-row--done' : ''}`;
+
+      const rewardStr = ach.reward
+        ? [
+            ach.reward.currency  ? `+${ach.reward.currency.toLocaleString()} ◈`  : '',
+            ach.reward.freeRolls ? `+${ach.reward.freeRolls} tirage${ach.reward.freeRolls > 1 ? 's' : ''}` : '',
+          ].filter(Boolean).join(' · ')
+        : '';
+
+      const hidden = ach.hidden && !ach.unlocked;
+      row.innerHTML = `
+        <div class="prf-ach-icon ${ach.unlocked ? '' : 'prf-ach-icon--locked'}">${hidden ? '?' : ach.icon}</div>
+        <div class="prf-ach-body">
+          <div class="prf-ach-name">${hidden ? '??? (secret)' : ach.name}</div>
+          <div class="prf-ach-desc">${hidden ? 'Condition secrète' : ach.desc}</div>
+          ${rewardStr ? `<div class="prf-ach-reward">${rewardStr}</div>` : ''}
+        </div>
+        ${ach.unlocked ? '<div class="prf-ach-check">✓</div>' : ''}`;
+
+      wrap.appendChild(row);
+      gsap.fromTo(row,
+        { opacity: 0, x: -12 },
+        { opacity: 1, x: 0, duration: 0.25, delay: i * 0.03, ease: 'power2.out' });
+    });
   }
 
   /* ─── Pull history ─── */

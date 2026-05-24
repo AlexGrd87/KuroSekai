@@ -29,6 +29,7 @@ import { audio }          from './audio/AudioManager.js';
 import { DailyLoginUI }   from './ui/DailyLoginUI.js';
 import { toast }          from './ui/ToastUI.js';
 import { transition }     from './ui/TransitionUI.js';
+import { tutorialUI }     from './ui/TutorialUI.js';
 
 /* ══════════════════════════════════════════
    DONNÉES JOUEUR
@@ -55,6 +56,38 @@ const levelUpUI  = new LevelUpUI();
 const rewardPopup = new RewardPopupUI();
 
 /* ── Retour hub depuis les sous-écrans plein-écran ── */
+function _checkAchievements() {
+  const newOnes = playerData.checkAchievements(CHARACTERS.length);
+  newOnes.forEach(ach => {
+    const rewardStr = [
+      ach.reward?.currency  ? `+${ach.reward.currency.toLocaleString()} ◈`  : '',
+      ach.reward?.freeRolls ? `+${ach.reward.freeRolls} tirage${ach.reward.freeRolls > 1 ? 's' : ''}` : '',
+    ].filter(Boolean).join(' · ');
+    toast.show(`🏆 Haut fait : ${ach.name}`, 'reward', {
+      sub:      rewardStr || ach.desc,
+      duration: 5000,
+    });
+  });
+}
+
+function _smartStartupNotifs() {
+  // Énergie rechargée pendant l'absence ?
+  const { current, full } = playerData.getEnergy();
+  const lastVisit = parseInt(localStorage.getItem('kuro_last_visit') ?? '0', 10);
+  const wasEmpty  = lastVisit > 0 && (playerData.energy ?? 0) < ENERGY_MAX;
+  if (full && wasEmpty) {
+    toast.show('Énergie rechargée !', 'energy', { sub: `⚡ ${current}/10 — prêt au combat` });
+  }
+  localStorage.setItem('kuro_last_visit', Date.now().toString());
+
+  // Quêtes réclamables ?
+  const claimable = playerData.claimableQuestCount();
+  if (claimable > 0) {
+    toast.show(`${claimable} quête${claimable > 1 ? 's' : ''} terminée${claimable > 1 ? 's' : ''}`, 'success',
+      { sub: 'Réclame tes récompenses dans Missions', duration: 4500 });
+  }
+}
+
 function goHub() {
   transition.sweep('hub', () => {
     hub.show();
@@ -63,6 +96,11 @@ function goHub() {
       audio.stopBgm(600);
       setTimeout(() => audio.playBgm('hub'), 650);
     }
+    // Vérifications au retour hub
+    setTimeout(() => {
+      _checkAchievements();
+      _smartStartupNotifs();
+    }, 400);
   });
 }
 
@@ -97,6 +135,9 @@ function handleVictory(stage, teamHpPct = 0) {
     return { char, oldLevel, newLevel: result.newLevel,
              newExp: prog.exp, expGained, leveled: result.newLevel > oldLevel };
   });
+
+  // Vérification achievements après victoire
+  _checkAchievements();
 
   // Toast victoire
   const starsStr = '★'.repeat(stars) + '☆'.repeat(3 - stars);
@@ -354,6 +395,11 @@ function goSplash() {
             dailyLoginUI.show();
           }
           _refreshDailyBadge();
+          _smartStartupNotifs();
+          // Lance le tutoriel si nouveau joueur
+          if (tutorialUI.isNew()) {
+            setTimeout(() => tutorialUI.start(playerData), 1200);
+          }
         }, 600);
       },
     });

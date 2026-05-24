@@ -8433,6 +8433,234 @@ html, body {
 
 
 /* ╔══════════════════════════════════════════════════════════╗
+   ║  HAUTS FAITS — ACHIEVEMENTS                              ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+/* Barre de progression globale */
+.prf-ach-progress-bar-wrap {
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  margin: 0.4rem 0 0.75rem;
+  overflow: hidden;
+}
+.prf-ach-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #f0c040, #ffaa00);
+  border-radius: 2px;
+  transition: width 0.6s ease;
+  box-shadow: 0 0 8px rgba(240,192,64,0.5);
+}
+
+/* Onglets catégories */
+.prf-ach-tabs {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+.prf-ach-tab {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(200,220,255,0.5);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 3px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.prf-ach-tab:hover { border-color: rgba(0,212,255,0.4); color: #e0eeff; }
+.prf-ach-tab--active {
+  background: rgba(240,192,64,0.15);
+  border-color: rgba(240,192,64,0.5);
+  color: #f0c040;
+}
+
+/* Liste des achievements */
+.prf-ach-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 320px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(240,192,64,0.3) transparent;
+}
+
+.prf-ach-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: rgba(5,8,20,0.5);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  transition: border-color 0.2s;
+}
+.prf-ach-row--done {
+  border-color: rgba(240,192,64,0.3);
+  background: rgba(240,192,64,0.04);
+}
+.prf-ach-row:hover { border-color: rgba(255,255,255,0.14); }
+
+.prf-ach-icon {
+  font-size: 1.2rem;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 4px rgba(240,192,64,0.4));
+}
+.prf-ach-icon--locked {
+  filter: grayscale(1) opacity(0.4);
+  font-size: 1rem;
+}
+
+.prf-ach-body { flex: 1; min-width: 0; }
+.prf-ach-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e0eeff;
+  line-height: 1.2;
+}
+.prf-ach-row--done .prf-ach-name { color: #f0c040; }
+.prf-ach-desc {
+  font-size: 0.67rem;
+  color: rgba(200,220,255,0.45);
+  margin-top: 1px;
+}
+.prf-ach-reward {
+  font-size: 0.65rem;
+  color: #44ee88;
+  margin-top: 3px;
+  font-weight: 600;
+}
+.prf-ach-row--done .prf-ach-reward { color: rgba(68,238,136,0.5); }
+
+.prf-ach-check {
+  color: #f0c040;
+  font-size: 0.9rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  text-shadow: 0 0 8px rgba(240,192,64,0.6);
+}
+
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  TUTORIEL INTERACTIF                                     ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+#tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9600;
+  pointer-events: all;
+}
+
+#tut-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 5, 18, 0.78);
+  backdrop-filter: blur(1px);
+}
+
+/* Fenêtre de spotlight sur l'élément cible */
+#tut-spotlight {
+  position: absolute;
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 9999px rgba(0,0,0,0.72),
+    0 0 0 2px rgba(0,212,255,0.7),
+    0 0 20px rgba(0,212,255,0.4),
+    inset 0 0 12px rgba(0,212,255,0.08);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 1;
+}
+
+/* Tooltip */
+#tut-tooltip {
+  position: fixed;
+  width: 290px;
+  background: rgba(4,8,22,0.97);
+  border: 1px solid rgba(0,212,255,0.35);
+  border-top: 3px solid rgba(0,212,255,0.7);
+  border-radius: 10px;
+  padding: 1rem 1.1rem 0.9rem;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.8), 0 0 20px rgba(0,212,255,0.12);
+  z-index: 9601;
+}
+
+/* Points de progression */
+#tut-step-dots {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 0.6rem;
+}
+.tut-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  transition: background 0.2s;
+}
+.tut-dot--active {
+  background: #00d4ff;
+  box-shadow: 0 0 6px rgba(0,212,255,0.6);
+}
+
+#tut-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #00d4ff;
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.02em;
+}
+
+#tut-text {
+  font-size: 0.75rem;
+  color: rgba(200,220,255,0.8);
+  line-height: 1.55;
+  margin-bottom: 0.85rem;
+}
+
+#tut-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#tut-skip-btn {
+  background: none;
+  border: none;
+  color: rgba(200,220,255,0.3);
+  font-size: 0.65rem;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.2s;
+}
+#tut-skip-btn:hover { color: rgba(200,220,255,0.6); }
+
+#tut-next-btn {
+  background: linear-gradient(135deg, rgba(0,180,220,0.2), rgba(0,212,255,0.15));
+  border: 1px solid rgba(0,212,255,0.5);
+  color: #00d4ff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.03em;
+}
+#tut-next-btn:hover {
+  background: rgba(0,212,255,0.25);
+  box-shadow: 0 0 12px rgba(0,212,255,0.3);
+}
+
+
+/* ╔══════════════════════════════════════════════════════════╗
    ║  TOASTS IN-GAME                                          ║
    ╚══════════════════════════════════════════════════════════╝ */
 
