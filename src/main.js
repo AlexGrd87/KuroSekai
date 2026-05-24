@@ -33,6 +33,7 @@ import { tutorialUI }     from './ui/TutorialUI.js';
 import { ArenaUI }        from './ui/ArenaUI.js';
 import { TowerUI }        from './ui/TowerUI.js';
 import { WeeklyBossUI }   from './ui/WeeklyBossUI.js';
+import { ForgeUI }        from './ui/ForgeUI.js';
 
 /* ══════════════════════════════════════════
    DONNÉES JOUEUR
@@ -276,6 +277,16 @@ document.getElementById('hub-tower-btn')
     audio.play('ui_navigate');
     hub.hide?.();
     towerUI.show();
+  });
+
+/* ── FORGE & ARTEFACTS ── */
+const forgeUI = new ForgeUI(playerData, goHub);
+
+document.getElementById('hub-forge-btn')
+  ?.addEventListener('click', () => {
+    audio.play('ui_navigate');
+    hub.hide?.();
+    forgeUI.show();
   });
 
 /* ── BOSS HEBDOMADAIRE ── */

@@ -10,7 +10,7 @@ import { DAILY_QUESTS, WEEKLY_QUESTS,
 import { DAILY_REWARDS, getDayInCycle }                  from './dailyRewards.js';
 import { ACHIEVEMENTS }                                  from './achievements.js';
 import { calcArtifactStats, generateArtifact,
-         ARTIFACT_SLOTS }                               from './artifacts.js';
+         ARTIFACT_SLOTS, DISMANTLE_REWARDS }             from './artifacts.js';
 import { ASCENSION_RANKS, ASCENSION_COSTS,
          getNextAscensionCost }                          from './ascension.js';
 
@@ -90,6 +90,10 @@ export class PlayerData {
       this.arenaLosses        = data.arenaLosses         ?? 0;
       // Bannières gacha — suivi du 50/50 par bannière
       this.bannerLostLast     = data.bannerLostLast      ?? {};
+      // Forge — Matériaux
+      this.forgeFragment      = data.forgeFragment        ?? 0;
+      this.crystalEssence     = data.crystalEssence       ?? 0;
+      this.primalShard        = data.primalShard          ?? 0;
       // Tour Infinie
       this.towerCurrentFloor  = data.towerCurrentFloor   ?? 1;
       this.towerBestFloor     = data.towerBestFloor       ?? 0;
@@ -123,6 +127,9 @@ export class PlayerData {
       this.arenaWins          = 0;
       this.arenaLosses        = 0;
       this.bannerLostLast     = {};
+      this.forgeFragment      = 0;
+      this.crystalEssence     = 0;
+      this.primalShard        = 0;
       this.towerCurrentFloor  = 1;
       this.towerBestFloor     = 0;
       this.towerWeeklyFloor   = 0;
@@ -313,6 +320,10 @@ export class PlayerData {
       arenaWins:          this.arenaWins,
       arenaLosses:        this.arenaLosses,
       bannerLostLast:     this.bannerLostLast    ?? {},
+      // Forge
+      forgeFragment:      this.forgeFragment     ?? 0,
+      crystalEssence:     this.crystalEssence    ?? 0,
+      primalShard:        this.primalShard       ?? 0,
       // Tour Infinie
       towerCurrentFloor:  this.towerCurrentFloor ?? 1,
       towerBestFloor:     this.towerBestFloor    ?? 0,
@@ -1062,5 +1073,76 @@ export class PlayerData {
       this._saveProgress();
     }
     this.seedDemoArtifacts();
+    // Matériaux de forge de démo (si non initialisés)
+    if ((this.forgeFragment ?? 0) === 0 && (this.crystalEssence ?? 0) === 0) {
+      this.forgeFragment  = 35;
+      this.crystalEssence = 15;
+      this.primalShard    = 4;
+      this._saveProgress();
+    }
+  }
+
+  /* ════════════════════════════════
+     HELPERS — FORGE
+  ════════════════════════════════ */
+
+  /** Vérifie si un artefact est actuellement équipé par un personnage. */
+  isArtifactEquipped(artId) {
+    return Object.values(this.characterEquipment ?? {}).some(
+      slots => Object.values(slots).includes(artId)
+    );
+  }
+
+  /** Retourne les matériaux de forge actuels. */
+  getForgeMaterials() {
+    return {
+      forge_fragment:  this.forgeFragment  ?? 0,
+      crystal_essence: this.crystalEssence ?? 0,
+      primal_shard:    this.primalShard    ?? 0,
+    };
+  }
+
+  /** Vérifie si les matériaux suffisent pour un coût donné. */
+  canAffordForge(cost) {
+    const mats = this.getForgeMaterials();
+    return Object.entries(cost).every(([k, v]) => (mats[k] ?? 0) >= v);
+  }
+
+  /** Déduit les matériaux de forge (sans vérification). */
+  spendForgeMaterials(cost) {
+    if (cost.forge_fragment)  this.forgeFragment  = Math.max(0, (this.forgeFragment  ?? 0) - cost.forge_fragment);
+    if (cost.crystal_essence) this.crystalEssence = Math.max(0, (this.crystalEssence ?? 0) - cost.crystal_essence);
+    if (cost.primal_shard)    this.primalShard    = Math.max(0, (this.primalShard    ?? 0) - cost.primal_shard);
+    this._saveProgress();
+  }
+
+  /** Ajoute des matériaux de forge. */
+  addForgeMaterials(rewards) {
+    if (rewards.forge_fragment)  this.forgeFragment  = (this.forgeFragment  ?? 0) + rewards.forge_fragment;
+    if (rewards.crystal_essence) this.crystalEssence = (this.crystalEssence ?? 0) + rewards.crystal_essence;
+    if (rewards.primal_shard)    this.primalShard    = (this.primalShard    ?? 0) + rewards.primal_shard;
+    this._saveProgress();
+  }
+
+  /** Retire un artefact de l'inventaire (après vérification équipement). */
+  removeArtifact(artId) {
+    if (this.isArtifactEquipped(artId)) return false;
+    const idx = (this.artifactInventory ?? []).findIndex(a => a.id === artId);
+    if (idx < 0) return false;
+    this.artifactInventory.splice(idx, 1);
+    this._saveProgress();
+    return true;
+  }
+
+  /** Applique un niveau de renforcement à un sub-stat d'artefact. */
+  enhanceArtifactSub(artId, subIdx) {
+    const art = (this.artifactInventory ?? []).find(a => a.id === artId);
+    if (!art) return false;
+    if (!art.enhancements) art.enhancements = [];
+    const current = art.enhancements[subIdx] ?? 0;
+    if (current >= 3) return false; // max niveau 3
+    art.enhancements[subIdx] = current + 1;
+    this._saveProgress();
+    return true;
   }
 }

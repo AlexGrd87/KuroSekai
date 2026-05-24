@@ -152,8 +152,11 @@ export function calcArtifactStats(arts = []) {
     if (art.mainStat) {
       result[art.mainStat.stat] = (result[art.mainStat.stat] ?? 0) + art.mainStat.value;
     }
-    for (const sub of (art.subStats || [])) {
-      result[sub.stat] = (result[sub.stat] ?? 0) + sub.value;
+    for (let si = 0; si < (art.subStats || []).length; si++) {
+      const sub      = art.subStats[si];
+      const enhLevel = art.enhancements?.[si] ?? 0;
+      const effVal   = getEnhancedSubValue(sub, enhLevel);
+      result[sub.stat] = (result[sub.stat] ?? 0) + effVal;
     }
     setCounts[art.setId] = (setCounts[art.setId] ?? 0) + 1;
   }
@@ -173,6 +176,57 @@ export function calcArtifactStats(arts = []) {
     }
   }
   return result;
+}
+
+/* ════════════════════════════════
+   FORGE — CONSTANTES
+════════════════════════════════ */
+
+/** Métadonnées des matériaux de forge. */
+export const FORGE_MATERIALS = {
+  forge_fragment:  { label: 'Fragment de Forge',   icon: '🔩', color: '#aaaaaa', desc: 'Débris récupérés d\'artefacts démantelés.' },
+  crystal_essence: { label: 'Essence Cristalline', icon: '💠', color: '#44aaff', desc: 'Énergie cristallisée extraite d\'artefacts rares.' },
+  primal_shard:    { label: 'Éclat Primordial',    icon: '⬡',  color: '#cc00ff', desc: 'Fragment de puissance primordiale du Vide.' },
+};
+
+/** Matériaux gagnés en démantelant un artefact selon sa rareté. */
+export const DISMANTLE_REWARDS = {
+  1: { forge_fragment: 5 },
+  2: { forge_fragment: 12, crystal_essence: 2 },
+  3: { forge_fragment: 8,  crystal_essence: 6,  primal_shard: 1 },
+  4: { forge_fragment: 4,  crystal_essence: 5,  primal_shard: 3 },
+  5: { forge_fragment: 2,  crystal_essence: 3,  primal_shard: 6 },
+};
+
+/** Coût en matériaux pour fusionner 3 artefacts vers la rareté cible. */
+export const FUSION_COSTS = {
+  2: { forge_fragment: 15 },
+  3: { forge_fragment: 8,  crystal_essence: 5 },
+  4: { crystal_essence: 5, primal_shard: 2 },
+  5: { crystal_essence: 8, primal_shard: 5 },
+};
+
+/** Coût par niveau de renforcement (index 0 = vers niveau 1, etc.). */
+export const ENHANCE_COSTS = [
+  { forge_fragment: 20, crystal_essence: 5 },   // sub-stat → niveau 1
+  { crystal_essence: 10, primal_shard: 2 },       // → niveau 2
+  { crystal_essence: 8,  primal_shard: 5 },       // → niveau 3
+];
+
+/** Boost multiplicateur de valeur par niveau d'amélioration (cumulatif). */
+export const ENHANCE_BOOST_PER_LEVEL = 0.25; // +25% de la valeur de base par niveau
+
+/** Retourne la valeur effective d'un sub-stat avec ses améliorations. */
+export function getEnhancedSubValue(subStat, enhLevel = 0) {
+  return subStat.value * (1 + ENHANCE_BOOST_PER_LEVEL * enhLevel);
+}
+
+/** Retourne le résumé des récompenses de démantèlement. */
+export function formatDismantleRewards(rarity) {
+  const r = DISMANTLE_REWARDS[rarity] ?? {};
+  return Object.entries(r)
+    .map(([k, v]) => `${v}× ${FORGE_MATERIALS[k]?.label ?? k}`)
+    .join(' · ');
 }
 
 /** Formate une valeur de stat pour affichage. */
