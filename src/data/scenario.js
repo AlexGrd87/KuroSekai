@@ -720,6 +720,104 @@ const DEBRIEF_12 = [
 ];
 
 /* ══════════════════════════════════════
+   ACTE V — RÉSURGENCE (stages 13-15)
+══════════════════════════════════════ */
+
+const BRIEFING_13 = [
+  { type: 'title', text: 'ACTE V', sub: 'RÉSURGENCE' },
+  { type: 'dialogue', char: CHARS.kira,
+    text: 'Il est mort. J\'ai senti sa présence s\'éteindre dans le Vide. Et pourtant...' },
+  { type: 'dialogue', char: CHARS.akane,
+    text: 'Les lectures de nanotech s\'affolent. Des fragments d\'une entité inconnue se matérialisent partout dans la ville.' },
+  { type: 'narration',
+    text: 'Le Souverain du Néant est vaincu.\nMais sa mort a libéré quelque chose de pire.' },
+  { type: 'dialogue', char: CHARS.ryuu,
+    text: 'Des fragments de son essence — chacun aussi dangereux qu\'un boss. On doit les éliminer avant qu\'ils se réunifient.' },
+];
+const DEBRIEF_13 = [
+  { type: 'dialogue', char: CHARS.kira,
+    text: 'Ils sont partout. Pour chaque fragment détruit, j\'en sens deux autres s\'éveiller plus loin.' },
+  { type: 'dialogue', char: CHARS.nyx,
+    text: 'Ce n\'est pas une résurgence. C\'est une transformation. Quelque chose utilise ces fragments comme... des antennes.' },
+];
+
+const BRIEFING_14 = [
+  { type: 'narration', text: 'Les anciens gardiens célestes ont été corrompus.\nLes Sérraphins, autrefois protecteurs de Neo-Osaka, ont basculé.' },
+  { type: 'dialogue', char: CHARS.seraph,
+    text: 'Je suis ce que vous protégiez. Ce que vous avez laissé mourir. Maintenant c\'est votre tour.' },
+  { type: 'dialogue', char: CHARS.akane,
+    text: 'Ils sont rapides. Plus rapides que tout ce qu\'on a affronté. Et ils manipulent le temps.' },
+];
+const DEBRIEF_14 = [
+  { type: 'dialogue', char: CHARS.ryuu,
+    text: 'Des êtres de lumière corrompus par le Vide. Le monde se retourne vraiment contre nous.' },
+  { type: 'narration',
+    text: 'Un signal plus fort. Plus profond.\nUn Héraut envoie un message depuis l\'entre-deux.' },
+];
+
+const BRIEFING_15 = [
+  { type: 'card', text: 'Un signal traverse les fracturesdu Vide.\n\n"VENEZ. TROUVEZ-MOI. OU JE VOUS TROUVERAI."', mood: 'dark' },
+  { type: 'dialogue', char: CHARS.nyx,
+    text: 'Ce n\'est pas le Souverain. C\'est quelque chose d\'antérieur. Plus vieux. Plus fondamental.' },
+  { type: 'dialogue', char: CHARS.kira,
+    text: 'Un Héraut. L\'avant-garde d\'une entité qui s\'appelle... l\'Origine.' },
+];
+const DEBRIEF_15 = [
+  { type: 'narration', text: 'Le Héraut est vaincu.\nMais avant de disparaître, il a murmuré quelque chose.' },
+  { type: 'dialogue', char: CHARS.passeur,
+    text: '"Elle vous attend. Elle a toujours su que vous viendriez. Le Nœud Originel vous appelle."' },
+  { type: 'title', text: 'ACTE VI', sub: 'TRANSCENDANCE' },
+];
+
+/* ══════════════════════════════════════
+   ACTE VI — TRANSCENDANCE (stages 16-18)
+══════════════════════════════════════ */
+
+const BRIEFING_16 = [
+  { type: 'card', text: 'Le Nœud Originel.\n\nLà où la réalité elle-même a été tissée.\nLà où le Vide a pris naissance.', mood: 'dark' },
+  { type: 'dialogue', char: CHARS.akane,
+    text: 'Les Gardiens de l\'Origine ne sont pas corrompus. Ils ont toujours été ainsi. Ils protègent l\'Origine depuis avant la création de Neo-Osaka.' },
+  { type: 'dialogue', char: CHARS.kira,
+    text: 'Avant l\'humanité entière, peut-être. En avant.' },
+];
+const DEBRIEF_16 = [
+  { type: 'dialogue', char: CHARS.ryuu,
+    text: 'Pour chaque Gardien qu\'on abat, les murs du Nœud s\'amincissent. Comme si notre victoire ouvrait quelque chose.' },
+  { type: 'dialogue', char: CHARS.nyx,
+    text: 'Elle nous laisse avancer. Elle veut qu\'on arrive jusqu\'à elle.' },
+];
+
+const BRIEFING_17 = [
+  { type: 'narration',
+    text: 'Le Couloir Infini.\n\nLes Gardiens ne mouraient pas vraiment. Ils se reformaient, quelques secondes plus tard, plus forts.' },
+  { type: 'dialogue', char: CHARS.akane,
+    text: 'Il faut avancer sans s\'arrêter. Chaque seconde perdue est une seconde où ils se régénèrent.' },
+  { type: 'dialogue', char: CHARS.kira,
+    text: 'Alors on court.' },
+];
+const DEBRIEF_17 = [
+  { type: 'card', text: 'Au bout du Couloir Infini.\n\nUne salle.\nUne silhouette.\n\nL\'Origine.', mood: 'dark' },
+  { type: 'dialogue', char: CHARS.passeur,
+    text: '"Vous avez survécu jusqu\'ici. Bien. Voyons si vous méritez de survivre à ce qui vient."' },
+];
+
+const BRIEFING_18 = [
+  { type: 'card', text: 'La Mère du Néant.\n\nElle n\'est pas un ennemi.\nElle est une condition — l\'état naturel de toute chose avant l\'existence.', mood: 'red' },
+  { type: 'dialogue', char: CHARS.archon,
+    text: '"Je suis avant vous. Je serai après vous. Vous ne pouvez que repousser l\'inévitable."' },
+  { type: 'dialogue', char: CHARS.kira,
+    text: 'Peut-être. Mais ce soir — c\'est nous.' },
+];
+const DEBRIEF_18 = [
+  { type: 'card', text: 'Elle est repoussée.\nPas vaincue — repoussée.\n\nNeo-Osaka respire encore.', mood: 'dark' },
+  { type: 'narration',
+    text: 'Les fractures se referment lentement.\nLes survivants émergent des abris.\nLa ville brûle encore.\nMais elle est debout.' },
+  { type: 'dialogue', char: CHARS.kira,
+    text: 'On a repoussé l\'inévitable. Pour aujourd\'hui, ça suffit.' },
+  { type: 'card', text: 'FIN DE L\'ACTE VI\n\nKuroSekai continue...', mood: 'dark' },
+];
+
+/* ══════════════════════════════════════
    EXPORT
 ══════════════════════════════════════ */
 export const SCENARIO = {
@@ -737,6 +835,12 @@ export const SCENARIO = {
     stage_10: BRIEFING_10,
     stage_11: BRIEFING_11,
     stage_12: BRIEFING_12,
+    stage_13: BRIEFING_13,
+    stage_14: BRIEFING_14,
+    stage_15: BRIEFING_15,
+    stage_16: BRIEFING_16,
+    stage_17: BRIEFING_17,
+    stage_18: BRIEFING_18,
   },
   debriefings: {
     stage_01: DEBRIEF_01,
@@ -751,5 +855,11 @@ export const SCENARIO = {
     stage_10: DEBRIEF_10,
     stage_11: DEBRIEF_11,
     stage_12: DEBRIEF_12,
+    stage_13: DEBRIEF_13,
+    stage_14: DEBRIEF_14,
+    stage_15: DEBRIEF_15,
+    stage_16: DEBRIEF_16,
+    stage_17: DEBRIEF_17,
+    stage_18: DEBRIEF_18,
   },
 };

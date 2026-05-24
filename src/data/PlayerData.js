@@ -16,6 +16,9 @@ const QUESTS_KEY    = 'kuro_quests';
 const DAILY_KEY     = 'kuro_daily_login';
 const HISTORY_MAX   = 100;
 
+export const ENERGY_MAX     = 10;
+export const ENERGY_REGEN_MS = 30 * 60 * 1000; // 30 minutes
+
 export const MAX_LEVEL   = 50;
 export const STAT_GROWTH = 0.04; // +4% par niveau sur HP, ATK, DEF
 
@@ -60,6 +63,9 @@ export class PlayerData {
       this.combatsWon       = data.combatsWon        ?? 0;
       this.totalSummons     = data.totalSummons      ?? 0;
       this.firstPlayDate    = data.firstPlayDate     ?? Date.now();
+      this.stageStars       = data.stageStars        ?? {};
+      this.energy           = data.energy            ?? ENERGY_MAX;
+      this.lastEnergyTime   = data.lastEnergyTime    ?? Date.now();
     } catch {
       this.completedStages = new Set();
       this.currency        = 0;
@@ -67,6 +73,9 @@ export class PlayerData {
       this.pity4           = 0;
       this.freeRolls       = 0;
       this.xpBoostCombats  = 0;
+      this.stageStars      = {};
+      this.energy          = ENERGY_MAX;
+      this.lastEnergyTime  = Date.now();
     }
     try {
       const raw = localStorage.getItem(HISTORY_KEY);
@@ -233,6 +242,9 @@ export class PlayerData {
       combatsWon:     this.combatsWon,
       totalSummons:   this.totalSummons,
       firstPlayDate:  this.firstPlayDate,
+      stageStars:     this.stageStars,
+      energy:         this.energy,
+      lastEnergyTime: this.lastEnergyTime,
     };
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
     this._scheduleCloudSync();
@@ -268,6 +280,9 @@ export class PlayerData {
       this.combatsWon      = p.combatsWon    ?? 0;
       this.totalSummons    = p.totalSummons  ?? 0;
       this.firstPlayDate   = p.firstPlayDate ?? Date.now();
+      this.stageStars      = p.stageStars    ?? {};
+      this.energy          = p.energy        ?? ENERGY_MAX;
+      this.lastEnergyTime  = p.lastEnergyTime ?? Date.now();
       if (p.pullHistory) {
         this.pullHistory = p.pullHistory;
         localStorage.setItem(HISTORY_KEY, JSON.stringify(this.pullHistory));
@@ -483,6 +498,86 @@ export class PlayerData {
 
   incrementSummons(n = 1) {
     this.totalSummons = (this.totalSummons ?? 0) + n;
+    this._saveProgress();
+  }
+
+  /* ════════════════════════════════
+     ÉTOILES PAR STAGE
+  ════════════════════════════════ */
+
+  /**
+   * Calcule les étoiles obtenues selon le % HP restant de l'équipe.
+   * 3★ ≥ 70% | 2★ ≥ 35% | 1★ > 0%
+   */
+  static calcStars(teamHpPct) {
+    if (teamHpPct >= 0.70) return 3;
+    if (teamHpPct >= 0.35) return 2;
+    return 1;
+  }
+
+  /** Enregistre le meilleur score d'étoiles pour un stage. */
+  setStageStars(stageId, stars) {
+    const prev = this.stageStars[stageId] ?? 0;
+    if (stars > prev) {
+      this.stageStars[stageId] = stars;
+      this._saveProgress();
+    }
+  }
+
+  getStageStars(stageId) {
+    return this.stageStars[stageId] ?? 0;
+  }
+
+  /* ════════════════════════════════
+     ÉNERGIE (STAMINA)
+  ════════════════════════════════ */
+
+  /** Régénère l'énergie selon le temps écoulé puis retourne l'état. */
+  _regenEnergy() {
+    const now     = Date.now();
+    const elapsed = now - (this.lastEnergyTime ?? now);
+    const gained  = Math.floor(elapsed / ENERGY_REGEN_MS);
+    if (gained > 0 && (this.energy ?? 0) < ENERGY_MAX) {
+      this.energy = Math.min(ENERGY_MAX, (this.energy ?? 0) + gained);
+      this.lastEnergyTime = this.lastEnergyTime + gained * ENERGY_REGEN_MS;
+      this._saveProgress();
+    }
+  }
+
+  /** Retourne l'état courant de l'énergie (après regen). */
+  getEnergy() {
+    this._regenEnergy();
+    const full    = (this.energy ?? 0) >= ENERGY_MAX;
+    const nextMs  = full ? null
+      : ENERGY_REGEN_MS - ((Date.now() - (this.lastEnergyTime ?? Date.now())) % ENERGY_REGEN_MS);
+    return {
+      current: this.energy ?? 0,
+      max:     ENERGY_MAX,
+      full,
+      nextRegenMs: nextMs,  // ms avant la prochaine +1
+    };
+  }
+
+  /**
+   * Consomme `cost` points d'énergie.
+   * @returns {boolean} false si pas assez d'énergie
+   */
+  spendEnergy(cost) {
+    this._regenEnergy();
+    if ((this.energy ?? 0) < cost) return false;
+    if (this.lastEnergyTime === Date.now() || (this.energy ?? 0) >= ENERGY_MAX) {
+      // On démarre le timer de regen au moment de la 1ère dépense depuis max
+      this.lastEnergyTime = Date.now();
+    }
+    this.energy = (this.energy ?? 0) - cost;
+    this._saveProgress();
+    return true;
+  }
+
+  /** Ajoute de l'énergie (achat boutique, récompense quotidienne). */
+  addEnergy(amount) {
+    this._regenEnergy();
+    this.energy = Math.min(ENERGY_MAX, (this.energy ?? 0) + amount);
     this._saveProgress();
   }
 

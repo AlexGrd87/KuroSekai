@@ -204,6 +204,13 @@ export class HubUI {
 
   _buildMapStageNode(stage, unlocked, completed) {
     const diffStars = '★'.repeat(stage.difficulty) + '☆'.repeat(5 - stage.difficulty);
+    const perfStars = this.playerData.getStageStars(stage.id);
+    const perfHtml  = completed
+      ? `<span class="msn-perf-stars">${'★'.repeat(perfStars)}${'☆'.repeat(3 - perfStars)}</span>`
+      : '';
+    const orderPad  = stage.order < 10 ? `0${stage.order}` : `${stage.order}`;
+    const energyCost = stage.energyCost ?? 1;
+    const energyHtml = `<span class="msn-energy-cost">⚡${energyCost}</span>`;
 
     const node = document.createElement('div');
     node.className = [
@@ -221,10 +228,10 @@ export class HubUI {
       <div class="msn-el-kanji">${this._elementKanji(stage.element)}</div>
       <div class="msn-body">
         <div class="msn-head">
-          <span class="msn-order">0${stage.order}</span>
+          <span class="msn-order">${orderPad}</span>
           <span class="msn-name">${stage.name}</span>
           ${stage.isBoss ? '<span class="msn-boss-badge">BOSS</span>' : ''}
-          ${completed   ? '<span class="msn-done-badge">✓</span>' : ''}
+          ${completed ? perfHtml : ''}
         </div>
         <div class="msn-subtitle">${stage.subtitle}</div>
         <div class="msn-diff">${diffStars}</div>
@@ -234,7 +241,10 @@ export class HubUI {
           <span>+${stage.rewards.exp} EXP</span>
           <span class="msn-cur">+${stage.rewards.currency} ◈</span>
         </div>
-        <div class="msn-waves">${stage.waves.length} vague${stage.waves.length > 1 ? 's' : ''}</div>
+        <div class="msn-right-meta">
+          ${energyHtml}
+          <div class="msn-waves">${stage.waves.length}V</div>
+        </div>
       </div>
       ${!unlocked ? '<div class="msn-lock-overlay"><span>🔒</span></div>' : ''}`;
 
@@ -261,6 +271,13 @@ export class HubUI {
     // Hub home — zones
     const zoneEl = document.getElementById('hub-player-stages');
     if (zoneEl) zoneEl.textContent = `${done} / ${STAGES.length} zones`;
+
+    // Énergie hub header
+    const { current: energyCurr } = this.playerData.getEnergy();
+    const energyHubEl = document.getElementById('hub-energy-val');
+    if (energyHubEl) energyHubEl.textContent = energyCurr;
+    const energyHubBar = document.getElementById('hub-energy-bar');
+    if (energyHubBar) energyHubBar.style.width = `${(energyCurr / 10) * 100}%`;
 
     // Carte header — stats complètes
     const statsEl = document.getElementById('hub-player-stats');
@@ -297,10 +314,34 @@ export class HubUI {
       wavesEl.appendChild(li);
     });
 
+    // Étoiles de performance
+    const perfStars = this.playerData.getStageStars(stage.id);
+    const perfEl    = document.getElementById('hd-perf-stars');
+    if (perfEl) {
+      const done = this.playerData.isStageCompleted(stage.id);
+      perfEl.innerHTML = done
+        ? `${'★'.repeat(perfStars)}${'☆'.repeat(3 - perfStars)}`
+        : '- - -';
+      perfEl.style.color = done ? '#ffd700' : 'rgba(200,220,255,0.25)';
+    }
+
+    // Énergie
+    const energyCost = stage.energyCost ?? 1;
+    const { current: energyCurr } = this.playerData.getEnergy();
+    const hasEnergy = energyCurr >= energyCost;
+    const energyEl = document.getElementById('hd-energy-cost');
+    if (energyEl) {
+      energyEl.textContent = `⚡ ${energyCurr} / 10  (coût : ${energyCost})`;
+      energyEl.style.color = hasEnergy ? '#88ff88' : '#ff6666';
+    }
+
     const btn = document.getElementById('hd-deploy-btn');
     btn.style.setProperty('--el',   stage.color);
     btn.style.setProperty('--glow', stage.glow);
-    btn.innerHTML = this.playerData.isStageCompleted(stage.id) ? '⚔ REJOUER' : '⚔ DÉPLOYER';
+    btn.disabled = !hasEnergy;
+    btn.innerHTML = !hasEnergy
+      ? `⚡ Énergie insuffisante (${energyCurr}/${energyCost})`
+      : this.playerData.isStageCompleted(stage.id) ? '⚔ REJOUER' : '⚔ DÉPLOYER';
 
     gsap.set(this.detailPanel, { display: 'flex' });
     gsap.fromTo(this.detailPanel, { opacity: 0 }, { opacity: 1, duration: 0.2 });
@@ -319,7 +360,9 @@ export class HubUI {
 
   _deploy() {
     if (!this._activeStage) return;
-    const stage = this._activeStage;
+    const stage      = this._activeStage;
+    const energyCost = stage.energyCost ?? 1;
+    if (!this.playerData.spendEnergy(energyCost)) return; // double-check
     this._closeDetail();
     gsap.to(this.screen, {
       opacity: 0, duration: 0.25, ease: 'power2.in',

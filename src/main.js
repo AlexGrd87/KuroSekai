@@ -11,7 +11,7 @@ import { TeamSelectUI }   from './ui/TeamSelectUI.js';
 import { CombatUI }       from './ui/CombatUI.js';
 import { HubUI }          from './ui/HubUI.js';
 import { SceneUI }        from './ui/SceneUI.js';
-import { PlayerData }     from './data/PlayerData.js';
+import { PlayerData, ENERGY_MAX } from './data/PlayerData.js';
 import { CHARACTERS }     from './data/characters.js';
 import { SCENARIO }       from './data/scenario.js';
 import { SettingsUI }     from './ui/SettingsUI.js';
@@ -72,9 +72,12 @@ const shopUI     = new ShopUI(playerData, goHub);
 let _pendingStage = null;
 let _currentTeam  = [];
 
-function handleVictory(stage) {
+function handleVictory(stage, teamHpPct = 0) {
   audio.play('victory');
   playerData.completeStage(stage.id, stage.rewards);
+  // Étoiles de performance
+  const stars = PlayerData.calcStars(teamHpPct);
+  playerData.setStageStars(stage.id, stars);
   // Progression quêtes + stats profil
   playerData.incrementCombatsWon();
   playerData.incrementQuest('COMBAT_WIN',     1);
@@ -110,8 +113,8 @@ function handleVictory(stage) {
   rewardPopup.show(stage, expGained, afterRewards);
 }
 
-const combatUI = new CombatUI((winner, stage) => {
-  if (winner === 'player' && stage) handleVictory(stage);
+const combatUI = new CombatUI((winner, stage, teamHpPct = 0) => {
+  if (winner === 'player' && stage) handleVictory(stage, teamHpPct);
   else {
     if (winner === 'enemy') audio.play('defeat');
     audio.stopBgm();

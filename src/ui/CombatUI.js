@@ -796,13 +796,23 @@ export class CombatUI {
   _endCombat() {
     const winner = this.engine?.winner;
     const stage  = this._currentStage;
+
+    // Calcul HP% restant de l'équipe joueur (pour les étoiles)
+    let teamHpPct = 0;
+    if (winner === 'player' && this.engine?.playerUnits) {
+      const units = this.engine.playerUnits;
+      const totHp    = units.reduce((s, u) => s + u.maxHp, 0);
+      const remHp    = units.reduce((s, u) => s + u.hp,    0);
+      teamHpPct = totHp > 0 ? remHp / totHp : 0;
+    }
+
     gsap.to(this.screen, { opacity: 0, duration: 0.3, ease: 'power2.in',
       onComplete: () => {
         this.screen.style.display = 'none';
         document.getElementById('combat-result').style.display = 'none';
         this.engine        = null;
         this._currentStage = null;
-        if (this.onBack) this.onBack(winner, stage);
+        if (this.onBack) this.onBack(winner, stage, teamHpPct);
       },
     });
   }
