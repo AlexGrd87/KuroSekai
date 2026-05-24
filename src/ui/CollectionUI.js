@@ -12,6 +12,12 @@
 import { gsap }                                    from 'gsap';
 import { CHARACTERS, RARITIES, CONSTELLATION_BONUSES } from '../data/characters.js';
 import { buildPortraitSVG }                        from './portrait.js';
+import { ARTIFACT_SLOTS, SLOT_META, ARTIFACT_SETS,
+         formatStatValue, getActiveSets,
+         generateArtifact }                        from '../data/artifacts.js';
+import { ASCENSION_RANKS, MATERIAL_META,
+         getNextAscensionCost }                    from '../data/ascension.js';
+import { audio }                                   from '../audio/AudioManager.js';
 
 const ELEMENT_DATA = {
   Fire:    { color: '#ff5500', glow: '#ff2200', kanji: '火' },
@@ -225,12 +231,18 @@ export class CollectionUI {
     /* -- Constellation -- */
     this._buildConstellationUI(char, el);
 
+    /* -- Ascension -- */
+    this._buildAscensionUI(char, el);
+
+    /* -- Équipement (artefacts) -- */
+    this._buildEquipmentUI(char, el);
+
     /* -- Boutons Améliorer -- */
     this._currentModalChar = char;
     this._bindAmeliorerButtons(char, el);
 
     /* -- Stagger des blocs de droite -- */
-    const infoSections = ['#det-header', '#det-ameliorer', '#det-stats', '#det-skills', '#det-constellation', '#det-lore-block'];
+    const infoSections = ['#det-header', '#det-ameliorer', '#det-ascension', '#det-stats', '#det-skills', '#det-constellation', '#det-equipment', '#det-lore-block'];
     gsap.fromTo(infoSections.map(s => document.querySelector(s)).filter(Boolean),
       { opacity: 0, x: 18 },
       { opacity: 1, x: 0, stagger: 0.07, duration: 0.35, ease: 'power2.out', delay: 0.15 }
@@ -408,6 +420,242 @@ export class CollectionUI {
         bonusEl.style.color = '#99aacc';
       }
     }
+  }
+
+  /* ════════════════════════════════
+     ASCENSION
+  ════════════════════════════════ */
+
+  _buildAscensionUI(char, el) {
+    const wrap = document.getElementById('det-ascension');
+    if (!wrap) return;
+
+    const rank     = this.playerData.getAscensionRank(char.id);
+    const rankData = ASCENSION_RANKS[rank];
+    const nextCost = getNextAscensionCost(rank);
+    const mats     = this.playerData.ascensionMaterials ?? {};
+
+    const rankNodes = ASCENSION_RANKS.map((r, i) => `
+      <div class="asc-node ${i <= rank ? 'asc-node--active' : ''} ${i === rank ? 'asc-node--current' : ''}"
+           style="${i <= rank ? `--nc:${r.color}` : ''}">
+        <span class="asc-node-label">${r.label}</span>
+      </div>
+    `).join('<div class="asc-conn"></div>');
+
+    const materialsHtml = nextCost
+      ? Object.entries(nextCost).map(([mat, qty]) => {
+          const meta  = MATERIAL_META[mat] ?? { label: mat, icon: '?', color: '#888' };
+          const have  = mats[mat] ?? 0;
+          const ok    = have >= qty;
+          return `
+            <div class="asc-mat ${ok ? 'asc-mat--ok' : 'asc-mat--missing'}">
+              <span class="asc-mat-icon" style="color:${meta.color}">${meta.icon}</span>
+              <span class="asc-mat-label">${meta.label}</span>
+              <span class="asc-mat-count">${have}/${qty}</span>
+            </div>
+          `;
+        }).join('')
+      : '<span class="asc-max-label">★ Rang maximum !</span>';
+
+    const canResult = this.playerData.canAscend(char.id);
+    const btnDisabled = !canResult.ok;
+
+    wrap.innerHTML = `
+      <div class="det-asc-header">
+        <span class="det-asc-title">⬆ ASCENSION</span>
+        <span class="det-asc-rank" style="color:${rankData.color}">${rankData.label}</span>
+      </div>
+      <div class="asc-track">${rankNodes}</div>
+      <div class="asc-stat-mult">
+        Stats × <span style="color:${rankData.color}">${rankData.statMult.toFixed(2)}</span>
+        · Niveau max <span style="color:${rankData.color}">${rankData.levelCap}</span>
+      </div>
+      ${rank < 5 ? `<div class="asc-mats-label">Coût ascension :</div>` : ''}
+      <div class="asc-mats-row">${materialsHtml}</div>
+      ${rank < 5 ? `
+        <button id="det-asc-btn" class="det-asc-btn ${btnDisabled ? 'det-asc-btn--disabled' : ''}"
+                ${btnDisabled ? 'disabled' : ''}>
+          ⬆ Monter en ${ASCENSION_RANKS[rank + 1]?.label ?? '—'}
+        </button>
+      ` : ''}
+      <div id="det-asc-toast" class="det-aml-toast"></div>
+    `;
+
+    const btn = document.getElementById('det-asc-btn');
+    btn?.addEventListener('click', () => {
+      const result = this.playerData.ascendCharacter(char.id);
+      if (!result.ok) {
+        this._showAscToast('✗ ' + (result.reason ?? 'Impossible'));
+        return;
+      }
+      audio.play?.('level_up');
+      const newRank  = ASCENSION_RANKS[result.newRank];
+      this._showAscToast(`⬆ Ascension ${newRank.label} atteinte !`);
+      // Refresh stats et section ascension
+      this._buildAscensionUI(char, el);
+      this._refreshModalProgress(char, el);
+    });
+  }
+
+  _showAscToast(msg) {
+    const t = document.getElementById('det-asc-toast');
+    if (!t) return;
+    gsap.killTweensOf(t);
+    t.textContent = msg;
+    gsap.fromTo(t,
+      { opacity: 0, y: 5 },
+      { opacity: 1, y: 0, duration: 0.2, ease: 'power2.out',
+        onComplete: () => gsap.to(t, { opacity: 0, y: -6, duration: 0.3, delay: 1.8 }) }
+    );
+  }
+
+  /* ════════════════════════════════
+     ÉQUIPEMENT (ARTEFACTS)
+  ════════════════════════════════ */
+
+  _buildEquipmentUI(char, el) {
+    const wrap = document.getElementById('det-equipment');
+    if (!wrap) return;
+
+    const equipped   = this.playerData.getEquippedArtifacts(char.id);
+    const activeSets = getActiveSets(equipped.filter(Boolean));
+
+    const slotsHtml = ARTIFACT_SLOTS.map((slot, i) => {
+      const art  = equipped[i];
+      const meta = SLOT_META[slot];
+      if (!art) {
+        return `
+          <div class="eq-slot eq-slot--empty" data-slot="${slot}" data-char="${char.id}">
+            <div class="eq-slot-icon">${meta.icon}</div>
+            <div class="eq-slot-label">${meta.label}</div>
+            <div class="eq-slot-kanji">${meta.kanji}</div>
+          </div>
+        `;
+      }
+      const setData = ARTIFACT_SETS[art.setId] ?? { name: '?', color: '#888', icon: '?' };
+      const mainLbl = formatStatValue(art.mainStat.stat, art.mainStat.value);
+      return `
+        <div class="eq-slot eq-slot--filled" data-slot="${slot}" data-char="${char.id}"
+             style="--eq-set-color:${setData.color}">
+          <div class="eq-slot-header">
+            <span class="eq-slot-icon-sm">${meta.icon}</span>
+            <span class="eq-slot-label-sm">${meta.label}</span>
+            <span class="eq-slot-rarity">${'★'.repeat(art.rarity)}</span>
+          </div>
+          <div class="eq-slot-set" style="color:${setData.color}">${setData.icon} ${setData.name}</div>
+          <div class="eq-slot-main">${mainLbl}</div>
+          <div class="eq-slot-subs">
+            ${art.subStats.slice(0, 2).map(s => `<span>${formatStatValue(s.stat, s.value)}</span>`).join('')}
+          </div>
+          <button class="eq-unequip-btn" data-slot="${slot}" data-char="${char.id}">✕</button>
+        </div>
+      `;
+    }).join('');
+
+    const setsHtml = activeSets.length > 0
+      ? activeSets.map(s => `
+          <div class="eq-set-tag" style="--sc:${s.set.color}">
+            <span class="eq-set-icon">${s.set.icon}</span>
+            <span class="eq-set-name">${s.set.name}</span>
+            <span class="eq-set-pieces">${s.pieces}p</span>
+            <span class="eq-set-bonus">${s.bonus.label}</span>
+          </div>
+        `).join('')
+      : '<span class="eq-no-set">Aucun bonus de set actif</span>';
+
+    wrap.innerHTML = `
+      <div class="det-eq-header">
+        <span class="det-eq-title">⚔ ÉQUIPEMENT</span>
+        <button id="det-eq-open-inv" class="det-eq-inv-btn">Inventaire</button>
+      </div>
+      <div class="eq-slots-grid">${slotsHtml}</div>
+      <div class="eq-sets-row">${setsHtml}</div>
+      <div id="det-eq-inv-panel" class="eq-inv-panel" style="display:none"></div>
+    `;
+
+    // Boutons déséquiper
+    wrap.querySelectorAll('.eq-unequip-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        this.playerData.unequipArtifact(char.id, btn.dataset.slot);
+        this._buildEquipmentUI(char, el);
+        this._refreshModalProgress(char, el);
+      });
+    });
+
+    // Slots vides → ouvre l'inventaire pour ce slot
+    wrap.querySelectorAll('.eq-slot--empty').forEach(slot => {
+      slot.addEventListener('click', () => this._openInventory(char, el, slot.dataset.slot));
+    });
+
+    // Bouton inventaire global
+    document.getElementById('det-eq-open-inv')
+      ?.addEventListener('click', () => this._openInventory(char, el, null));
+  }
+
+  _openInventory(char, el, filterSlot = null) {
+    const panel = document.getElementById('det-eq-inv-panel');
+    if (!panel) return;
+
+    if (panel.style.display !== 'none') {
+      gsap.to(panel, { opacity: 0, height: 0, duration: 0.25, onComplete: () => { panel.style.display = 'none'; } });
+      return;
+    }
+
+    const inventory = this.playerData.artifactInventory ?? [];
+    // Filtrer par slot si demandé
+    const arts = filterSlot ? inventory.filter(a => a.slot === filterSlot) : inventory;
+
+    if (arts.length === 0) {
+      panel.innerHTML = `<div class="eq-inv-empty">Inventaire vide.<br>Les artefacts se dropeent en combattant.</div>`;
+      panel.style.display = 'block';
+      gsap.fromTo(panel, { opacity: 0, height: 0 }, { opacity: 1, height: 'auto', duration: 0.3 });
+      return;
+    }
+
+    panel.innerHTML = `
+      <div class="eq-inv-title">${filterSlot ? SLOT_META[filterSlot]?.label : 'Tous les artefacts'}</div>
+      <div class="eq-inv-list">
+        ${arts.map(art => {
+          const setData = ARTIFACT_SETS[art.setId] ?? { name: '?', color: '#888', icon: '?', glow: '#444' };
+          const mainLbl = formatStatValue(art.mainStat.stat, art.mainStat.value);
+          // Check if already equipped on this char
+          const alreadyOn = (this.playerData.characterEquipment?.[char.id]?.[art.slot] === art.id);
+          return `
+            <div class="eq-inv-item ${alreadyOn ? 'eq-inv-item--equipped' : ''}"
+                 data-art-id="${art.id}" data-slot="${art.slot}"
+                 style="--si:${setData.color}">
+              <div class="eq-inv-item-top">
+                <span class="eq-inv-set-icon">${setData.icon}</span>
+                <span class="eq-inv-slot-label">${SLOT_META[art.slot]?.label ?? art.slot}</span>
+                <span class="eq-inv-rarity">${'★'.repeat(art.rarity)}</span>
+              </div>
+              <div class="eq-inv-main">${mainLbl}</div>
+              <div class="eq-inv-subs">
+                ${art.subStats.map(s => `<span>${formatStatValue(s.stat, s.value)}</span>`).join(' · ')}
+              </div>
+              ${alreadyOn
+                ? '<span class="eq-inv-eq-badge">ÉQUIPÉ</span>'
+                : `<button class="eq-inv-equip-btn" data-art-id="${art.id}" data-slot="${art.slot}">Équiper</button>`
+              }
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    panel.style.display = 'block';
+    panel.style.height   = '0';
+    panel.style.overflow = 'hidden';
+    gsap.to(panel, { height: 'auto', opacity: 1, duration: 0.35, ease: 'power2.out' });
+
+    panel.querySelectorAll('.eq-inv-equip-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.playerData.equipArtifact(char.id, btn.dataset.slot, btn.dataset.artId);
+        this._buildEquipmentUI(char, el);
+        this._refreshModalProgress(char, el);
+      });
+    });
   }
 
   _closeModal() {

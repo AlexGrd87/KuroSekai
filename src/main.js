@@ -30,6 +30,7 @@ import { DailyLoginUI }   from './ui/DailyLoginUI.js';
 import { toast }          from './ui/ToastUI.js';
 import { transition }     from './ui/TransitionUI.js';
 import { tutorialUI }     from './ui/TutorialUI.js';
+import { ArenaUI }        from './ui/ArenaUI.js';
 
 /* ══════════════════════════════════════════
    DONNÉES JOUEUR
@@ -111,8 +112,9 @@ const shopUI     = new ShopUI(playerData, goHub);
    COMBAT + SÉLECTION D'ÉQUIPE
 ══════════════════════════════════════════ */
 
-let _pendingStage = null;
-let _currentTeam  = [];
+let _pendingStage  = null;
+let _currentTeam   = [];
+let _arenaResultCb = null; // si non-null, le prochain résultat de combat va à l'arène
 
 function handleVictory(stage, teamHpPct = 0) {
   audio.play('victory');
@@ -167,6 +169,15 @@ function handleVictory(stage, teamHpPct = 0) {
 }
 
 const combatUI = new CombatUI((winner, stage, teamHpPct = 0) => {
+  // Combat d'arène : dévie vers l'arène
+  if (_arenaResultCb) {
+    const cb   = _arenaResultCb;
+    _arenaResultCb = null;
+    if (winner === 'enemy') audio.play('defeat');
+    audio.stopBgm();
+    setTimeout(() => { audio.playBgm('hub'); cb(winner); }, 800);
+    return;
+  }
   if (winner === 'player' && stage) handleVictory(stage, teamHpPct);
   else {
     if (winner === 'enemy') audio.play('defeat');
@@ -207,6 +218,23 @@ document.getElementById('hub-dungeon-btn')
   ?.addEventListener('click', () => {
     audio.play('ui_navigate');
     dungeonUI.show();
+  });
+
+/* ── ARÈNE PVP ── */
+const arenaUI = new ArenaUI(playerData, goHub);
+arenaUI.setCombatLauncher((stage, onResult) => {
+  _pendingStage  = stage;
+  _arenaResultCb = onResult;
+  audio.stopBgm(500);
+  setTimeout(() => audio.playBgm('combat'), 550);
+  teamSelect.show();
+});
+
+document.getElementById('hub-arena-btn')
+  ?.addEventListener('click', () => {
+    audio.play('ui_navigate');
+    hub.hide?.();
+    arenaUI.show();
   });
 
 /* ── CLASSEMENT ── */

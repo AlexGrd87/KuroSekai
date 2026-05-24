@@ -9,6 +9,10 @@ import { DAILY_QUESTS, WEEKLY_QUESTS,
          todayMidnight, weekStart }                      from './quests.js';
 import { DAILY_REWARDS, getDayInCycle }                  from './dailyRewards.js';
 import { ACHIEVEMENTS }                                  from './achievements.js';
+import { calcArtifactStats, generateArtifact,
+         ARTIFACT_SLOTS }                               from './artifacts.js';
+import { ASCENSION_RANKS, ASCENSION_COSTS,
+         getNextAscensionCost }                          from './ascension.js';
 
 const STORAGE_KEY   = 'kuro_player_collection';
 const PROGRESS_KEY  = 'kuro_player_progress';
@@ -70,6 +74,20 @@ export class PlayerData {
       this.achievements     = data.achievements      ?? [];
       this.totalEnergySpent = data.totalEnergySpent  ?? 0;
       this.dungeonClears    = data.dungeonClears      ?? 0;
+      // Artefacts & Équipement
+      this.artifactInventory  = data.artifactInventory  ?? [];
+      this.characterEquipment = data.characterEquipment ?? {};
+      // Ascension
+      this.ascensionRanks     = data.ascensionRanks     ?? {};
+      this.ascensionMaterials = data.ascensionMaterials ?? {
+        shard_basic: 0, shard_elite: 0, crystal_void: 0, stone_ascension: 0,
+      };
+      // Arène PvP
+      this.arenaRating        = data.arenaRating        ?? 1000;
+      this.arenaAttemptsLeft  = data.arenaAttemptsLeft  ?? 5;
+      this.arenaLastReset     = data.arenaLastReset      ?? 0;
+      this.arenaWins          = data.arenaWins           ?? 0;
+      this.arenaLosses        = data.arenaLosses         ?? 0;
     } catch {
       this.completedStages  = new Set();
       this.currency         = 0;
@@ -83,6 +101,15 @@ export class PlayerData {
       this.achievements     = [];
       this.totalEnergySpent = 0;
       this.dungeonClears    = 0;
+      this.artifactInventory  = [];
+      this.characterEquipment = {};
+      this.ascensionRanks     = {};
+      this.ascensionMaterials = { shard_basic: 0, shard_elite: 0, crystal_void: 0, stone_ascension: 0 };
+      this.arenaRating        = 1000;
+      this.arenaAttemptsLeft  = 5;
+      this.arenaLastReset     = 0;
+      this.arenaWins          = 0;
+      this.arenaLosses        = 0;
     }
     try {
       const raw = localStorage.getItem(HISTORY_KEY);
@@ -252,9 +279,18 @@ export class PlayerData {
       stageStars:       this.stageStars,
       energy:           this.energy,
       lastEnergyTime:   this.lastEnergyTime,
-      achievements:     this.achievements,
-      totalEnergySpent: this.totalEnergySpent,
-      dungeonClears:    this.dungeonClears,
+      achievements:       this.achievements,
+      totalEnergySpent:   this.totalEnergySpent,
+      dungeonClears:      this.dungeonClears,
+      artifactInventory:  this.artifactInventory,
+      characterEquipment: this.characterEquipment,
+      ascensionRanks:     this.ascensionRanks,
+      ascensionMaterials: this.ascensionMaterials,
+      arenaRating:        this.arenaRating,
+      arenaAttemptsLeft:  this.arenaAttemptsLeft,
+      arenaLastReset:     this.arenaLastReset,
+      arenaWins:          this.arenaWins,
+      arenaLosses:        this.arenaLosses,
     };
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
     this._scheduleCloudSync();
@@ -426,17 +462,30 @@ export class PlayerData {
     return { cd0, cd1 };
   }
 
-  /** Stats du personnage scalées selon son niveau et constellation */
+  /** Stats du personnage scalées selon son niveau, constellation, ascension et artefacts. */
   getScaledStats(char) {
-    const level = this.getLevel(char.id);
-    const mult  = statMultiplier(level);
-    const base  = {
-      hp:  Math.round(char.stats.hp  * mult),
-      atk: Math.round(char.stats.atk * mult),
-      def: Math.round(char.stats.def * mult),
+    const ascRank = this.getAscensionRank(char.id);
+    const rankData = ASCENSION_RANKS[ascRank];
+    const level   = this.getLevel(char.id);
+    const mult    = statMultiplier(level);
+    const base    = {
+      hp:  Math.round(char.stats.hp  * mult * rankData.statMult),
+      atk: Math.round(char.stats.atk * mult * rankData.statMult),
+      def: Math.round(char.stats.def * mult * rankData.statMult),
       spd: char.stats.spd,
     };
-    return this.applyConstellationBonuses(char, base);
+    let stats = this.applyConstellationBonuses(char, base);
+
+    // Artefacts
+    const artBonus = this.getArtifactBonusStats(char.id);
+    const ap = artBonus.all_pct ?? 0;
+    stats = {
+      hp:  Math.round(stats.hp  * (1 + (artBonus.hp_pct  ?? 0) + ap) + (artBonus.hp_flat  ?? 0)),
+      atk: Math.round(stats.atk * (1 + (artBonus.atk_pct ?? 0) + ap) + (artBonus.atk_flat ?? 0)),
+      def: Math.round(stats.def * (1 + (artBonus.def_pct ?? 0) + ap) + (artBonus.def_flat ?? 0)),
+      spd: Math.round(stats.spd * (1 + (artBonus.spd_pct ?? 0))     + (artBonus.spd_flat ?? 0)),
+    };
+    return stats;
   }
 
   /* ════════════════════════════════
@@ -771,6 +820,194 @@ export class PlayerData {
   }
 
   /* ════════════════════════════════
+     ARTEFACTS
+  ════════════════════════════════ */
+
+  /** Ajoute un artefact à l'inventaire. */
+  addArtifactToInventory(art) {
+    if (!this.artifactInventory) this.artifactInventory = [];
+    this.artifactInventory.push(art);
+    this._saveProgress();
+  }
+
+  /** Équipe un artefact sur un slot d'un personnage. L'ancien est renvoyé en inventaire. */
+  equipArtifact(charId, slot, artId) {
+    if (!this.characterEquipment) this.characterEquipment = {};
+    if (!this.characterEquipment[charId]) this.characterEquipment[charId] = {};
+    // Remettre l'ancien en inventaire si présent
+    const oldId = this.characterEquipment[charId][slot];
+    if (oldId) {
+      const oldArt = (this.artifactInventory ?? []).find(a => a.id === oldId);
+      if (!oldArt) {
+        // L'artefact n'est pas en inventaire, on le recrée ou on ignore
+      }
+    }
+    // Vérifier que l'artefact existe en inventaire
+    const artIdx = (this.artifactInventory ?? []).findIndex(a => a.id === artId);
+    if (artIdx === -1) return false;
+    // Détacher de tout autre perso
+    for (const [cid, slots] of Object.entries(this.characterEquipment)) {
+      for (const [sl, eid] of Object.entries(slots)) {
+        if (eid === artId && (cid !== charId || sl !== slot)) {
+          delete this.characterEquipment[cid][sl];
+        }
+      }
+    }
+    this.characterEquipment[charId][slot] = artId;
+    this._saveProgress();
+    return true;
+  }
+
+  /** Déséquipe un slot d'un personnage. */
+  unequipArtifact(charId, slot) {
+    if (!this.characterEquipment?.[charId]) return;
+    delete this.characterEquipment[charId][slot];
+    this._saveProgress();
+  }
+
+  /** Retourne les 4 artefacts équipés sur un personnage (null si vide). */
+  getEquippedArtifacts(charId) {
+    const equip = this.characterEquipment?.[charId] ?? {};
+    return ARTIFACT_SLOTS.map(slot => {
+      const artId = equip[slot];
+      if (!artId) return null;
+      return (this.artifactInventory ?? []).find(a => a.id === artId) ?? null;
+    });
+  }
+
+  /** Retourne les bonus de stats totaux des artefacts équipés sur un personnage. */
+  getArtifactBonusStats(charId) {
+    const arts = this.getEquippedArtifacts(charId);
+    return calcArtifactStats(arts);
+  }
+
+  /** Génère 8 artefacts de démo et les ajoute à l'inventaire. */
+  seedDemoArtifacts() {
+    if ((this.artifactInventory ?? []).length > 0) return;
+    const setIds = ['fureur', 'gardien', 'foudre', 'vitalite', 'ombre', 'neant'];
+    const slots  = ['arme', 'armure', 'accessoire', 'relique'];
+    // 2 sets complets pour avoir les bonus 2-pièces
+    ['fureur', 'gardien'].forEach(setId => {
+      slots.forEach(slot => {
+        this.addArtifactToInventory(generateArtifact(slot, setId, 3));
+      });
+    });
+    // 4 artefacts random supplémentaires
+    for (let i = 0; i < 4; i++) {
+      const setId = setIds[i % setIds.length];
+      const slot  = slots[i % slots.length];
+      this.addArtifactToInventory(generateArtifact(slot, setId, 4));
+    }
+  }
+
+  /* ════════════════════════════════
+     ASCENSION
+  ════════════════════════════════ */
+
+  /** Rang d'ascension actuel (0–5). */
+  getAscensionRank(charId) {
+    return Math.min(5, Math.max(0, this.ascensionRanks?.[charId] ?? 0));
+  }
+
+  /** Vérifie si le personnage peut monter en ascension. */
+  canAscend(charId) {
+    const rank = this.getAscensionRank(charId);
+    if (rank >= 5) return { ok: false, reason: 'Rang maximum atteint.' };
+    const costs = getNextAscensionCost(rank);
+    if (!costs) return { ok: false, reason: 'Impossible.' };
+    const mats  = this.ascensionMaterials ?? {};
+    for (const [mat, qty] of Object.entries(costs)) {
+      if ((mats[mat] ?? 0) < qty) {
+        return { ok: false, reason: `Matériaux insuffisants (${mat}).`, costs };
+      }
+    }
+    return { ok: true, costs };
+  }
+
+  /** Effectue l'ascension du personnage si possible. */
+  ascendCharacter(charId) {
+    const check = this.canAscend(charId);
+    if (!check.ok) return check;
+    const rank  = this.getAscensionRank(charId);
+    const costs = check.costs;
+    for (const [mat, qty] of Object.entries(costs)) {
+      this.ascensionMaterials[mat] = (this.ascensionMaterials[mat] ?? 0) - qty;
+    }
+    this.ascensionRanks[charId] = rank + 1;
+    this._saveProgress();
+    return { ok: true, newRank: rank + 1 };
+  }
+
+  /** Ajoute des matériaux d'ascension (récompenses de combat). */
+  addAscensionMaterials(mats = {}) {
+    if (!this.ascensionMaterials) {
+      this.ascensionMaterials = { shard_basic: 0, shard_elite: 0, crystal_void: 0, stone_ascension: 0 };
+    }
+    for (const [k, v] of Object.entries(mats)) {
+      this.ascensionMaterials[k] = (this.ascensionMaterials[k] ?? 0) + v;
+    }
+    this._saveProgress();
+  }
+
+  /* ════════════════════════════════
+     ARÈNE PVP
+  ════════════════════════════════ */
+
+  /** Réinitialise les tentatives si le jour a changé. */
+  _resetArenaIfNeeded() {
+    const today = todayMidnight();
+    if ((this.arenaLastReset ?? 0) < today) {
+      this.arenaAttemptsLeft = 5;
+      this.arenaLastReset    = today;
+      this._saveProgress();
+    }
+  }
+
+  /** Retourne l'état de l'arène. */
+  getArenaState() {
+    this._resetArenaIfNeeded();
+    const rating  = this.arenaRating ?? 1000;
+    const tier    = this._getArenaTier(rating);
+    return {
+      rating,
+      tier,
+      attemptsLeft: this.arenaAttemptsLeft ?? 5,
+      wins:         this.arenaWins    ?? 0,
+      losses:       this.arenaLosses  ?? 0,
+    };
+  }
+
+  _getArenaTier(rating) {
+    const tiers = [
+      { name: 'Bronze',  minRating: 0,    color: '#cd7f32', icon: '🥉' },
+      { name: 'Argent',  minRating: 1100, color: '#aaaacc', icon: '🥈' },
+      { name: 'Or',      minRating: 1250, color: '#ffd700', icon: '🥇' },
+      { name: 'Platine', minRating: 1400, color: '#00e5ff', icon: '💎' },
+      { name: 'Diamant', minRating: 1600, color: '#8844ff', icon: '◆' },
+    ];
+    for (let i = tiers.length - 1; i >= 0; i--) {
+      if (rating >= tiers[i].minRating) return tiers[i];
+    }
+    return tiers[0];
+  }
+
+  /**
+   * Enregistre le résultat d'un combat d'arène.
+   * @param {boolean} won
+   * @returns {{ newRating, ratingChange }}
+   */
+  recordArenaFight(won) {
+    this._resetArenaIfNeeded();
+    const ratingChange    = won ? 20 : -10;
+    this.arenaRating      = Math.max(0, (this.arenaRating ?? 1000) + ratingChange);
+    this.arenaAttemptsLeft = Math.max(0, (this.arenaAttemptsLeft ?? 5) - 1);
+    if (won) this.arenaWins    = (this.arenaWins   ?? 0) + 1;
+    else     this.arenaLosses  = (this.arenaLosses ?? 0) + 1;
+    this._saveProgress();
+    return { newRating: this.arenaRating, ratingChange };
+  }
+
+  /* ════════════════════════════════
      RESET
   ════════════════════════════════ */
 
@@ -787,5 +1024,11 @@ export class PlayerData {
     if (this.uniqueCount() > 0) return;
     ['kira', 'ryuu', 'akane', 'taka', 'suki', 'jin'].forEach(id => this.addCharacter(id));
     this.addCharacter('kira');
+    // Matériaux d'ascension de démo
+    if (!this.ascensionMaterials || Object.values(this.ascensionMaterials).every(v => v === 0)) {
+      this.ascensionMaterials = { shard_basic: 15, shard_elite: 6, crystal_void: 2, stone_ascension: 0 };
+      this._saveProgress();
+    }
+    this.seedDemoArtifacts();
   }
 }

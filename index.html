@@ -231,6 +231,7 @@
             <span class="hub-currency-icon">◈</span>
             <span id="hub-nav-currency-val">0</span>
           </div>
+          <button id="hub-arena-btn" title="Arène PvP">⚔</button>
           <button id="hub-lb-btn" title="Classement">🏆</button>
           <button id="hub-daily-btn" title="Connexion quotidienne">
             🗓
@@ -742,6 +743,11 @@
               </div>
             </div>
 
+            <!-- ── Section ASCENSION ── -->
+            <div id="det-ascension">
+              <!-- Rempli par CollectionUI._buildAscensionUI() -->
+            </div>
+
             <!-- ── Section AMÉLIORER ── -->
             <div id="det-ameliorer">
               <div class="det-aml-header">
@@ -809,6 +815,11 @@
                 <!-- 6 nodes injected by JS -->
               </div>
               <p class="det-const-bonus" id="det-const-bonus">Obtenez des copies pour débloquer des constellations.</p>
+            </div>
+
+            <!-- ── Section ÉQUIPEMENT ── -->
+            <div id="det-equipment">
+              <!-- Rempli par CollectionUI._buildEquipmentUI() -->
             </div>
 
             <div id="det-lore-block">
@@ -1206,6 +1217,13 @@
           <button id="dlb-close-btn">Revenir demain</button>
         </div>
       </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         ARÈNE PVP
+    ══════════════════════════════════════════ -->
+    <div id="arena-screen" style="display:none">
+      <!-- Contenu injecté dynamiquement par ArenaUI -->
     </div>
 
     <script type="module" src="/src/main.js"></script>
