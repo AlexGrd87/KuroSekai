@@ -8430,3 +8430,347 @@ html, body {
   .dlb-milestone-badge { display: none; }
   #dlb-claim-btn     { font-size: 0.72rem; }
 }
+
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  TOASTS IN-GAME                                          ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+#toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  pointer-events: none;
+  max-width: 300px;
+  width: 300px;
+}
+
+.kuro-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: rgba(4, 8, 22, 0.94);
+  border: 1px solid color-mix(in srgb, var(--tc) 60%, transparent);
+  border-left: 3px solid var(--tc);
+  border-radius: 6px;
+  padding: 0.55rem 0.75rem 0.65rem;
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.7),
+    0 0 16px color-mix(in srgb, var(--tc) 18%, transparent);
+  cursor: pointer;
+  pointer-events: all;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(6px);
+}
+.kuro-toast:hover { filter: brightness(1.1); }
+
+.kt-icon {
+  font-size: 1rem;
+  color: var(--tc);
+  flex-shrink: 0;
+  margin-top: 1px;
+  text-shadow: 0 0 8px var(--tc);
+}
+.kt-body { flex: 1; min-width: 0; }
+.kt-msg {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e0eeff;
+  line-height: 1.35;
+}
+.kt-sub {
+  font-size: 0.68rem;
+  color: rgba(200,220,255,0.5);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kt-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: rgba(255,255,255,0.05);
+}
+.kt-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--tc);
+  border-radius: 2px;
+  box-shadow: 0 0 6px var(--tc);
+}
+
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  TRANSITIONS ENTRE ÉCRANS                                ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+#tr-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: none;
+  pointer-events: none;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+}
+
+.tr-panel {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+.tr-panel--main {
+  background: var(--trc, #030810);
+}
+.tr-panel--accent {
+  background: var(--trca, #003366);
+  opacity: 0.55;
+}
+
+.tr-info {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+}
+.tr-kanji {
+  font-size: 5rem;
+  font-weight: 900;
+  color: rgba(255,255,255,0.07);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.tr-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.35em;
+  color: rgba(255,255,255,0.06);
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-top: 0.3rem;
+}
+
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  CARTE CAMPAGNE — CHAPITRES 5 & 6 + améliorations       ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+/* Icône de chapitre */
+.map-ch-top {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.map-ch-icon {
+  font-size: 1rem;
+  color: var(--cc);
+  text-shadow: 0 0 10px var(--cc);
+  flex-shrink: 0;
+}
+
+/* Zone de chapitre — fond coloré très subtil derrière les nodes */
+.map-chapter {
+  position: relative;
+}
+.map-chapter::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 50%,
+    color-mix(in srgb, var(--cc) 8%, transparent) 0%,
+    transparent 70%);
+  pointer-events: none;
+  border-radius: 8px;
+}
+
+/* Badge "BOSS" sur les nodes boss — plus visible */
+.msn-boss-badge {
+  background: linear-gradient(135deg, #cc0022, #ff0044);
+  color: #fff;
+  font-size: 0.55rem;
+  font-weight: 900;
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 8px rgba(255,0,40,0.6);
+  animation: boss-pulse 2s ease-in-out infinite;
+}
+@keyframes boss-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255,0,40,0.6); }
+  50%       { box-shadow: 0 0 16px rgba(255,0,40,0.9); }
+}
+
+/* Node actif (non complété, débloqué) — légère pulsation */
+.map-snode:not(.map-snode--locked):not(.map-snode--done):hover .msn-glow-bg {
+  animation: node-pulse 1.5s ease-in-out infinite;
+}
+@keyframes node-pulse {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 0.7; }
+}
+
+/* Connecteur vertical entre stages — plus épais et animé si complété */
+.map-vconn--active {
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--glow) 60%, transparent),
+    color-mix(in srgb, var(--glow) 20%, transparent));
+  position: relative;
+  overflow: hidden;
+}
+.map-vconn--active::after {
+  content: '';
+  position: absolute;
+  top: -100%; left: 0; right: 0;
+  height: 30%;
+  background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.3), transparent);
+  animation: conn-travel 2s linear infinite;
+}
+@keyframes conn-travel {
+  from { top: -30%; }
+  to   { top: 130%; }
+}
+
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  COMBAT UI — Améliorations visuelles                     ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+/* Unité active — bordure pulsante + lueur */
+.combat-unit--active {
+  position: relative;
+}
+.combat-unit--active::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 2px solid var(--el, #00d4ff);
+  border-radius: inherit;
+  box-shadow:
+    0 0 10px var(--el, #00d4ff),
+    inset 0 0 8px color-mix(in srgb, var(--el, #00d4ff) 20%, transparent);
+  animation: unit-active-glow 1.2s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 1;
+}
+@keyframes unit-active-glow {
+  from { opacity: 0.65; box-shadow: 0 0 8px var(--el, #00d4ff); }
+  to   { opacity: 1;    box-shadow: 0 0 18px var(--el, #00d4ff), 0 0 4px rgba(255,255,255,0.2); }
+}
+
+/* HP bar — transition couleur fluide */
+.cu-hp-bar {
+  transition: width 0.45s cubic-bezier(0.25, 0.8, 0.25, 1),
+              background 0.5s ease;
+  border-radius: 2px;
+}
+
+/* Tour actif — label animé */
+#combat-turn-label {
+  position: relative;
+  overflow: hidden;
+}
+#combat-turn-label::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  left: -60%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
+  animation: turn-shimmer 2.5s ease-in-out infinite;
+}
+@keyframes turn-shimmer {
+  from { left: -60%; }
+  to   { left: 120%; }
+}
+
+/* Queue de tours — chips améliorés */
+.tq-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--tc) 50%, transparent);
+  background: color-mix(in srgb, var(--tc) 12%, rgba(5,8,20,0.8));
+  color: color-mix(in srgb, var(--tc) 80%, #e0eeff);
+  letter-spacing: 0.02em;
+}
+.tq-chip--player {
+  border-color: color-mix(in srgb, var(--tc) 60%, transparent);
+}
+.tq-chip--enemy {
+  opacity: 0.8;
+}
+
+/* Résultat victoire — amélioration visuelle */
+#combat-result-box {
+  position: relative;
+  overflow: hidden;
+}
+#combat-result-box::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255,220,0,0.04) 45deg,
+    transparent 90deg,
+    rgba(0,200,255,0.04) 135deg,
+    transparent 180deg,
+    rgba(255,220,0,0.04) 225deg,
+    transparent 270deg,
+    rgba(0,200,255,0.04) 315deg,
+    transparent 360deg
+  );
+  animation: result-conic 8s linear infinite;
+  pointer-events: none;
+}
+@keyframes result-conic {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Icône trophée — pulse sur victoire */
+#combat-result-icon {
+  display: block;
+  font-size: 3.5rem;
+  animation: trophy-bounce 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) 0.5s both;
+}
+@keyframes trophy-bounce {
+  0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+  60%  { transform: scale(1.25) rotate(5deg); }
+  80%  { transform: scale(0.92) rotate(-3deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Boutons de skill — couleur élémentaire */
+#cbtn-skill1, #cbtn-skill2 {
+  position: relative;
+  overflow: hidden;
+}
+#cbtn-skill1:not(:disabled)::after,
+#cbtn-skill2:not(:disabled)::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  animation: btn-shimmer 3s ease-in-out infinite;
+}
+@keyframes btn-shimmer {
+  from { left: -60%; }
+  to   { left: 160%; }
+}

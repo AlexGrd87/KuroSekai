@@ -27,6 +27,8 @@ import { ProfileUI }      from './ui/ProfileUI.js';
 import { apiService }     from './data/ApiService.js';
 import { audio }          from './audio/AudioManager.js';
 import { DailyLoginUI }   from './ui/DailyLoginUI.js';
+import { toast }          from './ui/ToastUI.js';
+import { transition }     from './ui/TransitionUI.js';
 
 /* ══════════════════════════════════════════
    DONNÉES JOUEUR
@@ -54,12 +56,14 @@ const rewardPopup = new RewardPopupUI();
 
 /* ── Retour hub depuis les sous-écrans plein-écran ── */
 function goHub() {
-  hub.show();
-  questsUI?.refreshBadge();
-  if (!audio.ready || audio._bgmTheme !== 'hub') {
-    audio.stopBgm(600);
-    setTimeout(() => audio.playBgm('hub'), 650);
-  }
+  transition.sweep('hub', () => {
+    hub.show();
+    questsUI?.refreshBadge();
+    if (!audio.ready || audio._bgmTheme !== 'hub') {
+      audio.stopBgm(600);
+      setTimeout(() => audio.playBgm('hub'), 650);
+    }
+  });
 }
 
 const settingsUI = new SettingsUI(playerData, goHub);
@@ -93,6 +97,14 @@ function handleVictory(stage, teamHpPct = 0) {
     return { char, oldLevel, newLevel: result.newLevel,
              newExp: prog.exp, expGained, leveled: result.newLevel > oldLevel };
   });
+
+  // Toast victoire
+  const starsStr = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+  toast.show(
+    `${stage.name} — Victoire ${starsStr}`,
+    'reward',
+    { sub: `+${stage.rewards.currency} ◈  ·  +${expGained} EXP${xpMult > 1 ? ' (×' + xpMult + ')' : ''}` }
+  );
 
   const goToHub = () => {
     const debrief = SCENARIO.debriefings[stage.id];
@@ -256,6 +268,8 @@ document.addEventListener('kuro:character-obtained', (e) => {
     playerData.incrementSummons(1);
     playerData.incrementQuest('SUMMON', 1);
     questsUI?.refreshBadge();
+    toast.show(`${e.detail.name ?? e.detail.id} obtenu(e) !`, 'reward',
+      { icon: '✦', sub: 'Ajouté(e) à ta collection' });
   }
 });
 

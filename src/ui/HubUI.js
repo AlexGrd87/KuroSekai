@@ -6,9 +6,11 @@
  *   #hub-map-panel → carte des stages (ouverte via COMBAT, slide-up)
  */
 
-import { gsap }   from 'gsap';
-import { STAGES } from '../data/enemies.js';
-import { audio }  from '../audio/AudioManager.js';
+import { gsap }       from 'gsap';
+import { STAGES }     from '../data/enemies.js';
+import { audio }      from '../audio/AudioManager.js';
+import { transition } from './TransitionUI.js';
+import { toast }      from './ToastUI.js';
 
 export class HubUI {
   constructor(playerData, onDeploy, onSummon, onCollection, onSettings, onCampaign, onShop) {
@@ -107,17 +109,18 @@ export class HubUI {
     this._buildMap();
     this._updateStats();
 
-    // Slide-up du panneau carte depuis le bas
-    gsap.set(this.mapPanel, { display: 'flex', y: '100%', opacity: 0 });
-    gsap.to(this.homeView, {
-      opacity: 0, duration: 0.18, ease: 'power2.in',
-      onComplete: () => gsap.set(this.homeView, { display: 'none' }),
+    transition.sweep('map', () => {
+      // Slide-up du panneau carte depuis le bas
+      gsap.set(this.mapPanel, { display: 'flex', y: '100%', opacity: 0 });
+      gsap.to(this.homeView, {
+        opacity: 0, duration: 0.15, ease: 'power2.in',
+        onComplete: () => gsap.set(this.homeView, { display: 'none' }),
+      });
+      gsap.to(this.mapPanel, { y: 0, opacity: 1, duration: 0.38, delay: 0.05, ease: 'power3.out' });
+      gsap.fromTo('.map-snode',
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.3, stagger: 0.06, delay: 0.18, ease: 'back.out(1.3)' });
     });
-    gsap.to(this.mapPanel, { y: 0, opacity: 1, duration: 0.42, delay: 0.1, ease: 'power3.out' });
-
-    gsap.fromTo('.hub-node',
-      { opacity: 0, y: 25 },
-      { opacity: 1, y: 0, duration: 0.35, stagger: 0.09, delay: 0.3, ease: 'back.out(1.3)' });
   }
 
   _closeMap() {
@@ -147,18 +150,24 @@ export class HubUI {
     this.mapWrap.innerHTML = '';
 
     const CHAPTERS = [
-      { id: 1, name: 'PÉRIPHÉRIE',  subtitle: 'Districts extérieurs de Neo-Osaka', color: '#0099ff',
-        stageIds: ['stage_01', 'stage_02', 'stage_03'] },
-      { id: 2, name: 'PROFONDEUR',  subtitle: 'Nœuds industriels et réseaux souterrains', color: '#ffcc00',
-        stageIds: ['stage_04', 'stage_05', 'stage_06'] },
-      { id: 3, name: 'ABÎME',       subtitle: 'Fracturation de la réalité — Fin des temps', color: '#cc00ff',
-        stageIds: ['stage_07', 'stage_08', 'stage_09'] },
-      { id: 4, name: 'SINGULARITÉ', subtitle: 'L\'effacement final — Au-delà du vide',       color: '#dd00ff',
-        stageIds: ['stage_10', 'stage_11', 'stage_12'] },
+      { id: 1, name: 'PÉRIPHÉRIE',    subtitle: 'Districts extérieurs de Neo-Osaka',           color: '#0099ff', icon: '◈' },
+      { id: 2, name: 'PROFONDEUR',    subtitle: 'Nœuds industriels et réseaux souterrains',    color: '#ffcc00', icon: '◉' },
+      { id: 3, name: 'ABÎME',         subtitle: 'Fracturation de la réalité — Fin des temps',  color: '#cc00ff', icon: '◆' },
+      { id: 4, name: 'SINGULARITÉ',   subtitle: 'L\'effacement final — Au-delà du vide',        color: '#dd00ff', icon: '✦' },
+      { id: 5, name: 'RÉSURGENCE',    subtitle: 'Les fragments du vide s\'éveillent à nouveau', color: '#ff2266', icon: '⚡' },
+      { id: 6, name: 'TRANSCENDANCE', subtitle: 'Au-delà des limites de la réalité connue',     color: '#ff8800', icon: '★' },
     ];
+    const CHAPTER_STAGE_IDS = {
+      1: ['stage_01', 'stage_02', 'stage_03'],
+      2: ['stage_04', 'stage_05', 'stage_06'],
+      3: ['stage_07', 'stage_08', 'stage_09'],
+      4: ['stage_10', 'stage_11', 'stage_12'],
+      5: ['stage_13', 'stage_14', 'stage_15'],
+      6: ['stage_16', 'stage_17', 'stage_18'],
+    };
 
     for (const chapter of CHAPTERS) {
-      const chStages = chapter.stageIds
+      const chStages = (CHAPTER_STAGE_IDS[chapter.id] || [])
         .map(id => STAGES.find(s => s.id === id))
         .filter(Boolean);
 
@@ -194,7 +203,10 @@ export class HubUI {
     el.innerHTML = `
       <div class="map-ch-bar"></div>
       <div class="map-ch-content">
-        <span class="map-ch-label">CHAPITRE ${chapter.id}${allDone ? ' <span class="map-ch-check">✓</span>' : ''}</span>
+        <div class="map-ch-top">
+          <span class="map-ch-icon">${chapter.icon || '◈'}</span>
+          <span class="map-ch-label">CHAPITRE ${chapter.id}${allDone ? ' <span class="map-ch-check">✓</span>' : ''}</span>
+        </div>
         <span class="map-ch-name">${chapter.name}</span>
         <span class="map-ch-sub">${chapter.subtitle}</span>
       </div>
@@ -362,14 +374,14 @@ export class HubUI {
     if (!this._activeStage) return;
     const stage      = this._activeStage;
     const energyCost = stage.energyCost ?? 1;
-    if (!this.playerData.spendEnergy(energyCost)) return; // double-check
+    if (!this.playerData.spendEnergy(energyCost)) {
+      toast.show('Énergie insuffisante', 'warning', { sub: `Il te faut ${energyCost} ⚡` });
+      return;
+    }
     this._closeDetail();
-    gsap.to(this.screen, {
-      opacity: 0, duration: 0.25, ease: 'power2.in',
-      onComplete: () => {
-        gsap.set(this.screen, { display: 'none' });
-        this.onDeploy(stage);
-      },
+    transition.sweep('combat', () => {
+      gsap.set(this.screen, { display: 'none' });
+      this.onDeploy(stage);
     });
   }
 
