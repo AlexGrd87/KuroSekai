@@ -88,6 +88,8 @@ export class PlayerData {
       this.arenaLastReset     = data.arenaLastReset      ?? 0;
       this.arenaWins          = data.arenaWins           ?? 0;
       this.arenaLosses        = data.arenaLosses         ?? 0;
+      // Bannières gacha — suivi du 50/50 par bannière
+      this.bannerLostLast     = data.bannerLostLast      ?? {};
     } catch {
       this.completedStages  = new Set();
       this.currency         = 0;
@@ -110,6 +112,7 @@ export class PlayerData {
       this.arenaLastReset     = 0;
       this.arenaWins          = 0;
       this.arenaLosses        = 0;
+      this.bannerLostLast     = {};
     }
     try {
       const raw = localStorage.getItem(HISTORY_KEY);
@@ -291,6 +294,7 @@ export class PlayerData {
       arenaLastReset:     this.arenaLastReset,
       arenaWins:          this.arenaWins,
       arenaLosses:        this.arenaLosses,
+      bannerLostLast:     this.bannerLostLast    ?? {},
     };
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
     this._scheduleCloudSync();

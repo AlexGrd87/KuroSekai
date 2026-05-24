@@ -11,6 +11,9 @@ import { gsap }        from 'gsap';
 import { GachaEngine } from '../gacha/GachaEngine.js';
 import { RARITIES }    from '../data/characters.js';
 import { audio }       from '../audio/AudioManager.js';
+import {
+  getActiveBanners, getFeaturedCharacter, getBannerById, formatCountdown,
+} from '../data/banners.js';
 
 const COST_X1  = 300;
 const COST_X10 = 2700;
@@ -30,12 +33,14 @@ const ELEMENT_COLORS = {
 
 export class SummonUI {
   constructor(playerData) {
-    this.playerData  = playerData;
-    this.engine      = new GachaEngine(playerData);
-    this.overlay     = null;
-    this._cinematic  = null;
-    this._histPanel  = null;
-    this.isAnimating = false;
+    this.playerData        = playerData;
+    this.engine            = new GachaEngine(playerData);
+    this.overlay           = null;
+    this._cinematic        = null;
+    this._histPanel        = null;
+    this.isAnimating       = false;
+    this._activeBannerId   = 'standard';
+    this._countdownInterval = null;
     this._build();
     this._buildCinematic();
     this._buildHistoryPanel();
@@ -66,6 +71,12 @@ export class SummonUI {
           <button id="summon-history-btn" title="Historique des tirages">歴</button>
         </div>
       </div>
+
+      <!-- Onglets de bannière -->
+      <div id="summon-banner-tabs"></div>
+
+      <!-- Showcase bannière événement -->
+      <div id="summon-banner-showcase" style="display:none"></div>
 
       <!-- Zone de résultats (cartes) -->
       <div id="cards-area"></div>
@@ -183,6 +194,127 @@ export class SummonUI {
       .addEventListener('click', () => this._doPull(10));
     this.overlay.querySelector('#summon-history-btn')
       .addEventListener('click', () => this._showHistory());
+    this._initBannerTabs();
+  }
+
+  /* ══════════════════════════════════════════
+     BANNIÈRES — TABS + SHOWCASE
+  ══════════════════════════════════════════ */
+
+  /** Construit et bind les onglets de bannière. */
+  _initBannerTabs() {
+    const active  = getActiveBanners();
+    const tabsEl  = this.overlay.querySelector('#summon-banner-tabs');
+    if (!tabsEl) return;
+
+    if (active.length <= 1) {
+      // Une seule bannière → pas d'onglets, juste un label discret
+      tabsEl.innerHTML = `<div class="sbt-single-label">${active[0]?.name ?? 'STANDARD'}</div>`;
+      this._activeBannerId = active[0]?.id ?? 'standard';
+      this._renderBannerShowcase();
+      return;
+    }
+
+    // Auto-sélectionne la bannière événement si elle est active
+    const hasEvent = active.find(b => !b.permanent);
+    if (hasEvent) this._activeBannerId = hasEvent.id;
+
+    tabsEl.innerHTML = active.map(b => `
+      <button class="sbt-tab ${b.id === this._activeBannerId ? 'sbt-tab--active' : ''} ${!b.permanent ? 'sbt-tab--event' : ''}"
+              data-banner-id="${b.id}"
+              style="--tab-color:${b.color}">
+        <span class="sbt-kanji">${b.kanji}</span>
+        <span class="sbt-name">${b.name}</span>
+        ${!b.permanent ? '<span class="sbt-limited">LIMITÉ</span>' : ''}
+      </button>
+    `).join('');
+
+    tabsEl.querySelectorAll('.sbt-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this._activeBannerId = btn.dataset.bannerId;
+        // Met à jour classes actives
+        tabsEl.querySelectorAll('.sbt-tab').forEach(b =>
+          b.classList.toggle('sbt-tab--active', b.dataset.bannerId === this._activeBannerId)
+        );
+        audio.play?.('ui_navigate');
+        this._renderBannerShowcase();
+        this._stopCountdown();
+        this._startCountdownIfNeeded();
+      });
+    });
+
+    this._renderBannerShowcase();
+  }
+
+  /** Rend le showcase de la bannière active. */
+  _renderBannerShowcase() {
+    const el     = this.overlay.querySelector('#summon-banner-showcase');
+    const banner = getBannerById(this._activeBannerId);
+    if (!el) return;
+
+    if (!banner || banner.permanent || !banner.featuredId) {
+      gsap.to(el, {
+        opacity: 0, y: -8, duration: 0.2,
+        onComplete: () => { el.style.display = 'none'; },
+      });
+      return;
+    }
+
+    const featured = getFeaturedCharacter(banner);
+    if (!featured) { el.style.display = 'none'; return; }
+
+    const elColor  = this._elementColor(featured.element);
+    const timeLeft = banner.endTime ? banner.endTime - Date.now() : 0;
+
+    el.innerHTML = `
+      <div class="sbs-left">
+        <div class="sbs-feat-kanji" style="color:${banner.color}">${banner.kanji}</div>
+        <div class="sbs-feat-name" style="color:${banner.color}">${featured.name}</div>
+        <div class="sbs-feat-title">${featured.title}</div>
+        <div class="sbs-feat-element" style="color:${elColor.main}">
+          ${featured.element} · ${featured.class}
+        </div>
+      </div>
+      <div class="sbs-right">
+        <div class="sbs-badges">
+          <div class="sbs-badge sbs-badge--rate" style="--bc:${banner.color}">
+            TAUX ×${banner.rateUpMult}
+          </div>
+          <div class="sbs-badge sbs-badge--guarantee" style="--bc:${banner.color}">
+            50/50 GARANTI
+          </div>
+        </div>
+        <div class="sbs-countdown">
+          <span class="sbs-cd-label">FIN DANS</span>
+          <span class="sbs-cd-val" id="sbs-countdown-val">${formatCountdown(timeLeft)}</span>
+        </div>
+        <div class="sbs-note">Premier 5★ garanti · Pity partagé</div>
+      </div>
+    `;
+
+    el.style.setProperty('--sbs-color', banner.color);
+    el.style.setProperty('--sbs-dim',   banner.colorDim);
+    el.style.display = 'flex';
+    gsap.fromTo(el,
+      { opacity: 0, y: -12 },
+      { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }
+    );
+  }
+
+  _startCountdownIfNeeded() {
+    const banner = getBannerById(this._activeBannerId);
+    if (!banner || banner.permanent || !banner.endTime) return;
+    this._countdownInterval = setInterval(() => {
+      const el = this.overlay?.querySelector('#sbs-countdown-val');
+      if (el) el.textContent = formatCountdown(banner.endTime - Date.now());
+    }, 1000);
+  }
+
+  _stopCountdown() {
+    if (this._countdownInterval) {
+      clearInterval(this._countdownInterval);
+      this._countdownInterval = null;
+    }
   }
 
   /* ══════════════════════════════════════════
@@ -213,7 +345,8 @@ export class SummonUI {
     this._updateCurrencyDisplay();
     this._updateButtonStates();
 
-    const results = this.engine.pull(count);
+    const activeBanner = getBannerById(this._activeBannerId);
+    const results = this.engine.pull(count, activeBanner);
     this._updatePityDisplay();
 
     // Enregistre dans l'historique joueur
@@ -833,11 +966,15 @@ export class SummonUI {
     this._updatePityDisplay();
     this._updateCurrencyDisplay();
     this._updateButtonStates();
+    // Réinitialise les onglets (peut y avoir une nouvelle bannière événement)
+    this._initBannerTabs();
+    this._startCountdownIfNeeded();
     gsap.fromTo(this.overlay, { opacity: 0 }, { opacity: 1, duration: 0.4 });
   }
 
   hide() {
     this._hideHistory();
+    this._stopCountdown();
     gsap.to(this.overlay, {
       opacity: 0, duration: 0.3,
       onComplete: () => { this.overlay.style.display = 'none'; },
