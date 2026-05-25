@@ -8,6 +8,8 @@ import { apiService }                                    from './ApiService.js';
 import { DAILY_QUESTS, WEEKLY_QUESTS,
          todayMidnight, weekStart }                      from './quests.js';
 import { DAILY_REWARDS, getDayInCycle }                  from './dailyRewards.js';
+import { ACCOUNT_XP_REWARDS, LEVEL_MILESTONES,
+         getAccountLevel, ACCOUNT_MAX_LEVEL }            from './accountLevel.js';
 import { ACHIEVEMENTS }                                  from './achievements.js';
 import { calcArtifactStats, generateArtifact,
          ARTIFACT_SLOTS, DISMANTLE_REWARDS }             from './artifacts.js';
@@ -113,6 +115,8 @@ export class PlayerData {
       this.expeditionSlots        = data.expeditionSlots        ?? [null, null, null];
       // Événements temporaires
       this.eventProgress          = data.eventProgress          ?? {};
+      // Progression de compte (XP total brut)
+      this.accountXP              = data.accountXP              ?? 0;
     } catch {
       this.completedStages  = new Set();
       this.currency         = 0;
@@ -150,6 +154,7 @@ export class PlayerData {
       this.unlockedTalents     = {};
       this.expeditionSlots     = [null, null, null];
       this.eventProgress       = {};
+      this.accountXP           = 0;
     }
     try {
       const raw = localStorage.getItem(HISTORY_KEY);
@@ -355,6 +360,8 @@ export class PlayerData {
       expeditionSlots:         this.expeditionSlots         ?? [null, null, null],
       // Événements temporaires
       eventProgress:           this.eventProgress           ?? {},
+      // Progression de compte
+      accountXP:               this.accountXP               ?? 0,
     };
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
     this._scheduleCloudSync();
@@ -648,6 +655,54 @@ export class PlayerData {
   addFreeRolls(n) {
     this.freeRolls = (this.freeRolls ?? 0) + n;
     this._saveProgress();
+  }
+
+  /* ════════════════════════════════
+     PROGRESSION DE COMPTE
+  ════════════════════════════════ */
+
+  /**
+   * Ajoute de l'XP de compte suite à une action.
+   * @param {'COMBAT_WIN'|'COMBAT_LOSS'|'STAGE_COMPLETE'|'SUMMON'|'QUEST_CLAIM'|'DAILY_LOGIN'|'DUNGEON_CLEAR'|'BOSS_FIGHT'} action
+   * @returns {{ leveled: boolean, oldLevel: number, newLevel: number, rewards: object|null, xpGained: number }}
+   */
+  addAccountXP(action) {
+    const xp = ACCOUNT_XP_REWARDS[action] ?? 0;
+    const before = getAccountLevel(this.accountXP ?? 0);
+    if (xp <= 0) return { leveled: false, oldLevel: before.level, newLevel: before.level, rewards: null, xpGained: 0 };
+
+    this.accountXP = (this.accountXP ?? 0) + xp;
+    const after  = getAccountLevel(this.accountXP);
+
+    const leveled = after.level > before.level;
+    let rewards = null;
+
+    if (leveled) {
+      for (let l = before.level + 1; l <= Math.min(after.level, ACCOUNT_MAX_LEVEL); l++) {
+        const milestone = LEVEL_MILESTONES[l];
+        if (milestone) {
+          if (milestone.currency)  this.currency  = (this.currency  ?? 0) + milestone.currency;
+          if (milestone.freeRolls) this.addFreeRolls(milestone.freeRolls);
+          rewards = milestone;
+        }
+      }
+    }
+
+    this._saveProgress();
+
+    // Émet un événement DOM si level-up (pour affichage toast dans main.js)
+    if (leveled) {
+      document.dispatchEvent(new CustomEvent('kuro:account-leveled', {
+        detail: { oldLevel: before.level, newLevel: after.level, rewards, xpGained: xp },
+      }));
+    }
+
+    return { leveled, oldLevel: before.level, newLevel: after.level, rewards, xpGained: xp };
+  }
+
+  /** Retourne la progression de compte actuelle. */
+  getAccountProgress() {
+    return getAccountLevel(this.accountXP ?? 0);
   }
 
   /**

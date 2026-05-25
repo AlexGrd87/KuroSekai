@@ -40,6 +40,7 @@ import { ArtifactInventoryUI } from './ui/ArtifactInventoryUI.js';
 import { ExpeditionUI }         from './ui/ExpeditionUI.js';
 import { EventUI }              from './ui/EventUI.js';
 import { rollArtifactDrops, formatArtifactDrops } from './data/artifacts.js';
+import { getAccountRankLabel }                    from './data/accountLevel.js';
 
 /* ══════════════════════════════════════════
    DONNÉES JOUEUR
@@ -78,6 +79,11 @@ function _checkAchievements() {
       duration: 5000,
     });
   });
+}
+
+/** Accorde de l'XP de compte (le toast level-up est géré via kuro:account-leveled). */
+function _grantAccountXP(action) {
+  playerData.addAccountXP(action);
 }
 
 function _smartStartupNotifs() {
@@ -164,6 +170,9 @@ function handleVictory(stage, teamHpPct = 0) {
   playerData.incrementQuest('COMBAT_WIN',     1);
   playerData.incrementQuest('STAGE_COMPLETE', 1);
   questsUI?.refreshBadge();
+  // XP de compte
+  _grantAccountXP('COMBAT_WIN');
+  _grantAccountXP('STAGE_COMPLETE');
 
   const xpMult    = playerData.consumeXpBoost();   // 2 si boost actif, sinon 1
   const expGained = Math.round((stage.rewards.exp ?? 0) * xpMult);
@@ -535,9 +544,32 @@ document.addEventListener('kuro:character-obtained', (e) => {
     playerData.incrementSummons(1);
     playerData.incrementQuest('SUMMON', 1);
     questsUI?.refreshBadge();
+    _grantAccountXP('SUMMON');
     toast.show(`${e.detail.name ?? e.detail.id} obtenu(e) !`, 'reward',
       { icon: '✦', sub: 'Ajouté(e) à ta collection' });
   }
+});
+
+/* ══════════════════════════════════════════
+   PROGRESSION DE COMPTE — LEVEL UP TOAST
+══════════════════════════════════════════ */
+
+document.addEventListener('kuro:account-leveled', (e) => {
+  const { newLevel, rewards } = e.detail;
+  const rank = getAccountRankLabel(newLevel);
+  const rewardStr = rewards
+    ? [
+        rewards.currency  ? `+${rewards.currency.toLocaleString()} ◈` : '',
+        rewards.freeRolls ? `+${rewards.freeRolls} tirage${rewards.freeRolls > 1 ? 's' : ''}` : '',
+        rewards.label     ? rewards.label : '',
+      ].filter(Boolean).join(' · ')
+    : '';
+  toast.show(
+    `▲ Niveau ${newLevel} — ${rank}`,
+    'reward',
+    { sub: rewardStr || `Progression de compte`, duration: 5000 }
+  );
+  hub?.refreshAccountLevel?.();
 });
 
 /* ══════════════════════════════════════════
@@ -592,6 +624,7 @@ const dailyLoginUI = new DailyLoginUI(playerData, () => {
   hub?._updateStats?.();
   questsUI?.refreshBadge();
   _refreshDailyBadge();
+  _grantAccountXP('DAILY_LOGIN');
 });
 
 function _refreshDailyBadge() {

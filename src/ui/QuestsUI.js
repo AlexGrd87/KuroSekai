@@ -196,6 +196,7 @@ export class QuestsUI {
     if (!rewards) return;
 
     audio.play('shop_buy');
+    this.playerData.addAccountXP('QUEST_CLAIM');
 
     // Flash de la carte
     gsap.to(row, { backgroundColor: 'rgba(0,212,255,0.25)', duration: 0.15,

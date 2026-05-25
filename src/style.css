@@ -3969,6 +3969,60 @@ a:focus:not(:focus-visible) { outline: none; }
   text-align: right;
 }
 
+/* ── Niveau de compte ── */
+#hub-account-level-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  background: rgba(0, 212, 255, 0.06);
+  border: 1px solid rgba(0, 212, 255, 0.18);
+  border-radius: 8px;
+  padding: 0.22rem 0.55rem;
+  cursor: default;
+  min-width: 88px;
+}
+.halb-top {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  line-height: 1;
+}
+#hub-account-level {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #00d4ff;
+  font-family: var(--font-ui);
+  text-shadow: 0 0 8px rgba(0,212,255,0.5);
+}
+#hub-account-rank {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(0, 212, 255, 0.65);
+  font-family: var(--font-ui);
+}
+#hub-account-xp-track {
+  width: 100%;
+  height: 3px;
+  background: rgba(0, 212, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+#hub-account-xp-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #0099cc, #00d4ff);
+  border-radius: 2px;
+}
+.halb-xp-txt {
+  font-size: 0.5rem;
+  color: rgba(0, 212, 255, 0.45);
+  font-family: var(--font-ui);
+  line-height: 1;
+  white-space: nowrap;
+}
+
 #hub-nav-currency {
   display: flex; align-items: center; gap: 0.35rem;
   background: rgba(240,192,64,0.07); border: 1px solid rgba(240,192,64,0.2);

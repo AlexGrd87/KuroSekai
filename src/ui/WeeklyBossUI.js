@@ -284,9 +284,10 @@ export class WeeklyBossUI {
     );
     this.playerData._saveProgress();
 
-    // Quest tracking
+    // Quest tracking + XP de compte
     this.playerData.incrementQuest?.('COMBAT_WIN', 1);
     if (winner === 'player') this.playerData.incrementQuest?.('STAGE_COMPLETE', 1);
+    this.playerData.addAccountXP?.('BOSS_FIGHT');
 
     const tier = getBossRewardTier(this.playerData.weeklyBossDamage);
     const type = winner === 'player' ? 'reward' : 'warning';

@@ -11,6 +11,7 @@ import { STAGES }     from '../data/enemies.js';
 import { audio }      from '../audio/AudioManager.js';
 import { transition } from './TransitionUI.js';
 import { toast }      from './ToastUI.js';
+import { getAccountRankLabel } from '../data/accountLevel.js';
 
 export class HubUI {
   constructor(playerData, onDeploy, onSummon, onCollection, onSettings, onCampaign, onShop) {
@@ -339,6 +340,28 @@ export class HubUI {
       <span class="hub-stat">⚔ ${done}/${STAGES.length}</span>
       <span class="hub-stat">✦ ${owned} perso.</span>
       <span class="hub-stat" style="color:#f0c040">◈ ${curr.toLocaleString()}</span>`;
+
+    // Niveau de compte
+    this.refreshAccountLevel();
+  }
+
+  /** Met à jour le badge de niveau de compte dans le hub. */
+  refreshAccountLevel() {
+    const prog  = this.playerData.getAccountProgress?.();
+    if (!prog) return;
+    const rank  = getAccountRankLabel(prog.level);
+
+    const lvlEl = document.getElementById('hub-account-level');
+    if (lvlEl) lvlEl.textContent = `Nv.${prog.level}`;
+
+    const rankEl = document.getElementById('hub-account-rank');
+    if (rankEl) rankEl.textContent = rank;
+
+    const barEl = document.getElementById('hub-account-xp-bar');
+    if (barEl) gsap.to(barEl, { width: `${prog.pct}%`, duration: 0.5, ease: 'power2.out' });
+
+    const xpEl = document.getElementById('hub-account-xp-txt');
+    if (xpEl) xpEl.textContent = prog.isMaxed ? 'MAX' : `${prog.currentXp}/${prog.neededXp} XP`;
   }
 
   /* ══════════════════════════════════════

@@ -153,6 +153,7 @@ export class DungeonUI {
       this.playerData.currency = (this.playerData.currency ?? 0) + VICTORY_CURRENCY;
       this.playerData.incrementDungeonClears?.();
       this.playerData.incrementQuest?.('STAGE_COMPLETE', 1);
+      this.playerData.addAccountXP?.('DUNGEON_CLEAR');
 
       const artDrops = rollArtifactDrops('dungeon_win');
       artDrops.forEach(art => this.playerData.addArtifactToInventory(art));
