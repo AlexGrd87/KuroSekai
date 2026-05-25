@@ -286,6 +286,7 @@ export class WeeklyBossUI {
 
     // Quest tracking + XP de compte
     this.playerData.incrementQuest?.('COMBAT_WIN', 1);
+    this.playerData.incrementQuest?.('BOSS_FIGHT', 1);
     if (winner === 'player') this.playerData.incrementQuest?.('STAGE_COMPLETE', 1);
     this.playerData.addAccountXP?.('BOSS_FIGHT');
 

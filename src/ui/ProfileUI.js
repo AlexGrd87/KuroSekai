@@ -17,6 +17,7 @@ import {
   getAvatar, getFrame,
 } from '../data/profileData.js';
 import { ACH_CATS } from '../data/achievements.js';
+import { getAccountRankLabel } from '../data/accountLevel.js';
 
 /* ─── Système de titres ─── */
 const TITLES = [
@@ -97,6 +98,8 @@ export class ProfileUI {
     const av    = getAvatar(this._profile.avatarId);
     const fr    = getFrame(this._profile.frameId);
     const title = this._computeTitle();
+    const prog  = this.playerData.getAccountProgress?.() ?? { level: 1, currentXp: 0, neededXp: 100, pct: 0, isMaxed: false };
+    const rank  = getAccountRankLabel(prog.level);
 
     el.innerHTML = `
       <div class="prf-avatar-area">
@@ -124,6 +127,18 @@ export class ProfileUI {
         </div>
         <div class="prf-since">Actif depuis ${this._daysActive()} jour${this._daysActive() > 1 ? 's' : ''}</div>
         <div id="prf-av-label" class="prf-av-label">${av.label} · ${fr.label}</div>
+
+        <!-- Progression de compte -->
+        <div class="prf-account-level-block">
+          <div class="prf-alb-header">
+            <span class="prf-alb-level">Niveau ${prog.level}</span>
+            <span class="prf-alb-rank">${rank}</span>
+            <span class="prf-alb-xp">${prog.isMaxed ? 'MAX' : `${prog.currentXp.toLocaleString()} / ${prog.neededXp.toLocaleString()} XP`}</span>
+          </div>
+          <div class="prf-alb-track">
+            <div class="prf-alb-fill" id="prf-alb-fill" style="width:0%"></div>
+          </div>
+        </div>
       </div>`;
 
     this._bindHeroEvents();
@@ -134,6 +149,12 @@ export class ProfileUI {
       ?.addEventListener('click', () => { audio.play('ui_navigate'); this._openPicker('avatar'); });
     document.getElementById('btn-open-fr-picker')
       ?.addEventListener('click', () => { audio.play('ui_navigate'); this._openPicker('frame'); });
+
+    // Anime la barre XP de compte
+    const prog = this.playerData.getAccountProgress?.();
+    if (prog) {
+      gsap.to('#prf-alb-fill', { width: `${prog.pct}%`, duration: 0.7, delay: 0.3, ease: 'power2.out' });
+    }
 
     // Nom — mode édition
     document.getElementById('prf-name-edit-btn')

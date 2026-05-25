@@ -9,41 +9,46 @@
 
 import { gsap }   from 'gsap';
 import { STAGES } from '../data/enemies.js';
+import { getAccountRankLabel } from '../data/accountLevel.js';
 
 const LB_BEST_KEY = 'kuro_lb_dungeon_best';
 
 /* ── Joueurs mock (scores fixes, noms japonisés) ── */
 const MOCK_PLAYERS = [
-  { name: 'ヴァイオレット_XV', scores: { global: 98_400, campaign: 9, dungeon: 5 } },
-  { name: 'ZERO.PHOENIX',      scores: { global: 85_200, campaign: 9, dungeon: 4 } },
-  { name: '黒刃_Ryuu',         scores: { global: 78_600, campaign: 8, dungeon: 5 } },
-  { name: 'Neon_Sakura',       scores: { global: 71_000, campaign: 9, dungeon: 3 } },
-  { name: 'GHOST_HKZR',       scores: { global: 64_800, campaign: 7, dungeon: 5 } },
-  { name: '夜叉_Kimi',         scores: { global: 57_500, campaign: 8, dungeon: 2 } },
-  { name: 'Aurora_9',          scores: { global: 49_200, campaign: 6, dungeon: 4 } },
-  { name: 'Cipher_Wolf',       scores: { global: 41_600, campaign: 7, dungeon: 3 } },
-  { name: 'ミライ_09',         scores: { global: 35_800, campaign: 5, dungeon: 4 } },
-  { name: 'VORTEX.DATA',       scores: { global: 28_300, campaign: 6, dungeon: 2 } },
-  { name: '鋼鉄_Nova',         scores: { global: 19_400, campaign: 4, dungeon: 3 } },
-  { name: 'DataShard_Aya',     scores: { global: 11_200, campaign: 3, dungeon: 2 } },
+  { name: 'ヴァイオレット_XV', scores: { global: 98_400, campaign: 9, dungeon: 5, boss: 94_200,  accountLevel: 42 } },
+  { name: 'ZERO.PHOENIX',      scores: { global: 85_200, campaign: 9, dungeon: 4, boss: 81_500,  accountLevel: 38 } },
+  { name: '黒刃_Ryuu',         scores: { global: 78_600, campaign: 8, dungeon: 5, boss: 76_800,  accountLevel: 35 } },
+  { name: 'Neon_Sakura',       scores: { global: 71_000, campaign: 9, dungeon: 3, boss: 68_400,  accountLevel: 31 } },
+  { name: 'GHOST_HKZR',        scores: { global: 64_800, campaign: 7, dungeon: 5, boss: 59_700,  accountLevel: 28 } },
+  { name: '夜叉_Kimi',         scores: { global: 57_500, campaign: 8, dungeon: 2, boss: 52_000,  accountLevel: 25 } },
+  { name: 'Aurora_9',          scores: { global: 49_200, campaign: 6, dungeon: 4, boss: 45_300,  accountLevel: 22 } },
+  { name: 'Cipher_Wolf',       scores: { global: 41_600, campaign: 7, dungeon: 3, boss: 38_100,  accountLevel: 19 } },
+  { name: 'ミライ_09',         scores: { global: 35_800, campaign: 5, dungeon: 4, boss: 29_600,  accountLevel: 15 } },
+  { name: 'VORTEX.DATA',       scores: { global: 28_300, campaign: 6, dungeon: 2, boss: 22_400,  accountLevel: 12 } },
+  { name: '鋼鉄_Nova',         scores: { global: 19_400, campaign: 4, dungeon: 3, boss: 14_800,  accountLevel:  8 } },
+  { name: 'DataShard_Aya',     scores: { global: 11_200, campaign: 3, dungeon: 2, boss:  7_200,  accountLevel:  5 } },
 ];
 
 /* ── Calcul du score joueur ── */
 function calcPlayerScores(playerData) {
-  const stages_done  = playerData.completedStages?.size ?? 0;
-  const dungeonBest  = parseInt(localStorage.getItem(LB_BEST_KEY) ?? '0', 10);
-  const chars        = playerData.uniqueCount?.() ?? 0;
-  const totalLevels  = Array.from(playerData.completedStages ?? []).length;
+  const stages_done   = playerData.completedStages?.size ?? 0;
+  const dungeonBest   = parseInt(localStorage.getItem(LB_BEST_KEY) ?? '0', 10);
+  const chars         = playerData.uniqueCount?.() ?? 0;
+  const bossDmg       = playerData.weeklyBossDamage ?? 0;
+  const prog          = playerData.getAccountProgress?.() ?? { level: 1 };
 
-  const campaign_pts = stages_done * 1000;
-  const dungeon_pts  = dungeonBest * 800;
-  const char_pts     = chars * 200;
-  const global_pts   = campaign_pts + dungeon_pts + char_pts;
+  const campaign_pts  = stages_done * 1000;
+  const dungeon_pts   = dungeonBest * 800;
+  const char_pts      = chars * 200;
+  const account_pts   = prog.level * 300;
+  const global_pts    = campaign_pts + dungeon_pts + char_pts + account_pts;
 
   return {
-    global:   global_pts,
-    campaign: stages_done,
-    dungeon:  dungeonBest,
+    global:       global_pts,
+    campaign:     stages_done,
+    dungeon:      dungeonBest,
+    boss:         bossDmg,
+    accountLevel: prog.level,
   };
 }
 
@@ -53,7 +58,7 @@ export class LeaderboardUI {
     this.goHub      = goHub;
 
     this.screen  = document.getElementById('lb-screen');
-    this._tab    = 'global';  // 'global' | 'campaign' | 'dungeon'
+    this._tab    = 'global';  // 'global' | 'campaign' | 'dungeon' | 'boss'
 
     this._bindEvents();
   }
@@ -101,22 +106,24 @@ export class LeaderboardUI {
     const tab = this._tab;
 
     // Construit la liste complète (mocks + joueur)
+    const scoreFor = (scores, t) =>
+      t === 'global'   ? scores.global
+    : t === 'campaign' ? scores.campaign
+    : t === 'dungeon'  ? scores.dungeon
+    :                    scores.boss ?? 0;
+
     const all = [
       ...MOCK_PLAYERS.map(m => ({
-        name:   m.name,
-        score:  tab === 'global'   ? m.scores.global
-               : tab === 'campaign' ? m.scores.campaign
-               :                     m.scores.dungeon,
+        name:     m.name,
+        score:    scoreFor(m.scores, tab),
         isPlayer: false,
-        raw: m.scores,
+        raw:      m.scores,
       })),
       {
         name:     username,
-        score:    tab === 'global'   ? playerScores.global
-                 : tab === 'campaign' ? playerScores.campaign
-                 :                     playerScores.dungeon,
+        score:    scoreFor(playerScores, tab),
         isPlayer: true,
-        raw: playerScores,
+        raw:      playerScores,
       },
     ].sort((a, b) => b.score - a.score);
 
@@ -153,14 +160,19 @@ export class LeaderboardUI {
                     : rank === 3 ? 'lb-rank--bronze'
                     : '';
 
-    const subInfo = tab === 'global'
-      ? `${entry.raw.campaign} zones · Donjon S${entry.raw.dungeon ?? 0}`
+    const lvl       = entry.raw.accountLevel ?? 1;
+    const rankLabel = getAccountRankLabel(lvl);
+    const subInfo   = tab === 'global'
+      ? `Nv.${lvl} ${rankLabel} · ${entry.raw.campaign} zones · Donjon S${entry.raw.dungeon ?? 0}`
       : tab === 'campaign'
         ? `${entry.score} / ${STAGES.length} zones`
-        : `Salle ${entry.score} / 5`;
+      : tab === 'dungeon'
+        ? `Salle ${entry.score} / 5`
+        : `${entry.score.toLocaleString()} dégâts`;
 
     const scoreLabel = tab === 'campaign' ? `${entry.score} zones`
                      : tab === 'dungeon'  ? `Salle ${entry.score}`
+                     : tab === 'boss'     ? `${entry.score.toLocaleString()} dmg`
                      :                     `${entry.score.toLocaleString()} pts`;
 
     row.innerHTML = `
@@ -197,6 +209,7 @@ export class LeaderboardUI {
       global:   'Classement toutes catégories',
       campaign: 'Zones de campagne terminées',
       dungeon:  'Meilleure salle du Donjon Abyssal',
+      boss:     'Dégâts infligés au Boss Hebdomadaire',
     };
     const subEl = document.getElementById('lb-subtitle');
     if (subEl) subEl.textContent = subtitles[this._tab];

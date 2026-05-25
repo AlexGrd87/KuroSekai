@@ -304,6 +304,8 @@ export class ArenaUI {
       const currReward = 150 + Math.round(opp.winBonus * 3);
       this.playerData.currency += currReward;
       this.playerData._saveProgress();
+      this.playerData.incrementQuest?.('ARENA_WIN', 1);
+      this.playerData.addAccountXP?.('COMBAT_WIN');
       toast.show(title, type, { sub: `${sub} · +${currReward} ◈`, duration: 4500 });
     } else {
       toast.show(title, type, { sub, duration: 4000 });
