@@ -15,6 +15,7 @@ import { getTalentTree }                                 from './talents.js';
 import { ASCENSION_RANKS, ASCENSION_COSTS,
          getNextAscensionCost }                          from './ascension.js';
 import { EXPEDITION_TYPES }                              from './expeditions.js';
+import { EVENTS, getEventById }                          from './events.js';
 
 const STORAGE_KEY   = 'kuro_player_collection';
 const PROGRESS_KEY  = 'kuro_player_progress';
@@ -110,6 +111,8 @@ export class PlayerData {
       this.unlockedTalents        = data.unlockedTalents        ?? {};
       // Expéditions passives
       this.expeditionSlots        = data.expeditionSlots        ?? [null, null, null];
+      // Événements temporaires
+      this.eventProgress          = data.eventProgress          ?? {};
     } catch {
       this.completedStages  = new Set();
       this.currency         = 0;
@@ -146,6 +149,7 @@ export class PlayerData {
       this.weeklyBossRewardClaimed = false;
       this.unlockedTalents     = {};
       this.expeditionSlots     = [null, null, null];
+      this.eventProgress       = {};
     }
     try {
       const raw = localStorage.getItem(HISTORY_KEY);
@@ -244,6 +248,9 @@ export class PlayerData {
       this._saveQuests();
       document.dispatchEvent(new CustomEvent('kuro:quests-updated'));
     }
+
+    // Propage aussi aux quêtes des événements actifs
+    this._incrementEventQuests(type, amount);
   }
 
   /**
@@ -346,6 +353,8 @@ export class PlayerData {
       unlockedTalents:         this.unlockedTalents         ?? {},
       // Expéditions passives
       expeditionSlots:         this.expeditionSlots         ?? [null, null, null],
+      // Événements temporaires
+      eventProgress:           this.eventProgress           ?? {},
     };
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
     this._scheduleCloudSync();
@@ -594,6 +603,13 @@ export class PlayerData {
       def: Math.round(stats.def * (1 + (artBonus.def_pct ?? 0) + ap) + (artBonus.def_flat ?? 0)),
       spd: Math.round(stats.spd * (1 + (artBonus.spd_pct ?? 0))     + (artBonus.spd_flat ?? 0)),
     };
+
+    // Crit — base 5% taux / +50% bonus (×1.5) pour tous, +talents
+    const baseCritRate = char.class === 'Assassin' ? 0.25 : 0.05;
+    const baseCritDmg  = 0.50;
+    stats.crit_rate = baseCritRate + (talentFx.crit_rate ?? 0);
+    stats.crit_dmg  = baseCritDmg  + (talentFx.crit_dmg  ?? 0);
+
     return stats;
   }
 
@@ -1277,5 +1293,139 @@ export class PlayerData {
   hasReadyExpeditions() {
     const now = Date.now();
     return (this.expeditionSlots ?? []).some(s => s !== null && now >= s.endTime);
+  }
+
+  /* ════════════════════════════════
+     ÉVÉNEMENTS TEMPORAIRES
+  ════════════════════════════════ */
+
+  /**
+   * Avance la progression des quêtes de tous les événements actifs du type donné.
+   * Appelé automatiquement par incrementQuest().
+   * @param {string} type
+   * @param {number} amount
+   */
+  _incrementEventQuests(type, amount) {
+    const now    = Date.now();
+    const active = EVENTS.filter(e => e.startTime <= now && now < e.endTime);
+    if (!active.length) return;
+
+    let changed = false;
+    for (const ev of active) {
+      if (!this.eventProgress[ev.id])
+        this.eventProgress[ev.id] = { quests: {}, completionClaimed: false };
+      const prog = this.eventProgress[ev.id];
+
+      for (const quest of ev.quests) {
+        if (quest.type !== type) continue;
+        if (!prog.quests[quest.id])
+          prog.quests[quest.id] = { current: 0, claimed: false };
+        const p = prog.quests[quest.id];
+        if (p.current < quest.target) {
+          p.current = Math.min(quest.target, p.current + amount);
+          changed   = true;
+        }
+      }
+    }
+
+    if (changed) {
+      this._saveProgress();
+      document.dispatchEvent(new CustomEvent('kuro:events-updated'));
+    }
+  }
+
+  /**
+   * Retourne l'état de progression des quêtes d'un événement.
+   * @param {string} eventId
+   * @returns {Array<{quest, current, claimed, done}>}
+   */
+  getEventQuestState(eventId) {
+    const ev = getEventById(eventId);
+    if (!ev) return [];
+    const prog = this.eventProgress[eventId] ?? {};
+    return ev.quests.map(quest => {
+      const p = prog.quests?.[quest.id] ?? { current: 0, claimed: false };
+      return {
+        quest,
+        current: p.current,
+        claimed: p.claimed,
+        done:    p.current >= quest.target,
+      };
+    });
+  }
+
+  /**
+   * Réclame la récompense d'une quête d'événement terminée.
+   * @param {string} eventId
+   * @param {string} questId
+   * @returns {{ currency?, freeRolls? } | null}
+   */
+  claimEventQuest(eventId, questId) {
+    const ev    = getEventById(eventId);
+    if (!ev) return null;
+    const quest = ev.quests.find(q => q.id === questId);
+    if (!quest) return null;
+
+    if (!this.eventProgress[eventId])
+      this.eventProgress[eventId] = { quests: {}, completionClaimed: false };
+    const prog = this.eventProgress[eventId];
+    if (!prog.quests[questId])
+      prog.quests[questId] = { current: 0, claimed: false };
+    const p = prog.quests[questId];
+
+    if (p.current < quest.target || p.claimed) return null;
+    p.claimed = true;
+
+    if (quest.rewards.currency)  this.currency += quest.rewards.currency;
+    if (quest.rewards.freeRolls) this.addFreeRolls(quest.rewards.freeRolls);
+    this._saveProgress();
+    document.dispatchEvent(new CustomEvent('kuro:events-updated'));
+    return quest.rewards;
+  }
+
+  /**
+   * Réclame la récompense de complétion d'un événement (toutes quêtes réclamées).
+   * @param {string} eventId
+   * @returns {{ currency?, freeRolls? } | null}
+   */
+  claimEventCompletion(eventId) {
+    const ev = getEventById(eventId);
+    if (!ev?.completion) return null;
+
+    if (!this.eventProgress[eventId])
+      this.eventProgress[eventId] = { quests: {}, completionClaimed: false };
+    const prog = this.eventProgress[eventId];
+    if (prog.completionClaimed) return null;
+
+    // Toutes les quêtes doivent être réclamées
+    const allClaimed = ev.quests.every(q => prog.quests?.[q.id]?.claimed);
+    if (!allClaimed) return null;
+
+    prog.completionClaimed = true;
+    if (ev.completion.currency)  this.currency += ev.completion.currency;
+    if (ev.completion.freeRolls) this.addFreeRolls(ev.completion.freeRolls);
+    this._saveProgress();
+    document.dispatchEvent(new CustomEvent('kuro:events-updated'));
+    return ev.completion;
+  }
+
+  /**
+   * Vrai si au moins une récompense d'événement est réclamable (quête ou complétion).
+   */
+  hasClaimableEventRewards() {
+    const now = Date.now();
+    for (const ev of EVENTS) {
+      if (ev.startTime > now || now >= ev.endTime) continue;
+      const prog = this.eventProgress[ev.id] ?? {};
+      for (const quest of ev.quests) {
+        const p = prog.quests?.[quest.id];
+        if (p && p.current >= quest.target && !p.claimed) return true;
+      }
+      if (!prog.completionClaimed) {
+        const allClaimed = ev.quests.every(q => prog.quests?.[q.id]?.claimed);
+        if (allClaimed) return true;
+      }
+    }
+    return false;
   }
 }

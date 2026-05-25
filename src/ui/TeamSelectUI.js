@@ -7,6 +7,7 @@ import { gsap }             from 'gsap';
 import { CHARACTERS, RARITIES } from '../data/characters.js';
 import { statMultiplier }   from '../data/PlayerData.js';
 import { buildPortraitSVG } from './portrait.js';
+import { getActiveSynergies } from '../data/synergies.js';
 
 const ELEMENT_DATA = {
   Fire:    { color: '#ff5500', glow: '#ff2200', kanji: '火' },
@@ -65,6 +66,8 @@ export class TeamSelectUI {
 
       const level = this.playerData.getLevel(char.id);
       const prog  = this.playerData.expProgress(char.id);
+      const stats = this.playerData.getScaledStats(char);
+      const critPct = Math.round((stats.crit_rate ?? 0.05) * 100);
 
       card.innerHTML = `
         <div class="ts-char-bg" style="--el:${el.color};--glow:${el.glow};--rar:${rar.color}">
@@ -78,6 +81,11 @@ export class TeamSelectUI {
             <div class="ts-lv-bar-track">
               <div class="ts-lv-bar" style="width:${prog.pct}%"></div>
             </div>
+          </div>
+          <div class="ts-char-stats">
+            <span class="ts-stat ts-stat--atk" title="ATK">⚔${stats.atk}</span>
+            <span class="ts-stat ts-stat--spd" title="SPD">💨${stats.spd}</span>
+            <span class="ts-stat ts-stat--crit ${critPct >= 50 ? 'ts-stat--crit-hi' : ''}" title="Taux de critique">◆${critPct}%</span>
           </div>
           <div class="ts-char-check">✓</div>
         </div>
@@ -134,6 +142,43 @@ export class TeamSelectUI {
     } else {
       this.startBtn.classList.remove('ts-start-ready');
     }
+
+    this._updateSynergies();
+  }
+
+  _updateSynergies() {
+    const panel = document.getElementById('ts-synergy-panel');
+    if (!panel) return;
+
+    const team = this.selectedIds
+      .map(id => CHARACTERS.find(c => c.id === id))
+      .filter(Boolean);
+
+    const active = getActiveSynergies(team);
+    panel.innerHTML = '';
+
+    if (!active.length) {
+      panel.innerHTML = `<span class="ts-syn-hint">Assemblez une équipe pour révéler les synergies</span>`;
+      return;
+    }
+
+    active.forEach((syn, i) => {
+      const badge = document.createElement('div');
+      badge.className = 'ts-syn-badge';
+      badge.style.setProperty('--sc', syn.color);
+      badge.innerHTML = `
+        <span class="ts-syn-icon">${syn.icon}</span>
+        <div class="ts-syn-info">
+          <span class="ts-syn-name">${syn.name}</span>
+          <span class="ts-syn-namejp">${syn.nameJp}</span>
+          <span class="ts-syn-desc">${syn.desc}</span>
+        </div>`;
+      panel.appendChild(badge);
+
+      gsap.fromTo(badge,
+        { opacity: 0, x: -16, scale: 0.92 },
+        { opacity: 1, x: 0, scale: 1, duration: 0.28, delay: i * 0.07, ease: 'back.out(1.5)' });
+    });
   }
 
   _launch() {

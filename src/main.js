@@ -33,10 +33,12 @@ import { tutorialUI }     from './ui/TutorialUI.js';
 import { ArenaUI }        from './ui/ArenaUI.js';
 import { TowerUI }        from './ui/TowerUI.js';
 import { WeeklyBossUI }   from './ui/WeeklyBossUI.js';
+import { getBossState }   from './data/weeklyBoss.js';
 import { ForgeUI }             from './ui/ForgeUI.js';
 import { TalentUI }            from './ui/TalentUI.js';
 import { ArtifactInventoryUI } from './ui/ArtifactInventoryUI.js';
 import { ExpeditionUI }         from './ui/ExpeditionUI.js';
+import { EventUI }              from './ui/EventUI.js';
 import { rollArtifactDrops, formatArtifactDrops } from './data/artifacts.js';
 
 /* ══════════════════════════════════════════
@@ -102,12 +104,30 @@ function _smartStartupNotifs() {
     const badge = document.getElementById('hub-expedition-badge');
     if (badge) badge.style.display = 'block';
   }
+
+  // Récompenses événement réclamables ?
+  if (playerData.hasClaimableEventRewards()) {
+    toast.show('祭 Récompenses événement disponibles !', 'reward',
+      { sub: 'Des quêtes d\'événement sont terminées.', duration: 4500 });
+    const badge = document.getElementById('hub-event-badge');
+    if (badge) badge.style.display = 'block';
+  }
+
+  // Boss hebdo — tentatives disponibles ou récompense réclamable ?
+  weeklyBossUI?.refreshBadge();
+  const bossState = getBossState(playerData);
+  if (!bossState.needsReset && bossState.tier && !bossState.rewardClaimed) {
+    toast.show('魔 Boss Hebdo — récompense disponible !', 'reward',
+      { sub: `Palier ${bossState.tier.label} atteint — réclame tes gains.`, duration: 4500 });
+  }
 }
 
 function goHub() {
   transition.sweep('hub', () => {
     hub.show();
     questsUI?.refreshBadge();
+    eventUI?.refreshBadge();
+    weeklyBossUI?.refreshBadge();
     if (!audio.ready || audio._bgmTheme !== 'hub') {
       audio.stopBgm(600);
       setTimeout(() => audio.playBgm('hub'), 650);
@@ -344,11 +364,21 @@ document.getElementById('hub-inventory-btn')
 /* ── EXPÉDITIONS PASSIVES ── */
 const expeditionUI = new ExpeditionUI(playerData, goHub);
 
+/* ── ÉVÉNEMENTS TEMPORAIRES ── */
+const eventUI = new EventUI(playerData, goHub);
+
 document.getElementById('hub-expedition-btn')
   ?.addEventListener('click', () => {
     audio.play?.('ui_navigate');
     hub?.hide();
     expeditionUI.show();
+  });
+
+document.getElementById('hub-event-btn')
+  ?.addEventListener('click', () => {
+    audio.play?.('ui_navigate');
+    hub?.hide();
+    eventUI.show();
   });
 
 /* ── BOSS HEBDOMADAIRE ── */
@@ -451,6 +481,43 @@ document.getElementById('hub-daily-btn')
     audio.play('ui_navigate');
     dailyLoginUI.show(true); // force=true → affiche même si déjà réclamé
   });
+
+/* ── RACCOURCI CLAVIER ESC → retour hub ── */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+
+  // Ordre prioritaire : screens les plus "profondes" en premier
+  const escMap = [
+    // Événements : ESC gère vue détail → liste → hub via _handleBack
+    ['event-screen',              () => eventUI._handleBack()],
+    // Autres écrans plein-format
+    ['expedition-screen',         () => { expeditionUI.hide(); goHub(); }],
+    ['collection-screen',         () => { collection.hide(); goHub(); }],
+    ['quests-screen',             () => { questsUI.hide(); goHub(); }],
+    ['profile-screen',            () => { profileUI.hide?.(); goHub(); }],
+    ['settings-screen',           () => { settingsUI.hide?.(); goHub(); }],
+    ['lb-screen',                 () => { leaderboardUI.hide?.(); goHub(); }],
+    ['arena-screen',              () => { arenaUI.hide?.(); goHub(); }],
+    ['tower-screen',              () => { towerUI.hide?.(); goHub(); }],
+    ['boss-screen',               () => { weeklyBossUI.hide?.(); goHub(); }],
+    ['forge-screen',              () => { forgeUI.hide?.(); goHub(); }],
+    ['artifact-inventory-screen', () => { artifactInv.hide?.(); goHub(); }],
+    ['dungeon-intro',             () => { dungeonUI.hide?.(); goHub(); }],
+    ['dungeon-buff-overlay',      () => { /* buff pick en cours — pas d'interruption */ }],
+    ['dungeon-end-overlay',       () => { dungeonUI.hide?.(); goHub(); }],
+    ['shop-screen',               () => { shopUI.hide?.(); goHub(); }],
+    ['summon-screen',             () => { summon.hide?.(); goHub(); }],
+    ['talent-screen',             () => talentUI.hide?.()],
+  ];
+
+  for (const [id, action] of escMap) {
+    const el = document.getElementById(id);
+    if (el && el.style.display && el.style.display !== 'none') {
+      action();
+      return;
+    }
+  }
+});
 
 /* Retour hub depuis summon et collection */
 summon.overlay?.querySelector('#summon-back')

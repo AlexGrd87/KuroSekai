@@ -77,6 +77,12 @@ export class CombatUI {
 
     const stageName = stage?.name ?? 'Combat';
     this._addLog(`⚔ Début du combat — ${stageName}`, 'round');
+
+    // Afficher les synergies loggées pendant la construction de l'engine
+    this.engine.log
+      .filter(e => e.tag === 'synergy')
+      .forEach(e => this._addLog(e.msg, 'synergy'));
+
     this._updateWaveIndicator();
     this._updateTurnUI();
 

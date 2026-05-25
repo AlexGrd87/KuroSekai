@@ -140,16 +140,19 @@ export class DungeonUI {
       return;
     }
 
-    // Victoire de salle — sauvegarde progression
+    // Victoire de salle — sauvegarde progression + quête
     saveDungeonBest(this._roomIndex);
+    this.playerData.incrementQuest?.('COMBAT_WIN', 1);
 
     const isLast = this._roomIndex >= DUNGEON_ROOMS.length - 1;
     if (isLast) {
-      // Victoire finale — drop garanti (dungeon_win)
+      // Victoire finale
       audio.play?.('victory');
       audio.stopBgm();
       setTimeout(() => audio.playBgm('hub'), 800);
       this.playerData.currency = (this.playerData.currency ?? 0) + VICTORY_CURRENCY;
+      this.playerData.incrementDungeonClears?.();
+      this.playerData.incrementQuest?.('STAGE_COMPLETE', 1);
 
       const artDrops = rollArtifactDrops('dungeon_win');
       artDrops.forEach(art => this.playerData.addArtifactToInventory(art));
@@ -284,6 +287,21 @@ export class DungeonUI {
       r.classList.toggle('dng-end-room--failed', failed);
     });
 
+    // Résumé des buffs accumulés
+    const buffSummary = document.getElementById('dungeon-end-buffs');
+    if (buffSummary) {
+      if (this._buffsApplied.length > 0) {
+        buffSummary.innerHTML = this._buffsApplied.map(bid => {
+          const b = DUNGEON_BUFFS.find(x => x.id === bid);
+          if (!b) return '';
+          return `<span class="dng-end-buff-tag" style="--bc:${b.color}" title="${b.desc}">${b.icon} ${b.name}</span>`;
+        }).join('');
+        buffSummary.style.display = '';
+      } else {
+        buffSummary.style.display = 'none';
+      }
+    }
+
     // Animation
     gsap.set(ol, { display: 'flex', opacity: 0 });
     gsap.to(ol, { opacity: 1, duration: 0.4, ease: 'power2.out' });
@@ -296,21 +314,53 @@ export class DungeonUI {
         { scale: 0, opacity: 0 },
         { scale: 1, opacity: 1, stagger: 0.09, duration: 0.32, ease: 'back.out(2)', delay: 0.4 }
       );
+      gsap.fromTo('.dng-end-buff-tag',
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, stagger: 0.06, duration: 0.25, ease: 'power2.out', delay: 0.7 }
+      );
     }
   }
 
   _bindEnd() {
     document.getElementById('dungeon-end-back')
-      ?.addEventListener('click', () => {
-        const ol = this.endOverlay;
-        if (!ol) { this.goHub(); return; }
-        gsap.to(ol, {
-          opacity: 0, duration: 0.3, ease: 'power2.in',
-          onComplete: () => {
-            gsap.set(ol, { display: 'none' });
-            this.goHub();
-          },
-        });
-      });
+      ?.addEventListener('click', () => this._closeEnd());
+  }
+
+  _closeEnd() {
+    const ol = this.endOverlay;
+    if (!ol) { this.goHub(); return; }
+    gsap.to(ol, {
+      opacity: 0, duration: 0.3, ease: 'power2.in',
+      onComplete: () => {
+        gsap.set(ol, { display: 'none' });
+        this.goHub();
+      },
+    });
+  }
+
+  /* ════════════════════════════════
+     HIDE (ESC / retour externe)
+  ════════════════════════════════ */
+
+  hide() {
+    // Ferme proprement l'overlay actif et retourne au hub
+    const overlays = [this.endOverlay, this.buffOverlay, this.introOverlay];
+    const visible  = overlays.find(ol => ol && ol.style.display !== 'none');
+    if (!visible) return;
+
+    // Restaurer les callbacks combat overridés si on interrompt en plein donjon
+    if (this._origOnBack !== null) {
+      this.combatUI.onBack = this._origOnBack;
+      this._origOnBack = null;
+    }
+    if (this._origTeamReady !== null) {
+      this.teamSelect.onTeamReady = this._origTeamReady;
+      this._origTeamReady = null;
+    }
+
+    gsap.to(visible, {
+      opacity: 0, duration: 0.25, ease: 'power2.in',
+      onComplete: () => { gsap.set(visible, { display: 'none' }); },
+    });
   }
 }

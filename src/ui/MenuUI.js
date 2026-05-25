@@ -78,7 +78,6 @@ export class MenuUI {
 
   /* ── Feedback visuel au clic ── */
   _onButtonClick(label) {
-    console.log(`[KuroSekai] Menu → ${label}`);
     gsap.to('#ui-overlay', {
       background: 'radial-gradient(ellipse at center, rgba(0,180,255,0.12) 0%, rgba(0,0,0,0.6) 100%)',
       duration: 0.12,

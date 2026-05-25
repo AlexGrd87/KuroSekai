@@ -28,7 +28,8 @@ export class HubUI {
     this.mapWrap     = document.getElementById('hub-map-wrap');
     this.detailPanel = document.getElementById('hub-detail');
 
-    this._activeStage = null;
+    this._activeStage    = null;
+    this._energyInterval = null;
 
     this._bindEvents();
   }
@@ -66,6 +67,7 @@ export class HubUI {
   /** Affiche le hub-home (vue icônes). */
   show() {
     this._updateStats();
+    this._startEnergyTimer();
 
     gsap.set(this.screen,   { display: 'flex', opacity: 0 });
     gsap.set(this.homeView, { display: 'flex', opacity: 1 });
@@ -88,6 +90,7 @@ export class HubUI {
   /** Masque le hub (navigation vers un autre écran plein-écran). */
   hide() {
     this._closeDetail();
+    this._stopEnergyTimer();
     gsap.to(this.screen, {
       opacity: 0, duration: 0.3, ease: 'power2.in',
       onComplete: () => gsap.set(this.screen, { display: 'none' }),
@@ -265,6 +268,45 @@ export class HubUI {
       : () => this._shakeNode(node));
 
     return node;
+  }
+
+  /* ══════════════════════════════════════
+     TIMER ÉNERGIE
+  ══════════════════════════════════════ */
+
+  _startEnergyTimer() {
+    this._stopEnergyTimer();
+    this._updateEnergyTimer();
+    this._energyInterval = setInterval(() => this._updateEnergyTimer(), 10_000);
+  }
+
+  _stopEnergyTimer() {
+    clearInterval(this._energyInterval);
+    this._energyInterval = null;
+  }
+
+  _updateEnergyTimer() {
+    const el = document.getElementById('hub-energy-timer');
+    if (!el) return;
+
+    const REGEN_MS = 30 * 60 * 1000; // 30 min
+    const ENERGY_MAX = 10;
+    const { current } = this.playerData.getEnergy();
+
+    if (current >= ENERGY_MAX) {
+      el.textContent = '';
+      el.title = 'Énergie au maximum';
+      return;
+    }
+
+    const lastTime  = this.playerData.lastEnergyTime ?? Date.now();
+    const elapsed   = Date.now() - lastTime;
+    const msToNext  = REGEN_MS - (elapsed % REGEN_MS);
+    const totalSec  = Math.ceil(msToNext / 1000);
+    const mm        = Math.floor(totalSec / 60);
+    const ss        = totalSec % 60;
+    el.textContent  = `→ ${mm}:${String(ss).padStart(2, '0')}`;
+    el.title        = `Prochain +1 dans ${mm}m ${ss}s`;
   }
 
   /* ══════════════════════════════════════

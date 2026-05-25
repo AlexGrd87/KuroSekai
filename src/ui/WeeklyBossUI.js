@@ -284,6 +284,10 @@ export class WeeklyBossUI {
     );
     this.playerData._saveProgress();
 
+    // Quest tracking
+    this.playerData.incrementQuest?.('COMBAT_WIN', 1);
+    if (winner === 'player') this.playerData.incrementQuest?.('STAGE_COMPLETE', 1);
+
     const tier = getBossRewardTier(this.playerData.weeklyBossDamage);
     const type = winner === 'player' ? 'reward' : 'warning';
     const msg  = winner === 'player'
@@ -294,7 +298,19 @@ export class WeeklyBossUI {
       duration: 4000,
     });
 
+    this.refreshBadge();
     this.show();
+  }
+
+  /** Met à jour le badge sur le bouton hub. */
+  refreshBadge() {
+    const badge = document.getElementById('hub-boss-badge');
+    if (!badge) return;
+    const state    = getBossState(this.playerData);
+    const canClaim = state.tier !== null && !state.rewardClaimed;
+    const hasAttempts = state.attemptsLeft > 0;
+    badge.style.display = (canClaim || hasAttempts) ? 'block' : 'none';
+    badge.textContent   = canClaim ? '!' : state.attemptsLeft;
   }
 
   /* ════════════════════════════════

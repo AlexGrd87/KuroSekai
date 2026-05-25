@@ -7,6 +7,7 @@
  */
 
 import { ENEMIES } from '../data/enemies.js';
+import { getActiveSynergies, mergeSynergyEffects } from '../data/synergies.js';
 
 /* ── Statuts temporaires ── */
 const STATUS = {
@@ -45,6 +46,9 @@ export class CombatEngine {
     /* ── Ordre de tour initial par SPD décroissant ── */
     this._buildTurnOrder();
 
+    /* ── Synergies d'équipe ── */
+    this._applySynergies();
+
     /* ── Passif Gardien : DEF équipe +15% si Gardien présent ── */
     if (this.playerUnits.some(u => u.class === 'Gardien')) {
       this.playerUnits.forEach(u => {
@@ -77,6 +81,8 @@ export class CombatEngine {
       atk:      data.stats.atk,
       def:      data.stats.def,
       spd:      data.stats.spd,
+      crit_rate: data.stats.crit_rate ?? (data.class === 'Assassin' ? 0.25 : 0.05),
+      crit_dmg:  data.stats.crit_dmg  ?? 0.50,
       // État
       alive:    true,
       statuses: [],          // [{ type, duration, value }]
@@ -88,6 +94,42 @@ export class CombatEngine {
       ai:       data.ai || 'aggressive',
       symbol:   data.symbol || '◆',
     };
+  }
+
+  /* ════════════════════════════════
+     SYNERGIES D'ÉQUIPE
+  ════════════════════════════════ */
+
+  _applySynergies() {
+    const active = getActiveSynergies(this.playerUnits);
+    if (!active.length) return;
+
+    const fx = mergeSynergyEffects(active);
+    const ap = fx.all_pct ?? 0;
+
+    this.playerUnits.forEach(u => {
+      // Stats multiplicatives (base + synergie + all_pct)
+      const hm = 1 + (fx.hp_pct  ?? 0) + ap;
+      const am = 1 + (fx.atk_pct ?? 0) + ap;
+      const dm = 1 + (fx.def_pct ?? 0) + ap;
+      const sm = 1 + (fx.spd_pct ?? 0) + ap;
+      u.maxHp = Math.round(u.maxHp * hm);
+      u.hp    = Math.round(u.hp    * hm);
+      u.atk   = Math.round(u.atk   * am);
+      u.def   = Math.round(u.def   * dm);
+      u.spd   = Math.round(u.spd   * sm);
+      // Crit — additif (plafonné à 95%)
+      u.crit_rate = Math.min(0.95, (u.crit_rate ?? 0.05) + (fx.crit_rate ?? 0));
+      u.crit_dmg  = (u.crit_dmg  ?? 0.50) + (fx.crit_dmg  ?? 0);
+    });
+
+    // Journal de combat
+    for (const syn of active) {
+      this._log(`⚡ Synergie — ${syn.name} : ${syn.desc}`, null, null, 0, 'synergy');
+    }
+
+    // SPD peut avoir changé → recalcul ordre de tour
+    if (fx.spd_pct || ap) this._buildTurnOrder();
   }
 
   /* ════════════════════════════════
@@ -252,10 +294,10 @@ export class CombatEngine {
     const reduce = defVal * 0.30;
     const variance = 0.9 + Math.random() * 0.2;
 
-    /* Assassin — critique 25% : ×2 dégâts */
+    /* Critique — taux et bonus par unité (talents inclus) */
     let critMult = 1;
-    if (att.class === 'Assassin' && Math.random() < 0.25) {
-      critMult = 2;
+    if (Math.random() < (att.crit_rate ?? 0.05)) {
+      critMult = 1 + (att.crit_dmg ?? 0.50);
       this._log(`💥 CRITIQUE — ${att.name} !`, att, def, 0, 'crit');
     }
 
